@@ -94,8 +94,21 @@ Mausbewegung — erst auf Aktion des Nutzers.
 
 ## Deployment
 
-GitHub Pages. HTTPS ist über `*.github.io` automatisch vorhanden und Voraussetzung
-für Service Worker und Installierbarkeit. Das Repo muss dafür öffentlich sein.
+GitHub Pages, Branch `main`, Verzeichnis `/` (root). HTTPS ist über `*.github.io`
+automatisch vorhanden und Voraussetzung für Service Worker und Installierbarkeit.
+Das Repo muss dafür öffentlich sein.
+
+- Repo: `github.com/dleitz-projects/bikeRouterIOS`
+- Seite: `https://dleitz-projects.github.io/bikeRouterIOS/`
+
+Die Seite liegt unter einem **Unterpfad**, nicht auf der Domain-Wurzel. Deshalb
+müssen alle Pfade relativ bleiben (`./` in `manifest.json` für `start_url` und
+`scope`, kein führender `/` bei Skripten, Styles, Icons und der
+Service-Worker-Registrierung). Ein absoluter Pfad würde lokal funktionieren und
+erst auf Pages brechen.
+
+Nach jeder Änderung `CACHE` in `sw.js` hochzählen, sonst liefert der Service
+Worker weiter die alte Version aus.
 
 ## Geklärte Architekturentscheidung: CORS → Variante A
 
@@ -104,6 +117,10 @@ für Service Worker und Installierbarkeit. Das Repo muss dafür öffentlich sein
 
 Damit gilt **Variante A: rein statische PWA mit direktem `fetch` aus dem
 Browser.** Kein Proxy, kein eigener Container, kein Server-Code.
+
+Seit dem Deployment zusätzlich in der Praxis bestätigt: Die Berechnung läuft
+im Browser von `https://dleitz-projects.github.io` aus, also von einer echten
+fremden Origin. Der curl-Test war damit korrekt.
 
 Belegt für alle drei relevanten Aufrufvarianten (jeweils `HTTP 200` und
 `Access-Control-Allow-Origin: *`, gesendet mit `Origin: https://example.github.io`):
