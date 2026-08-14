@@ -1,0 +1,72 @@
+/* Minimaler Service Worker.
+   Zweck ist die Installierbarkeit ("Zum Home-Bildschirm" ohne Safari-Leiste),
+   nicht Offline-Routing — das ist ein Nicht-Ziel.
+
+   Beim Ausliefern einer geaenderten Version CACHE hochzaehlen. */
+
+const CACHE = 'routenplaner-v1';
+
+const SHELL = [
+  './',
+  'index.html',
+  'app.js',
+  'style.css',
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png'
+];
+
+const CDN = [
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(SHELL);
+    // Faellt das CDN aus, soll die Installation trotzdem gelingen.
+    await Promise.all(CDN.map((u) => cache.add(u).catch(() => {})));
+    await self.skipWaiting();
+  })());
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter((n) => n !== CACHE).map((n) => caches.delete(n)));
+    await self.clients.claim();
+  })());
+});
+
+function cacheable(url) {
+  return url.origin === self.location.origin || url.hostname === 'unpkg.com';
+}
+
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+
+  // Routen nie cachen — sie sollen immer frisch sein.
+  // Kacheln nie cachen — das wuerde den Speicher unbegrenzt fuellen.
+  if (url.hostname.endsWith('brouter.de')) return;
+  if (url.hostname.endsWith('tile.openstreetmap.org')) return;
+
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const hit = await cache.match(e.request);
+
+    const fresh = fetch(e.request).then((res) => {
+      if (res.ok && cacheable(url)) cache.put(e.request, res.clone());
+      return res;
+    }).catch(() => null);
+
+    // Aus dem Cache antworten, im Hintergrund aktualisieren.
+    if (hit) {
+      e.waitUntil(fresh);
+      return hit;
+    }
+    return (await fresh) || Response.error();
+  })());
+});

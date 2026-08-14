@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rennrad-Routenplaner</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b3a4b">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Routenplaner">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="anonymous">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="map" aria-label="Karte"></div>
+
+<div id="panel">
+  <div class="row">
+    <label class="sr-only" for="profile">Routing-Profil</label>
+    <select id="profile">
+      <option value="fastbike">Fastbike — schnell, auch Hauptstraßen</option>
+      <option value="fastbike-lowtraffic" selected>Fastbike lowtraffic — Standard</option>
+      <option value="fastbike-verylowtraffic">Fastbike verylowtraffic — sehr verkehrsscheu</option>
+      <option value="trekking">Trekking — auch unbefestigt</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <button id="calc" class="primary" type="button">Route berechnen</button>
+    <button id="share" type="button" disabled>Teilen</button>
+  </div>
+
+  <div class="row">
+    <button id="clear" class="ghost" type="button" disabled>Alle Punkte löschen</button>
+  </div>
+
+  <p id="stats" class="stats" hidden></p>
+  <p id="status" class="status" role="status" aria-live="polite">Tippe auf die Karte, um den Start zu setzen.</p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="anonymous"></script>
+<script src="app.js"></script>
+</body>
+</html>
