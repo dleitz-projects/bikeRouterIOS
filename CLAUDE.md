@@ -167,6 +167,14 @@ Damit ein Deployment überhaupt ankommt, gilt zusätzlich:
 
 Alle übrigen Dateien laufen weiter stale-while-revalidate.
 
+**Henne-Ei beim Umstieg:** Eine Korrektur am Service Worker kann auf das
+Deployment, das sie ausliefert, noch nicht wirken — in Kontrolle ist ja noch
+der alte Worker mit seiner alten Logik. Ein Gerät, das die vorige Version
+installiert hat, braucht deshalb einmalig **zwei Aufrufe**: der erste holt im
+Hintergrund die neuen Dateien, der zweite zeigt sie. Ab dann greift
+network-first und ein Deployment ist beim ersten Aufruf da. Gemessen am
+15.08.2026 beim Wechsel von `routenplaner-v1` auf `bikerouterios-v2`.
+
 ## Geklärte Architekturentscheidung: CORS → Variante A
 
 **Getestet am 14.08.2026.** `brouter.de` sendet
