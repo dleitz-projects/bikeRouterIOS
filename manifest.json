@@ -1,7 +1,7 @@
 {
-  "name": "Rennrad-Routenplaner",
-  "short_name": "Routenplaner",
-  "description": "Radrouten mit BRouter planen und als GPX teilen.",
+  "name": "bikeRouteriOS",
+  "short_name": "bikeRouter",
+  "description": "Radrouten mit BRouter planen, archivieren und als GPX teilen.",
   "lang": "de",
   "start_url": "./",
   "scope": "./",

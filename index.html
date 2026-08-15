@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Rennrad-Routenplaner</title>
+<title>bikeRouteriOS</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b3a4b">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Routenplaner">
+<meta name="apple-mobile-web-app-title" content="bikeRouter">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
@@ -39,12 +39,51 @@
   </div>
 
   <div class="row">
-    <button id="clear" class="ghost" type="button" disabled>Alle Punkte löschen</button>
+    <button id="save" type="button" disabled>Route speichern</button>
+    <button id="clear" class="ghost" type="button" disabled>Punkte löschen</button>
   </div>
 
   <p id="stats" class="stats" hidden></p>
   <p id="status" class="status" role="status" aria-live="polite">Tippe auf die Karte, um den Start zu setzen.</p>
+
+  <section class="archive">
+    <button id="archiveToggle" class="ghost toggle" type="button" aria-expanded="false" aria-controls="archivePanel">
+      <span id="archiveLabel">Archiv (0)</span>
+      <span class="chev" aria-hidden="true">▾</span>
+    </button>
+
+    <div id="archivePanel" hidden>
+      <p id="archiveEmpty" class="status">Noch keine Touren gespeichert.</p>
+      <ul id="tourList" class="tours"></ul>
+      <div class="row">
+        <button id="exportArchive" type="button">Archiv sichern</button>
+        <button id="importArchive" type="button">Archiv laden</button>
+      </div>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </section>
 </div>
+
+<dialog id="nameDialog">
+  <form id="nameForm" method="dialog">
+    <label id="nameLabel" for="nameInput">Name der Route</label>
+    <input id="nameInput" type="text" autocomplete="off" autocapitalize="sentences" maxlength="80">
+    <div class="row">
+      <button type="button" class="ghost" id="nameCancel">Abbrechen</button>
+      <button type="submit" class="primary" id="nameOk" value="ok">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirmDialog">
+  <form id="confirmForm" method="dialog">
+    <p id="confirmText"></p>
+    <div class="row">
+      <button type="button" class="ghost" id="confirmCancel">Abbrechen</button>
+      <button type="submit" class="danger" value="ok">Löschen</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

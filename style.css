@@ -30,7 +30,7 @@ body {
 
 #map {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 35vh;
   background: var(--bg);
 }
 
@@ -45,6 +45,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Bei geöffnetem Archiv darf das Panel wachsen, aber nicht die Karte
+     verdrängen — der Rest scrollt innerhalb des Panels. */
+  max-height: 65vh;
+  overflow-y: auto;
 }
 
 .row { display: flex; gap: 8px; }
@@ -84,6 +88,11 @@ button.ghost {
   background: transparent;
   color: var(--muted);
   font-weight: 500;
+}
+
+button.danger {
+  color: var(--error);
+  border-color: #5c3340;
 }
 
 button[disabled] { opacity: .45; }
@@ -137,6 +146,20 @@ button[disabled] { opacity: .45; }
 .wp--start { background: #86efac; }
 .wp--end   { background: #fca5a5; }
 
+/* Hervorhebung, wenn der Server keinen Weg gefunden hat */
+.wp--flagged {
+  box-shadow: 0 0 0 4px rgba(252, 165, 165, .9), 0 1px 6px rgba(0, 0, 0, .6);
+  animation: wp-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes wp-pulse {
+  50% { box-shadow: 0 0 0 9px rgba(252, 165, 165, .25), 0 1px 6px rgba(0, 0, 0, .6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp--flagged { animation: none; }
+}
+
 /* Leaflet-Popup an das dunkle Panel angleichen */
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
   background: var(--panel);
@@ -157,3 +180,112 @@ button[disabled] { opacity: .45; }
   font-size: 11px;
 }
 .leaflet-control-attribution a { color: var(--accent); }
+
+/* --- Archiv --- */
+
+.archive {
+  border-top: 1px solid var(--panel-line);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+button.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  color: var(--text);
+}
+
+button.toggle .chev {
+  transition: transform .15s ease;
+  color: var(--muted);
+}
+button.toggle.open .chev { transform: rotate(180deg); }
+
+#archivePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tours {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tour {
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tour-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tour-meta {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.tour-actions {
+  display: flex;
+  gap: 6px;
+}
+.tour-actions button {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0 4px;
+}
+
+/* --- Dialoge --- */
+
+dialog {
+  border: 1px solid var(--panel-line);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 16px;
+  width: min(92vw, 380px);
+  margin: auto;
+}
+
+dialog::backdrop { background: rgba(0, 0, 0, .55); }
+
+dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+dialog label, dialog p {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+dialog input[type="text"] {
+  min-height: 44px;
+  font-size: 16px;          /* < 16px löst auf iOS Auto-Zoom aus */
+  font-family: inherit;
+  border-radius: 10px;
+  border: 1px solid var(--panel-line);
+  background: #16303e;
+  color: var(--text);
+  padding: 0 12px;
+  width: 100%;
+}

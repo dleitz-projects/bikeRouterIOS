@@ -4,7 +4,7 @@
 
    Beim Ausliefern einer geaenderten Version CACHE hochzaehlen. */
 
-const CACHE = 'routenplaner-v1';
+const CACHE = 'bikerouterios-v2';
 
 const SHELL = [
   './',
@@ -55,14 +55,22 @@ self.addEventListener('fetch', (e) => {
 
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const hit = await cache.match(e.request);
 
     const fresh = fetch(e.request).then((res) => {
       if (res.ok && cacheable(url)) cache.put(e.request, res.clone());
       return res;
     }).catch(() => null);
 
-    // Aus dem Cache antworten, im Hintergrund aktualisieren.
+    // Das Navigationsdokument IMMER zuerst aus dem Netz holen, nur offline
+    // aus dem Cache. Sonst liefert eine neue Version ihre eigene alte
+    // index.html aus, registriert damit den alten Service Worker erneut —
+    // und ein Deployment kommt auf dem Geraet nie an.
+    if (e.request.mode === 'navigate') {
+      return (await fresh) || (await cache.match(e.request)) || (await cache.match('./')) || Response.error();
+    }
+
+    // Uebrige Dateien: aus dem Cache antworten, im Hintergrund aktualisieren.
+    const hit = await cache.match(e.request);
     if (hit) {
       e.waitUntil(fresh);
       return hit;

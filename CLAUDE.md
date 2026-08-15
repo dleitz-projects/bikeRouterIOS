@@ -1,4 +1,8 @@
-# Projekt: Rennrad-Routenplaner (PWA)
+# Projekt: bikeRouteriOS (PWA)
+
+App-Name: `bikeRouteriOS` (Langform, `manifest.json` → `name`, `<title>`).
+Auf dem Home-Bildschirm kürzt iOS nach etwa 12 Zeichen, deshalb ist
+`short_name` bewusst `bikeRouter` — kurz genug, um ungekürzt zu bleiben.
 
 ## Zweck
 
@@ -41,6 +45,31 @@ Diese Punkte sind bewusst ausgeschlossen. Nicht implementieren, auch nicht
 - Keine Offline-Routenberechnung (BRouter ist Java, kein Port verfügbar)
 - Keine Social-Features, kein Teilen von Routen mit anderen Nutzern
 
+## Auf dem iPhone verifiziert (14.08.2026) — nicht anfassen
+
+Diese Punkte sind am echten Gerät geprüft und funktionieren. Sie sind **kein
+Umbaugebiet**, auch nicht für naheliegende Verbesserungen:
+
+- Installation über "Zum Home-Bildschirm", Kaltstart ohne Safari-UI
+- Trefferflächen der Marker (44 px) reichen in der Praxis
+- Routenberechnung, Distanz- und Höhenmeterangabe
+- **Der Teilen-Pfad in ganzer Länge.** Das Share-Sheet zeigt die Datei korrekt
+  als "GPS Exchange Format (GPX)" mit passender Größe, der Inhalt ist gültiges
+  GPX von BRouter 1.7.9, die Werte im GPX-Header stimmen mit der Anzeige
+  überein. Ein Tap genügt; die befürchtete verfallende Nutzergeste tritt
+  nicht ein.
+
+### Warnung: OsmAnd fehlt im Share-Sheet — das ist kein Fehler
+
+OsmAnd registriert sich auf iOS **nicht als Share-Ziel**, sondern nur als
+Dokument-Handler. Der funktionierende Weg ist "In Dateien sichern" und dann in
+der Dateien-App "Öffnen mit".
+
+Das liegt an OsmAnd, nicht an dieser App. **Am Teilen-Pfad deshalb nichts
+ändern — auch nicht "verbessern".** Jeder Umbau, der OsmAnd ins Share-Sheet
+holen soll, ist verlorene Zeit und gefährdet einen Pfad, der nachweislich
+funktioniert.
+
 ## Technische Rahmenbedingungen
 
 - **Vanilla JavaScript, kein Framework.** Kein React, kein Vue, kein Svelte.
@@ -72,6 +101,23 @@ https://brouter.de/brouter
 - `format=geojson` zum Anzeigen, `format=gpx` zum Exportieren
 - Nogo-Bereiche über den Parameter `nogos=<lon>,<lat>,<radius_in_metern>`,
   mehrere durch `|` getrennt
+
+### Fehlerantworten: am Body unterscheiden, nicht am Statuscode
+
+Beobachtet am 14.08.2026. BRouter trennt seine Fehlerfälle **nicht** über den
+HTTP-Status — die drei häufigen Fälle kommen alle als `400` mit einem
+`text/plain`-Body. Wer nach Status verzweigt, gibt zwangsläufig falsche
+Meldungen aus:
+
+| Body | Bedeutung |
+|---|---|
+| `no track found at pass=0` | Ein Wegpunkt liegt zu weit von einer erfassten Straße entfernt |
+| `datafile <name>.rd5 not found` | Punkt außerhalb der abgedeckten Region |
+| `operation killed by thread-priority-watchdog after N seconds` | Server bricht ab, meist zu weite Distanz |
+
+Der Body kann auch leer sein — dann bleibt nur eine generische Meldung.
+Fehlerantworten tragen die CORS-Header ebenfalls, der Text ist im Browser also
+lesbar.
 
 ### Profile
 
@@ -109,6 +155,17 @@ erst auf Pages brechen.
 
 Nach jeder Änderung `CACHE` in `sw.js` hochzählen, sonst liefert der Service
 Worker weiter die alte Version aus.
+
+Damit ein Deployment überhaupt ankommt, gilt zusätzlich:
+
+- Das **Navigationsdokument wird network-first** ausgeliefert, der Cache dient
+  nur als Offline-Rückfall. Käme die `index.html` aus dem Cache, würde eine
+  alte Version ihre eigene alte `app.js` laden, damit den alten Service Worker
+  erneut registrieren — und das Update erreicht das Gerät nie.
+- Registrierung mit `updateViaCache: 'none'`, damit das Worker-Skript nicht aus
+  dem HTTP-Cache kommt.
+
+Alle übrigen Dateien laufen weiter stale-while-revalidate.
 
 ## Geklärte Architekturentscheidung: CORS → Variante A
 
@@ -155,6 +212,20 @@ für die befahrene Region.
 Einstiegspunkt für die Recherche: `github.com/abrensch/brouter`, README,
 Abschnitt Docker. Bewusst kein Image-Name, kein Tag, keine Segment-URL hier —
 die ändern sich, das Repo bleibt. Dort steht die jeweils aktuelle Wahrheit.
+
+## Offene Punkte
+
+### Snapping der Wegpunkte auf die nächste Straße — offen, nicht bauen
+
+Wenn ein Wegpunkt zu weit von einer erfassten Straße liegt, meldet BRouter
+`no track found at pass=0`. Die App erklärt das und hebt die Punkte hervor,
+verschiebt sie aber **nicht** automatisch.
+
+Automatisches Snapping bräuchte einen **zweiten externen Dienst** (Nominatim,
+Overpass oder einen Map-Matching-Dienst) — also eine neue Abhängigkeit, eine
+zweite Fehlerquelle und zusätzliche Last auf fremder Infrastruktur. Das ist
+eine Architekturentscheidung, die der Nutzer separat trifft. Bis dahin: nicht
+implementieren, auch nicht vorbereiten.
 
 ## Arbeitsweise
 
