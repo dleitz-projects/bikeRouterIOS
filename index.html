@@ -53,6 +53,18 @@
     </button>
   </div>
 
+  <!-- Nennung der Datenquellen. OSM verlangt sie sichtbar, erlaubt auf kleinen
+       Displays aber, sie hinter ein antippbares Zeichen zu legen. Die volle
+       Zeile steht zusaetzlich im Menue. -->
+  <div class="attribwrap" id="attribWrap">
+    <button class="attribtag" id="attribBtn" type="button"
+            aria-expanded="false" aria-label="Datenquellen">©</button>
+    <div class="attribbox" id="attribBox" hidden>
+      Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende ·
+      Routing über <a href="https://brouter.de">BRouter</a>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <!-- Unten: die Route -->
@@ -106,11 +118,6 @@
           <p id="fastText"></p>
         </div>
       </div>
-
-      <p class="note attrib">
-        Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende ·
-        Routing über <a href="https://brouter.de">BRouter</a>
-      </p>
     </div>
   </section>
 
@@ -196,6 +203,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 11.5l4 4 4-4"/><path d="M4 17v2.4A1.6 1.6 0 0 0 5.6 21h12.8a1.6 1.6 0 0 0 1.6-1.6V17"/></svg>
       <span class="mt"><b>Sicherung</b><span id="miBackup">Alles in eine Datei</span></span>
     </button>
+    <p class="note menuattrib">
+      Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende ·
+      Routing über <a href="https://brouter.de">BRouter</a>
+    </p>
   </div>
 
   <div class="menu" id="savedlg" aria-label="Profil sichern">

@@ -250,6 +250,8 @@ const map = L.map('map', { zoomControl: false }).setView([51.85, 10.30], 10);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
 map.on('click', function (e) {
+  $('#attribBox').hidden = true;
+  $('#attribBtn').setAttribute('aria-expanded', 'false');
   if (map._popupOpen) return;
   onMapTap(e.latlng);
 });
@@ -281,7 +283,7 @@ function onMapTap(latlng) {
     n.circle.setRadius(radius);
     n.circle.setStyle({ dashArray: '6 5', opacity: 1 });
     state.editIdx = null;
-    invalidate('Radius auf ' + km(radius) + ' geändert — bitte neu berechnen.');
+    invalidate('Radius auf ' + km(radius) + ' geändert.');
     return;
   }
   addNogo(centre, radius);
@@ -302,7 +304,7 @@ function wpIcon(i, total, flagged) {
 function addWaypoint(latlng) {
   const marker = L.marker(latlng, { draggable: true, autoPan: true }).addTo(map);
   marker.on('dragend', function () {
-    invalidate('Wegpunkt verschoben — bitte neu berechnen.');
+    invalidate('Wegpunkt verschoben.');
   });
   marker.on('click', function (ev) {
     L.DomEvent.stopPropagation(ev);
@@ -310,7 +312,7 @@ function addWaypoint(latlng) {
   });
   state.wps.push({ marker: marker, flagged: false });
   renumber();
-  invalidate();
+  invalidate('Wegpunkt ' + state.wps.length + ' gesetzt.');
 }
 
 function openWpMenu(marker) {
@@ -333,7 +335,7 @@ function removeWaypoint(marker) {
   state.wps.splice(i, 1);
   dropFromStack('wp');
   renumber();
-  invalidate('Wegpunkt entfernt — bitte neu berechnen.');
+  invalidate('Wegpunkt entfernt.');
 }
 
 function renumber() {
@@ -379,7 +381,7 @@ function addNogo(latlng, radius) {
   });
   state.nogos.push(entry);
   state.stack.push('nogo');
-  invalidate('Sperrbereich mit ' + km(radius) + ' Radius angelegt — bitte neu berechnen.');
+  invalidate('Sperrbereich mit ' + km(radius) + ' Radius angelegt.');
 }
 
 function openNogoMenu(entry) {
@@ -410,7 +412,7 @@ function removeNogo(entry) {
   map.removeLayer(entry.dot);
   state.nogos.splice(i, 1);
   dropFromStack('nogo');
-  invalidate('Sperrbereich entfernt — bitte neu berechnen.');
+  invalidate('Sperrbereich entfernt.');
 }
 
 /* Rückgängig darf später nichts zurücknehmen, das schon weg ist. */
@@ -513,11 +515,17 @@ function clearRoute() {
   $('#analysis').hidden = true;
 }
 
-function invalidate(msg) {
+/* Zwei Rueckmeldungen mit verschiedenen Aufgaben, sonst steht alles doppelt:
+   Der Toast quittiert die Geste und ist wieder weg, die Statuszeile traegt den
+   Zustand der Route. Vorher stand die Quittung in der Statuszeile — als graue
+   Zeile ueber dem Rechnen-Knopf, die man beim Tippen auf die Karte nicht
+   ansieht. Der Entwurf hatte dafuer den Toast ueber der Karte. */
+function invalidate(receipt) {
   clearRoute();
   clearFlags();
   syncButtons();
-  setStatus(msg || defaultHint());
+  if (receipt) toast(receipt);
+  setStatus(defaultHint());
 }
 
 function defaultHint() {
@@ -579,6 +587,14 @@ function explain(status, body) {
       return { text: 'Der Routing-Server hat die Anfrage sofort abgewiesen — meist, weil kurz zuvor schon eine lief. Kurz warten und noch einmal berechnen.' };
     }
     return { text: 'Der Server hat die Berechnung abgebrochen, weil sie zu lange gedauert hat. Meist liegen die Punkte zu weit auseinander.' };
+  }
+  /* Gemessen am 19.08.2026: Nach etwa 30 Anfragen in kurzer Folge antwortet
+     brouter.de mit HTTP 403 und dem Text „Please, retry later!". Das ist eine
+     Mengenbegrenzung, kein Fehler an der Anfrage — ohne eigenen Fall stünde
+     hier „Der Server antwortete mit Fehler 403", und man suchte den Fehler bei
+     sich. */
+  if (b.indexOf('retry later') !== -1 || status === 403) {
+    return { text: 'Der Routing-Server nimmt gerade keine weiteren Anfragen an — es waren zu viele in kurzer Zeit. Ein bis zwei Minuten warten, dann geht es wieder.' };
   }
   if (status >= 500) {
     return { text: 'Der Routing-Server hat einen internen Fehler gemeldet. Wenn das nach einer Profiländerung auftritt, liegt es vermutlich an einem Wert im Profil.' };
@@ -653,6 +669,10 @@ async function calculate(override) {
     };
     state.gpx = null;
     setStatus('Route berechnet.');
+    /* Der Entwurf oeffnete das Blatt nach dem Rechnen auf die volle Raste.
+       Ohne das bleibt die Analyse hinter einer 16-px-Leiste verborgen, und es
+       sieht aus, als sei ausser der Linie nichts passiert. */
+    setDetent(2);
     if (!ok) { noteUse(profile.id); persist(); }
   } catch (err) {
     clearRoute();
@@ -1004,7 +1024,7 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastT);
-  toastT = setTimeout(function () { t.classList.remove('show'); }, 2600);
+  toastT = setTimeout(function () { t.classList.remove('show'); }, 3800);
 }
 
 function setStatus(text, kind) {
@@ -1071,8 +1091,16 @@ function positionRail() {
   const bottom = sh + 14;
   /* Bliebe oben kein Platz mehr, hilft Verschieben nicht — dann ausblenden. */
   const passtNicht = window.innerHeight - bottom - height < 70;
-  rail.classList.toggle('hidden', DETENTS[detent] === 'full' || passtNicht);
+  rail.classList.toggle('hidden', passtNicht);
   rail.style.bottom = bottom + 'px';
+
+  /* Die Nennung der Datenquellen haengt an derselben Kante. Ist von der Karte
+     nichts mehr zu sehen, verschwindet sie mit — im Menue steht sie weiter. */
+  const at = $('#attribWrap');
+  at.style.bottom = bottom + 'px';
+  const weg = window.innerHeight - bottom < 52;
+  at.classList.toggle('hidden', weg);
+  if (weg) $('#attribBox').hidden = true;
 }
 
 /* ------------------------------------------------------------ Ebenen
@@ -1439,7 +1467,7 @@ function selectProfile(id, fromAll) {
   if (fromAll) { promoteToTop(id); close('allprofiles'); }
   renderProfiles(); renderAllProfiles();
   persist();
-  if (state.route) invalidate('Profil gewechselt — bitte neu berechnen.');
+  if (state.route) invalidate();
   toast('Profil „' + p.name + '“ gewählt.');
 }
 
@@ -1926,9 +1954,75 @@ function renderKit() {
 
 /* ========================================================= Verdrahtung */
 
-$('#grab').addEventListener('click', function () { setDetent(detent + 1); });
+/* Der Griff kann beides: Antippen schaltet eine Raste weiter, Ziehen fuehrt
+   das Blatt der Hand nach. Nur Antippen fuehlt sich auf dem Telefon defekt an
+   — man zieht, und nichts folgt. Waehrend des Ziehens bekommt das Blatt eine
+   feste Hoehe in Pixeln; beim Loslassen entscheidet die naechstgelegene Raste,
+   und die Hoehe geht zurueck ans Stylesheet. */
+function detentHeights() {
+  const H = $('.app').getBoundingClientRect().height;
+  return [186, H * 0.58, H - 92];
+}
+
+(function dragSheet() {
+  const sheet = $('#sheet');
+  const grab = $('#grab');
+  let startY = 0, startH = 0, moved = false, dragging = false;
+
+  grab.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    moved = false;
+    startY = e.clientY;
+    startH = sheet.getBoundingClientRect().height;
+    sheet.style.transition = 'none';
+    sheet.classList.add('dragging');
+    document.body.classList.add('dragging');
+    try { grab.setPointerCapture(e.pointerId); } catch (err) { /* egal */ }
+  });
+
+  grab.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    const dy = startY - e.clientY;
+    if (Math.abs(dy) > 5) moved = true;
+    const h = detentHeights();
+    sheet.style.height = Math.min(h[2], Math.max(h[0], startH + dy)) + 'px';
+    positionRail();
+  });
+
+  function release() {
+    if (!dragging) return;
+    dragging = false;
+    sheet.classList.remove('dragging');
+    document.body.classList.remove('dragging');
+    const h = sheet.getBoundingClientRect().height;
+    sheet.style.transition = '';
+    sheet.style.height = '';
+    /* Erzwingt eine Stilberechnung. Ohne sie gilt für den Browser beim
+       nächsten Höhenwechsel noch das `transition:none` von eben — die
+       Bewegung fiele aus und `transitionend` käme nie; die Leiste rückte
+       erst der Zeitgeber in afterSheetSettled zurecht. Am 19.08.2026 im
+       Entwurf aufgefallen. */
+    void sheet.offsetHeight;
+    if (!moved) { setDetent(detent + 1); return; }
+    const hs = detentHeights();
+    let best = 0;
+    hs.forEach(function (v, i) {
+      if (Math.abs(v - h) < Math.abs(hs[best] - h)) best = i;
+    });
+    setDetent(best);
+  }
+  grab.addEventListener('pointerup', release);
+  grab.addEventListener('pointercancel', release);
+})();
+
 $('#grab').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetent(detent + 1); }
+});
+
+$('#attribBtn').addEventListener('click', function () {
+  const box = $('#attribBox');
+  box.hidden = !box.hidden;
+  this.setAttribute('aria-expanded', box.hidden ? 'false' : 'true');
 });
 
 /* Nicht `calculate` direkt haengen: Ein Listener bekommt das Event als
