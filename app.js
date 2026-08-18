@@ -52,10 +52,19 @@ function loadStore() {
   if (!Array.isArray(out.tours)) out.tours = [];
   if (!out.usage || typeof out.usage !== 'object') out.usage = {};
   if (!out.user || typeof out.user !== 'object') out.user = {};
-  out.tours = out.tours.filter(validTour);
-  out.profiles = out.profiles.filter(function (p) {
-    return p && typeof p.id === 'string' && typeof p.name === 'string' && BR.BASES[p.basis];
-  });
+  out.tours = out.tours.filter(validTour).map(repairTour);
+  out.profiles = out.profiles
+    .filter(function (p) {
+      return p && typeof p.id === 'string' && typeof p.name === 'string';
+    })
+    .map(function (p) {
+      /* Reparieren statt verwerfen: Ein Profil mit unbekanntem Basisprofil
+         wegzuwerfen hiesse, dem Nutzer stillschweigend seine Arbeit zu
+         löschen. Es bekommt das Standardprofil und behält seinen Namen. */
+      if (!BR.isKnownBase(p.basis)) p.basis = BR.FALLBACK_BASE;
+      if (!p.params || typeof p.params !== 'object') p.params = {};
+      return p;
+    });
   return out;
 }
 
@@ -157,13 +166,13 @@ function pval(profile, paramId) {
   return BR.baseDefault(profile.basis, paramId);
 }
 
+/* Geht über den abgesicherten Weg im Katalog: Ein unbekanntes Basisprofil
+   liefert die Parameter des Standardprofils, statt hier zu scheitern.
+   Vorher stand hier ein direkter Zugriff auf BR.BASES[basis].groups — und
+   ein einziger unbekannter Name brachte die ganze App zum Stillstand,
+   ohne eine Meldung zu hinterlassen. */
 function paramIds(basis) {
-  const b = BR.BASES[basis];
-  const out = [];
-  Object.keys(b.groups).forEach(function (g) {
-    b.groups[g].forEach(function (id) { out.push(id); });
-  });
-  return out;
+  return BR.baseParamIds(basis);
 }
 
 function deviations(profile) {
@@ -232,7 +241,11 @@ const state = {
   busy: false
 };
 
-const map = L.map('map', { zoomControl: false, tap: false }).setView([51.85, 10.30], 10);
+/* Kein `tap: false` mehr: Die Option gibt es seit Leaflet 1.9 nicht mehr,
+   und in älteren Fassungen war sie auf iOS eine bekannte Ursache dafür, dass
+   Antippen nicht ankam. Eine Altlast auf einem Gerät, das ich nicht testen
+   kann, ist die schlechteste Sorte. */
+const map = L.map('map', { zoomControl: false }).setView([51.85, 10.30], 10);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
@@ -1524,6 +1537,19 @@ function buildUser() {
 
 /* ==================================================== Touren */
 
+/* Eine Tour trägt ihr Basisprofil als Kopie mit. Ist der Name unbekannt —
+   aus altem Bestand oder einer fremden Sicherungsdatei —, wird die Tour
+   nicht verworfen, sondern auf das Standardprofil gesetzt. */
+function repairTour(t) {
+  if (!BR.isKnownBase(t.basis)) t.basis = BR.FALLBACK_BASE;
+  if (!t.params || typeof t.params !== 'object') t.params = {};
+  if (typeof t.profileName !== 'string' || !t.profileName) {
+    t.profileName = BR.base(t.basis).label;
+  }
+  if (!Array.isArray(t.nogos)) t.nogos = [];
+  return t;
+}
+
 function validTour(t) {
   return !!t && typeof t === 'object' && typeof t.id === 'string' &&
     typeof t.name === 'string' && Array.isArray(t.waypoints) &&
@@ -1768,6 +1794,23 @@ function renderBackup() {
   n1.innerHTML = 'Die Datei geht über das Teilen-Menü, zum Beispiel nach iCloud Drive. ' +
     '<b>Automatisch geht das nicht:</b> Safari darf auf iOS keine Dateien unbemerkt ' +
     'schreiben. Ein Tap ist immer nötig.';
+  if (lastFault) {
+    const f = document.createElement('div');
+    f.className = 'card';
+    f.innerHTML = '<h3>Zuletzt aufgetretener Fehler</h3>';
+    const pre = document.createElement('p');
+    pre.className = 'note';
+    pre.style.fontFamily = '"IBM Plex Mono", monospace';
+    pre.style.overflowWrap = 'anywhere';
+    pre.textContent = lastFault;
+    f.appendChild(pre);
+    const hint = document.createElement('p');
+    hint.className = 'note';
+    hint.textContent = 'Diesen Text weitergeben — er nennt Stelle und Ursache.';
+    f.appendChild(hint);
+    host.appendChild(f);
+  }
+
   const n2 = document.createElement('p');
   n2.className = 'note';
   n2.innerHTML = '<b>Wiederherstellen</b> heißt nur hier so — weil hier tatsächlich ' +
@@ -1936,26 +1979,64 @@ window.addEventListener('resize', function () {
   map.invalidateSize({ pan: false });
 });
 
+/* =================================================== Fehler sichtbar machen
+
+   Ohne das stirbt die App bei einem unerwarteten Fehler lautlos: Die Karte
+   steht, nichts reagiert, und die Ursache steht nur in einer Konsole, an die
+   auf einem iPhone niemand herankommt. Genau so ist am 18.08.2026 ein Fehler
+   tagelang unsichtbar geblieben. */
+
+let lastFault = null;
+
+function reportFault(what, err) {
+  const msg = (err && (err.message || err)) || 'unbekannt';
+  const where = err && err.stack
+    ? String(err.stack).split('\n')[1] || ''
+    : '';
+  lastFault = what + ': ' + msg + (where ? ' — ' + where.trim() : '');
+  try {
+    setStatus('Interner Fehler — ' + what + ': ' + msg +
+      '  (Zum Melden: Menü → Sicherung zeigt den vollständigen Text.)', 'error');
+  } catch (e) { /* wenn selbst das scheitert, bleibt nur die Konsole */ }
+  if (window.console && console.error) console.error(what, err);
+}
+
+window.addEventListener('error', function (e) {
+  reportFault('Skriptfehler', e.error || new Error(e.message));
+});
+window.addEventListener('unhandledrejection', function (e) {
+  reportFault('Unbehandelter Fehler', e.reason);
+});
+
 /* =============================================================== Start */
 
-store = loadStore();
-if (!byId(store.active)) store.active = 'stock:fastbike-lowtraffic';
+/* Jeder Aufbauschritt einzeln abgesichert. Fällt einer aus — etwa wegen
+   eines unerwarteten gespeicherten Werts —, bleibt der Rest der App
+   bedienbar, und der Fehler wird sichtbar statt verschluckt. */
+function step(name, fn) {
+  try { fn(); } catch (err) { reportFault('Aufbau „' + name + '“', err); }
+}
 
-$('#pillName').textContent = activeProfile().name;
-$('#sheetProfile').textContent = activeProfile().name;
-$('#miBackup').textContent = store.lastBackup
-  ? 'zuletzt vor ' + daysSince(store.lastBackup) + ' Tagen'
-  : 'noch nie gesichert';
+step('Speicher lesen', function () {
+  store = loadStore();
+  if (!byId(store.active)) store.active = 'stock:' + BR.FALLBACK_BASE;
+});
+if (!store) store = JSON.parse(JSON.stringify(DEFAULT_STORE));
 
-freezeOrder();
-renderProfiles();
-renderAllProfiles();
-buildUser();
-renderTours();
-renderBackup();
-setDetent(0);
+step('Kopfzeile', function () {
+  $('#pillName').textContent = activeProfile().name;
+  $('#sheetProfile').textContent = activeProfile().name;
+  $('#miBackup').textContent = store.lastBackup
+    ? 'zuletzt vor ' + daysSince(store.lastBackup) + ' Tagen'
+    : 'noch nie gesichert';
+});
+step('Profilliste', function () { freezeOrder(); renderProfiles(); renderAllProfiles(); });
+step('Fahrer & Rad', buildUser);
+step('Touren', renderTours);
+step('Sicherung', renderBackup);
+step('Blatt', function () { setDetent(0); });
 syncButtons();
-setStatus(defaultHint());
+if (!lastFault) setStatus(defaultHint());
 
 /* iOS räumt Web-Speicher unter Umständen weg. Das hier ist eine Bitte, kein
    Versprechen — die Sicherung als Datei bleibt der eigentliche Schutz. */

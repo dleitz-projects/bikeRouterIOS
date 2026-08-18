@@ -360,9 +360,24 @@ function paramDef(id) {
   return out;
 }
 
+const FALLBACK_BASE = 'fastbike-lowtraffic';
+
+/* Ein unbekanntes Basisprofil darf die App nicht umbringen. Es kann aus altem
+   Bestand kommen, aus einer Sicherungsdatei oder aus einer Fassung, die andere
+   Namen kannte. Statt an einer Stelle tief im Code zu scheitern, fällt alles
+   auf den Standard zurück — und `isKnownBase` erlaubt es der Oberfläche, das
+   sichtbar zu machen, statt es zu verschweigen. */
+function isKnownBase(baseId) {
+  return !!BASES[baseId];
+}
+
+function base(baseId) {
+  return BASES[baseId] || BASES[FALLBACK_BASE];
+}
+
 /* Der Standardwert eines Parameters in einem bestimmten Basisprofil. */
 function baseDefault(baseId, paramId) {
-  const b = BASES[baseId];
+  const b = base(baseId);
   if (b && Object.prototype.hasOwnProperty.call(b.defs, paramId)) return b.defs[paramId];
   const d = PARAM_DEFS[paramId];
   return d ? d.def : null;
@@ -371,10 +386,19 @@ function baseDefault(baseId, paramId) {
 /* Alle Parameter eines Basisprofils mit ihren Standardwerten. */
 function baseDefaults(baseId) {
   const out = {};
-  const b = BASES[baseId];
-  if (!b) return out;
+  const b = base(baseId);
   Object.keys(b.groups).forEach(function (g) {
     b.groups[g].forEach(function (id) { out[id] = baseDefault(baseId, id); });
+  });
+  return out;
+}
+
+/* Alle Parameter-Ids eines Basisprofils, in Gruppenreihenfolge. */
+function baseParamIds(baseId) {
+  const b = base(baseId);
+  const out = [];
+  Object.keys(b.groups).forEach(function (g) {
+    b.groups[g].forEach(function (id) { out.push(id); });
   });
   return out;
 }
@@ -384,7 +408,11 @@ window.BR = {
   USER_DEFS: USER_DEFS,
   SECTIONS: SECTIONS,
   BASES: BASES,
+  FALLBACK_BASE: FALLBACK_BASE,
+  isKnownBase: isKnownBase,
+  base: base,
   paramDef: paramDef,
   baseDefault: baseDefault,
-  baseDefaults: baseDefaults
+  baseDefaults: baseDefaults,
+  baseParamIds: baseParamIds
 };
