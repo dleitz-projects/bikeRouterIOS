@@ -4,12 +4,13 @@
 
    Beim Ausliefern einer geaenderten Version CACHE hochzaehlen. */
 
-const CACHE = 'bikerouterios-v2';
+const CACHE = 'bikerouterios-v3';
 
 const SHELL = [
   './',
   'index.html',
   'app.js',
+  'params.js',
   'style.css',
   'manifest.json',
   'icon-192.png',
@@ -20,6 +21,10 @@ const CDN = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
+
+// Schriften liegen bei Google Fonts. Faellt das aus, greift die
+// Rueckfallkette im CSS — die App bleibt lesbar.
+const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
@@ -40,7 +45,9 @@ self.addEventListener('activate', (e) => {
 });
 
 function cacheable(url) {
-  return url.origin === self.location.origin || url.hostname === 'unpkg.com';
+  return url.origin === self.location.origin
+    || url.hostname === 'unpkg.com'
+    || FONT_HOSTS.indexOf(url.hostname) !== -1;
 }
 
 self.addEventListener('fetch', (e) => {

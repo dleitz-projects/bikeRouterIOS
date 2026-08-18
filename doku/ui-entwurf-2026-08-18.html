@@ -1,0 +1,1986 @@
+<title>bikeRouteriOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#E9EBE3; --sheet:#F7F8F3; --raised:#FFFFFF;
+  --ink:#171A13; --muted:#6B7362; --faint:#98A08C;
+  --line:#D5D9CB; --line-soft:#E3E6DA;
+  --signal:#DC4514; --signal-ink:#FFFFFF;
+  --slate:#4B6E88; --ochre:#B0812B; --sienna:#96502E; --good:#3F7F58;
+  --map-bg:#E2E5D9; --map-forest:#CFDDC2; --map-water:#BFD3DC;
+  --map-road:#FBFBF7; --map-case:#C6CBBB; --map-main:#F0DCA6; --map-contour:#D3C39F;
+  --shadow:0 1px 2px rgba(20,26,16,.10), 0 8px 28px rgba(20,26,16,.14);
+  --shadow-sm:0 1px 2px rgba(20,26,16,.10), 0 2px 8px rgba(20,26,16,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D100B; --sheet:#181C15; --raised:#1F2419;
+    --ink:#E9EDE1; --muted:#8B937F; --faint:#69715E;
+    --line:#2B3125; --line-soft:#232819;
+    --signal:#FF6B33; --signal-ink:#1A0C05;
+    --slate:#7FA6C2; --ochre:#DBA748; --sienna:#C8744C; --good:#5FB07E;
+    --map-bg:#121610; --map-forest:#182213;
+    --map-water:#13242C; --map-road:#2E362B; --map-case:#1B2016;
+    --map-main:#453C22; --map-contour:#232A1D;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 34px rgba(0,0,0,.55);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 3px 10px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D100B; --sheet:#181C15; --raised:#1F2419;
+  --ink:#E9EDE1; --muted:#8B937F; --faint:#69715E;
+  --line:#2B3125; --line-soft:#232819;
+  --signal:#FF6B33; --signal-ink:#1A0C05;
+  --slate:#7FA6C2; --ochre:#DBA748; --sienna:#C8744C; --good:#5FB07E;
+  --map-bg:#121610; --map-forest:#182213;
+  --map-water:#13242C; --map-road:#2E362B; --map-case:#1B2016;
+  --map-main:#453C22; --map-contour:#232A1D;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 34px rgba(0,0,0,.55);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 3px 10px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:4px;}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,monospace;}
+.num{font-variant-numeric:tabular-nums;}
+
+/* ---------- Bühne ---------- */
+.stage{min-height:100dvh;display:flex;flex-direction:column;}
+.phone{position:relative;width:100%;height:100dvh;overflow:hidden;background:var(--map-bg);}
+.notes{display:none;}
+
+@media (min-width:900px){
+  .stage{flex-direction:row;align-items:flex-start;gap:44px;padding:44px;
+    max-width:1240px;margin:0 auto;min-height:100dvh;}
+  .phone{flex:0 0 auto;width:390px;height:800px;border-radius:42px;
+    box-shadow:var(--shadow);border:1px solid var(--line);position:sticky;top:44px;}
+  .notes{display:block;flex:1 1 auto;padding-top:8px;max-width:560px;}
+}
+
+/* ---------- App-Rahmen ---------- */
+.app{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+.chrome{position:absolute;top:0;left:0;right:0;z-index:20;
+  padding:calc(env(safe-area-inset-top) + 14px) 14px 0;
+  display:flex;gap:10px;align-items:flex-start;pointer-events:none;}
+.chrome > *{pointer-events:auto;}
+
+.pill{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 15px;
+  background:var(--raised);border-radius:22px;box-shadow:var(--shadow-sm);
+  border:1px solid var(--line-soft);max-width:100%;}
+.pill .dot{width:9px;height:9px;border-radius:50%;background:var(--signal);flex:0 0 auto;}
+.pill b{font-weight:600;font-size:15px;white-space:nowrap;}
+.pill .chev{color:var(--faint);font-size:11px;margin-left:1px;}
+.spacer{flex:1 1 auto;}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--raised);
+  box-shadow:var(--shadow-sm);border:1px solid var(--line-soft);
+  display:grid;place-items:center;flex:0 0 auto;}
+.iconbtn svg{width:19px;height:19px;stroke:var(--ink);fill:none;
+  stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+
+.rail{position:absolute;right:14px;z-index:20;display:flex;flex-direction:column;gap:9px;
+  transition:bottom .34s cubic-bezier(.32,.72,0,1);}
+.rail{transition:bottom .34s cubic-bezier(.32,.72,0,1),opacity .2s;}
+.rail.hidden{opacity:0;pointer-events:none;}
+.rail .iconbtn.on{background:var(--signal);border-color:var(--signal);}
+.rail .iconbtn.on svg{stroke:var(--signal-ink);}
+
+.badge{position:absolute;z-index:20;left:50%;transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top) + 70px);
+  background:var(--ink);color:var(--ground);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;padding:5px 11px;border-radius:20px;font-weight:600;opacity:.82;}
+
+/* ---------- Marker ---------- */
+.markers{position:absolute;inset:0;z-index:10;pointer-events:none;}
+.wp{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;
+  display:grid;place-items:center;}
+.wp i{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;
+  font-style:normal;font-size:12px;font-weight:600;font-family:"IBM Plex Mono",monospace;
+  color:#12160F;background:var(--signal);border:2.5px solid var(--raised);
+  box-shadow:0 2px 7px rgba(0,0,0,.34);}
+.wp.start i{background:#5FB07E;} .wp.end i{background:#E0574B;}
+
+/* ---------- Blatt ---------- */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;
+  background:var(--sheet);border-top:1px solid var(--line);
+  border-radius:20px 20px 0 0;box-shadow:0 -2px 26px rgba(0,0,0,.14);
+  display:flex;flex-direction:column;
+  height:172px;transition:height .34s cubic-bezier(.32,.72,0,1);}
+.sheet[data-detent="half"]{height:56%;}
+.sheet[data-detent="full"]{height:calc(100% - 92px);}
+@media (prefers-reduced-motion:reduce){
+  .sheet,.rail{transition:none;}
+}
+.grab{flex:0 0 auto;padding:9px 0 3px;display:grid;place-items:center;cursor:grab;}
+.grab span{width:38px;height:4.5px;border-radius:3px;background:var(--line);display:block;}
+.sheetscroll{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
+  padding:4px 17px calc(env(safe-area-inset-bottom) + 17px);
+  display:flex;flex-direction:column;gap:17px;}
+
+.readout{display:flex;align-items:baseline;gap:15px;flex-wrap:wrap;}
+.readout .big{font-size:31px;font-weight:600;letter-spacing:-.024em;line-height:1;}
+.readout .big small{font-size:15px;font-weight:500;color:var(--muted);margin-left:3px;letter-spacing:0;}
+.readout .sep{width:1px;height:24px;background:var(--line);}
+
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);font-weight:500;}
+
+.actions{display:grid;grid-template-columns:1fr auto auto;gap:9px;}
+.btn{min-height:47px;border-radius:13px;font-weight:600;font-size:15.5px;
+  display:grid;place-items:center;border:1px solid var(--line);background:var(--raised);
+  padding:0 17px;}
+.btn.primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal);}
+.btn.sq{width:47px;padding:0;}
+.btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;}
+.btn:active{filter:brightness(.94);}
+
+/* ---------- Analyse ---------- */
+.card{background:var(--raised);border:1px solid var(--line-soft);border-radius:15px;
+  padding:14px;display:flex;flex-direction:column;gap:11px;}
+.card h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.005em;}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.cardhead .v{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;}
+
+.chart{width:100%;height:104px;display:block;overflow:visible;}
+.axis{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:var(--faint);}
+
+.bar{display:flex;height:11px;border-radius:6px;overflow:hidden;gap:1.5px;background:var(--line-soft);}
+.bar i{display:block;height:100%;}
+.legend{display:flex;flex-direction:column;gap:7px;}
+.legend div{display:flex;align-items:center;gap:9px;font-size:12.5px;}
+.legend .swatch{width:9px;height:9px;border-radius:2.5px;flex:0 0 auto;}
+.legend .lbl{flex:1 1 auto;color:var(--muted);}
+.legend .pct{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-weight:500;font-size:12.5px;}
+
+.flag{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:12px;
+  background:color-mix(in srgb, var(--signal) 11%, transparent);
+  border:1px solid color-mix(in srgb, var(--signal) 26%, transparent);}
+.flag .k{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;
+  color:var(--signal);line-height:1.1;font-variant-numeric:tabular-nums;}
+.flag p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45;}
+.flag p b{color:var(--ink);font-weight:600;}
+
+/* ---------- Vollbild-Ebenen ---------- */
+.screen{position:absolute;inset:0;z-index:50;background:var(--sheet);
+  display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .36s cubic-bezier(.32,.72,0,1);
+  visibility:hidden;}
+.screen.open{transform:translateY(0);visibility:visible;}
+@media (prefers-reduced-motion:reduce){.screen{transition:none;}}
+.nav{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 11px) 13px 11px;
+  border-bottom:1px solid var(--line);background:var(--sheet);}
+.nav h2{margin:0;font-size:16.5px;font-weight:600;flex:1 1 auto;letter-spacing:-.01em;}
+.nav .txtbtn{font-size:15px;font-weight:600;color:var(--signal);padding:6px 4px;}
+.screenscroll{flex:1 1 auto;overflow-y:auto;
+  padding:17px 17px calc(env(safe-area-inset-bottom) + 24px);
+  display:flex;flex-direction:column;gap:13px;}
+
+.tabs{display:flex;flex-wrap:wrap;gap:5px;padding:10px 13px;
+  border-bottom:1px solid var(--line);background:var(--sheet);flex:0 0 auto;}
+.tab{padding:8px 12px;border-radius:9px;font-size:13px;font-weight:500;
+  white-space:nowrap;color:var(--muted);border:1px solid var(--line-soft);}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--ground);font-weight:600;}
+
+.group{display:flex;flex-direction:column;gap:2px;}
+.grouphead{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);font-weight:500;padding:5px 2px 9px;}
+
+.param{background:var(--raised);border:1px solid var(--line-soft);padding:14px;
+  display:flex;flex-direction:column;gap:9px;}
+.param:first-of-type{border-radius:14px 14px 0 0;}
+.param:last-of-type{border-radius:0 0 14px 14px;}
+.param + .param{border-top:0;}
+.param.only{border-radius:14px;}
+.ptop{display:flex;align-items:flex-start;gap:12px;}
+.pname{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;}
+.pname b{font-size:14.5px;font-weight:600;letter-spacing:-.005em;}
+.pname .key{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);}
+.pdesc{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted);}
+.pval{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600;
+  color:var(--signal);font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;
+  background:transparent;margin:0;}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:var(--line);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:25px;height:25px;
+  border-radius:50%;background:var(--raised);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);margin-top:-10px;}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:var(--line);}
+input[type=range]::-moz-range-thumb{width:23px;height:23px;border-radius:50%;
+  background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow-sm);}
+.scale{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+  font-size:10px;color:var(--faint);margin-top:-4px;}
+
+/* An die Rolle gebunden, nicht an die Klasse allein: Ein blosses .sw
+   (etwa ein Farbkaestchen in einer Legende) darf sich hier nichts abholen.
+   Genau das war am 18.08.2026 der Fall — der weisse Knopf des Schalters
+   erschien als Kreis in jeder Legendenzeile. */
+.sw[role="switch"]{width:50px;height:30px;border-radius:16px;background:var(--line);
+  position:relative;flex:0 0 auto;transition:background .2s;}
+.sw[role="switch"]::after{content:"";position:absolute;top:2.5px;left:2.5px;
+  width:25px;height:25px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s;}
+.sw[role="switch"][aria-checked="true"]{background:var(--good);}
+.sw[role="switch"][aria-checked="true"]::after{transform:translateX(20px);}
+
+.note{font-size:12px;line-height:1.55;color:var(--muted);padding:0 3px;}
+.note b{color:var(--ink);font-weight:600;}
+.note code{font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  background:var(--line-soft);padding:1.5px 5px;border-radius:4px;}
+
+.danger{background:color-mix(in srgb, var(--sienna) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--sienna) 32%, transparent);
+  border-radius:13px;padding:13px;display:flex;flex-direction:column;gap:8px;}
+.danger b{font-size:13.5px;}
+.danger p{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted);}
+
+.code{background:var(--ground);border:1px solid var(--line);border-radius:12px;
+  padding:13px;overflow-x:auto;}
+.code pre{margin:0;font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.75;
+  white-space:pre;}
+.c-key{color:var(--slate);} .c-tag{color:var(--sienna);}
+.c-num{color:var(--signal);} .c-rem{color:var(--faint);font-style:italic;}
+
+.toast{position:absolute;left:50%;transform:translateX(-50%) translateY(9px);
+  z-index:40;background:var(--ink);color:var(--ground);font-size:12.5px;font-weight:500;
+  padding:9px 15px;border-radius:20px;box-shadow:var(--shadow);white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:88%;}
+.toast.show{opacity:.95;transform:translateX(-50%) translateY(0);}
+@media (prefers-reduced-motion:reduce){.toast{transition:none;}}
+
+.chip{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.04em;
+  padding:3.5px 8px;border-radius:20px;border:1px solid var(--line);
+  color:var(--muted);white-space:nowrap;}
+.chip.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 42%,transparent);
+  background:color-mix(in srgb,var(--good) 11%,transparent);}
+.chip.warn{color:var(--ochre);border-color:color-mix(in srgb,var(--ochre) 42%,transparent);
+  background:color-mix(in srgb,var(--ochre) 11%,transparent);}
+.kitmeta{display:flex;gap:6px;flex-wrap:wrap;}
+.kit{background:var(--raised);border:1px solid var(--line-soft);border-radius:14px;
+  padding:14px;display:flex;flex-direction:column;gap:10px;}
+.kit[data-on="false"]{opacity:.62;}
+.kit[data-on="false"] .kitrange{display:none;}
+
+.tour{background:var(--raised);border:1px solid var(--line-soft);border-radius:14px;
+  padding:14px;display:flex;flex-direction:column;gap:9px;}
+.tour .t1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.tour b{font-size:14.5px;font-weight:600;min-width:0;overflow-wrap:anywhere;}
+.tour .t1 .meta{flex:0 0 auto;}
+.tour .meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;}
+/* Bleibt zwingend einzeilig. Die Angaben sind Beiwerk und duerfen die
+   Karteikarte nicht in die Hoehe treiben. Ueberlanges wird abgeschnitten,
+   und die Zahl der genannten Abweichungen ist ohnehin gedeckelt. */
+.tour .tprof{font-size:11px;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+/* Drei gleich breite Textknoepfe. Das ging erst, seit die Hauptaktion
+   „Öffnen" heisst — „Wiederherstellen" allein brauchte mehr als ein Drittel
+   der Breite und trieb die Reihe aus dem Bild.
+   Bewusst Text statt Symbolen: Bei einer loeschenden Aktion ist Eindeutigkeit
+   mehr wert als Zeitgeist, und ein Stift fuer „Umbenennen" muss man raten. */
+.tour .row{display:flex;gap:7px;}
+.tour .row .btn{flex:1;min-width:0;min-height:38px;border-radius:10px;
+  font-size:13.5px;padding:0 6px;}
+
+/* ---------- Sprungnavigation ---------- */
+.jump{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:4px;
+  margin:0 -17px;padding:7px 17px 8px;background:var(--sheet);
+  border-bottom:1px solid var(--line);}
+.jump button{padding:4px 9px;border-radius:7px;font-size:11.5px;font-weight:500;
+  color:var(--muted);border:1px solid var(--line-soft);white-space:nowrap;
+  line-height:1.5;}
+.jump button.on{background:var(--ink);color:var(--ground);font-weight:600;
+  border-color:var(--ink);}
+
+.sect{display:flex;flex-direction:column;gap:2px;scroll-margin-top:58px;}
+.secthead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:14px 2px 9px;}
+.secthead h3{margin:0;font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-family:"IBM Plex Mono",monospace;font-weight:500;}
+.secthead .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);}
+
+select{-webkit-appearance:none;appearance:none;width:100%;min-height:42px;
+  font:inherit;font-size:14.5px;color:var(--ink);background:var(--ground);
+  border:1px solid var(--line);border-radius:10px;padding:0 34px 0 12px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='2'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:11px;}
+
+/* ---------- Menü ---------- */
+.menu{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--sheet);
+  border-radius:20px 20px 0 0;border-top:1px solid var(--line);
+  box-shadow:0 -2px 30px rgba(0,0,0,.28);
+  padding:9px 13px calc(env(safe-area-inset-bottom) + 13px);
+  transform:translateY(101%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  visibility:hidden;}
+.menu.open{transform:translateY(0);visibility:visible;}
+.scrim{position:absolute;inset:0;z-index:55;background:rgba(0,0,0,.35);
+  opacity:0;visibility:hidden;transition:opacity .3s;}
+.scrim.open{opacity:1;visibility:visible;}
+@media (prefers-reduced-motion:reduce){.menu,.scrim{transition:none;}}
+.menu .grab{padding:0 0 11px;}
+.menuitem{display:flex;align-items:center;gap:13px;width:100%;padding:14px 5px;
+  border-bottom:1px solid var(--line-soft);text-align:left;}
+.menuitem:last-child{border-bottom:0;}
+.menuitem svg{width:21px;height:21px;stroke:var(--muted);fill:none;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
+.menuitem .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;}
+.menuitem b{font-size:15px;font-weight:600;}
+.menuitem span{font-size:12.5px;color:var(--muted);}
+
+.editnote{margin:0;padding:10px 17px;font-size:12.5px;line-height:1.45;
+  color:var(--muted);background:color-mix(in srgb, var(--signal) 9%, transparent);
+  border-bottom:1px solid color-mix(in srgb, var(--signal) 24%, transparent);}
+.editnote b{color:var(--ink);font-weight:600;}
+
+/* ---------- Profilauswahl ---------- */
+.menuhead{display:flex;align-items:baseline;justify-content:space-between;
+  padding:2px 5px 10px;gap:10px;}
+.menuhead h3{margin:0;font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-family:"IBM Plex Mono",monospace;font-weight:500;}
+.menuhead .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);}
+
+.prow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-soft);}
+.prow:last-of-type{border-bottom:0;}
+.psel{flex:1 1 auto;display:flex;align-items:center;gap:12px;padding:13px 4px;
+  text-align:left;min-width:0;}
+.pdot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);
+  flex:0 0 auto;position:relative;}
+.pdot.on{border-color:var(--signal);}
+.pdot.on::after{content:"";position:absolute;inset:3px;border-radius:50%;
+  background:var(--signal);}
+.psel .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.psel b{font-size:15px;font-weight:600;}
+.psel span.sub{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pedit{padding:9px 13px;border-radius:10px;border:1px solid var(--signal);
+  color:var(--signal);font-size:13px;font-weight:600;flex:0 0 auto;}
+.pmore{display:flex;align-items:center;justify-content:space-between;width:100%;
+  padding:14px 5px 4px;border-top:1px solid var(--line);margin-top:4px;
+  font-size:14.5px;font-weight:600;}
+.pmore span{color:var(--faint);font-size:13px;font-weight:400;}
+
+input[type=text]{width:100%;min-height:46px;font:inherit;font-size:16px;
+  color:var(--ink);background:var(--ground);border:1px solid var(--line);
+  border-radius:11px;padding:0 13px;}
+.pwhen{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
+  flex:0 0 auto;white-space:nowrap;padding-right:2px;}
+
+/* ---------- Sperrbereich ---------- */
+.nogo{position:absolute;border-radius:50%;border:2px dashed var(--sienna);
+  background:color-mix(in srgb, var(--sienna) 17%, transparent);
+  transform:translate(-50%,-50%);pointer-events:none;}
+/* Kurzes Aufziehen, damit man sieht, wo etwas entstanden ist. Bewusst nur
+   beim Entstehen und Aendern — keine dauerhafte Animation auf einer Karte,
+   die geschoben und gezoomt wird. */
+@keyframes nogo-in{from{transform:translate(-50%,-50%) scale(.55);opacity:0;}}
+.nogo.fresh{animation:nogo-in .18s cubic-bezier(.32,.72,0,1);}
+@media (prefers-reduced-motion:reduce){.nogo.fresh{animation:none;}}
+.nogo.editing{border-style:dotted;opacity:.55;}
+
+/* Der Mittelpunkt bleibt sichtbar und ist das Ziel zum Antippen.
+   Die Kreisflaeche selbst darf keine Taps schlucken — sonst koennte man
+   unter einem grossen Sperrbereich keinen Wegpunkt mehr setzen. */
+.pin{position:absolute;width:34px;height:34px;border-radius:50%;
+  transform:translate(-50%,-50%);display:grid;place-items:center;
+  pointer-events:auto;background:none;border:0;padding:0;}
+.pin::before{content:"";width:12px;height:12px;border-radius:50%;
+  background:var(--sienna);border:2.5px solid var(--raised);
+  box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.pin.ghost{pointer-events:none;}
+.pin.ghost::before{opacity:.6;}
+
+.wp{pointer-events:auto;background:none;border:0;padding:0;}
+
+.pop{position:absolute;z-index:14;transform:translate(-50%,-100%);
+  margin-top:-15px;background:var(--raised);border:1px solid var(--line);
+  border-radius:10px;box-shadow:var(--shadow);padding:4px;
+  display:flex;flex-direction:column;min-width:0;pointer-events:auto;
+  white-space:nowrap;}
+.pop .ph{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--faint);padding:4px 8px 5px;}
+.pop button{min-height:30px;border-radius:6px;border:0;background:none;
+  font-size:12.5px;font-weight:500;padding:0 8px;text-align:left;color:var(--ink);}
+.pop button + button{border-top:1px solid var(--line-soft);border-radius:0;}
+.pop button:active{background:var(--line-soft);}
+.pop button.del{color:var(--sienna);}
+/* kleiner Zeiger zum Element hinunter */
+.pop::after{content:"";position:absolute;left:50%;bottom:-5px;width:9px;height:9px;
+  margin-left:-4.5px;background:var(--raised);border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);transform:rotate(45deg);}
+
+/* ---------- Freitext ---------- */
+textarea{width:100%;min-height:190px;font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;line-height:1.7;color:var(--ink);background:var(--ground);
+  border:1px solid var(--line);border-radius:12px;padding:12px;resize:vertical;
+  white-space:pre;overflow-wrap:normal;overflow-x:auto;}
+
+/* ---------- Notizen (Desktop) ---------- */
+.notes h1{font-size:31px;font-weight:600;letter-spacing:-.028em;margin:0 0 5px;
+  text-wrap:balance;}
+.notes .sub{color:var(--muted);font-size:15px;margin:0 0 26px;line-height:1.55;max-width:52ch;}
+.notes section{padding:19px 0;border-top:1px solid var(--line);}
+.notes h2{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+  margin:0 0 11px;font-family:"IBM Plex Mono",monospace;font-weight:500;}
+.notes p{margin:0 0 11px;font-size:14.5px;line-height:1.65;color:var(--muted);max-width:60ch;}
+.notes p b,.notes li b{color:var(--ink);font-weight:600;}
+.notes ul{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:9px;}
+.notes li{font-size:14.5px;line-height:1.6;color:var(--muted);max-width:58ch;}
+.notes code{font-family:"IBM Plex Mono",monospace;font-size:13px;
+  background:var(--line-soft);padding:2px 5px;border-radius:4px;color:var(--ink);}
+.themebtn{margin-top:22px;border:1px solid var(--line);border-radius:10px;
+  padding:9px 15px;font-size:13.5px;font-weight:500;background:var(--raised);}
+</style>
+
+<div class="stage">
+<div class="phone">
+  <div class="app">
+    <canvas id="map"></canvas>
+    <div class="markers" id="markers"></div>
+
+    <div class="chrome">
+      <button class="pill" id="pillBtn">
+        <span class="dot"></span><b id="pillName">Harz ruhig</b><span class="chev">▾</span>
+      </button>
+      <span class="spacer"></span>
+      <button class="iconbtn" id="menuBtn" aria-label="Menü">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+
+    <div class="badge">Entwurf · keine echte Funktion</div>
+
+    <div class="rail" id="rail">
+      <button class="iconbtn on" id="mPoint" aria-pressed="true" aria-label="Wegpunkt-Modus">
+        <svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      </button>
+      <button class="iconbtn" id="mNogo" aria-pressed="false" aria-label="Sperrbereich-Modus">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6 18 18 6"/></svg>
+      </button>
+      <button class="iconbtn" id="mUndo" aria-label="Letzte Aktion zurücknehmen">
+        <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+      </button>
+      <button class="iconbtn" id="mLoc" aria-label="Auf meinen Standort zentrieren">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><circle cx="12" cy="12" r="7.6"/><path d="M12 1.6v2.8M12 19.6v2.8M1.6 12h2.8M19.6 12h2.8"/></svg>
+      </button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <section class="sheet" data-detent="peek" id="sheet">
+      <div class="grab" id="grab" role="button" tabindex="0" aria-label="Blatt öffnen"><span></span></div>
+      <div class="sheetscroll">
+        <div>
+          <div class="eyebrow" style="margin-bottom:7px" id="sheetProfile">Berechnet · Harz ruhig</div>
+          <div class="readout">
+            <div class="big num">43,5<small>km</small></div><div class="sep"></div>
+            <div class="big num">965<small>hm</small></div><div class="sep"></div>
+            <div class="big num">3:36<small>h</small></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="calcBtn">Route berechnen</button>
+          <button class="btn sq" id="shareBtn" aria-label="Als GPX teilen">
+            <svg viewBox="0 0 24 24"><path d="M12 15V3M8.5 6.5 12 3l3.5 3.5"/><path d="M5 13v6a1.6 1.6 0 0 0 1.6 1.6h10.8A1.6 1.6 0 0 0 19 19v-6"/></svg>
+          </button>
+          <button class="btn sq" id="saveBtn" aria-label="Tour speichern">
+            <svg viewBox="0 0 24 24"><path d="M5 5.8A1.8 1.8 0 0 1 6.8 4h8.4L19 7.8v10.4A1.8 1.8 0 0 1 17.2 20H6.8A1.8 1.8 0 0 1 5 18.2z"/><path d="M8.4 4v5h6V4M8.4 20v-5.4h7.2V20"/></svg>
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h3>Höhenprofil</h3><span class="v">238 – 881 m</span></div>
+          <svg class="chart" id="elev" viewBox="0 0 340 104" preserveAspectRatio="none" role="img"
+               aria-label="Höhenprofil, 238 bis 881 Meter über 43,5 Kilometer"></svg>
+          <div style="display:flex;justify-content:space-between" class="eyebrow">
+            <span>0 km</span><span>21,8 km</span><span>43,5 km</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h3>Bodenbeschaffenheit</h3><span class="v">97,2 % befestigt</span></div>
+          <div class="bar" id="barSurface"></div>
+          <div class="legend" id="legSurface"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h3>Straßenarten</h3><span class="v">42,5 % Hauptstraße</span></div>
+          <div class="bar" id="barRoad"></div>
+          <div class="legend" id="legRoad"></div>
+        </div>
+
+        <div class="flag">
+          <span class="k num">25,5&thinsp;%</span>
+          <p>der Strecke liegt auf Straßen mit <b>Tempo 70 oder mehr</b>.
+             Der Baustein „Tempolimit meiden“ drückt das auf etwa 9 % — bei rund 10 % Mehrweg.</p>
+        </div>
+
+        <p class="note" style="padding-bottom:4px">
+          Kartendaten © OpenStreetMap-Mitwirkende · Routing über BRouter
+        </p>
+      </div>
+    </section>
+
+    <!-- Routing-Profil: alle Parameter -->
+    <section class="screen" id="editor" aria-label="Routing-Profil">
+      <div class="nav">
+        <button class="txtbtn" id="editorDone">Fertig</button>
+        <h2 id="editorTitle">Harz ruhig</h2>
+        <button class="txtbtn" id="toKit">Baukasten</button>
+      </div>
+      <p class="editnote" id="editorNote" style="display:none"></p>
+      <div class="screenscroll" id="editorBody" style="padding-top:0"></div>
+    </section>
+
+    <!-- Baukasten -->
+    <section class="screen" id="kit" aria-label="Baukasten">
+      <div class="nav">
+        <button class="txtbtn" data-close="kit">Zurück</button>
+        <h2>Baukasten</h2>
+        <button class="txtbtn" id="kitSave">Sichern</button>
+      </div>
+      <div class="screenscroll">
+        <div class="danger">
+          <b>Werkstatt — hier kommen neue Regeln ins Profil</b>
+          <p>Bausteine erweitern das Profil um Regeln, die BRouter von Haus aus nicht
+             hat. Ein Profil mit Bausteinen wird zum Berechnen einmalig zum
+             Routing-Server übertragen und lässt sich danach nicht mehr allein über
+             die Regler bedienen.</p>
+        </div>
+        <div class="eyebrow" style="padding:3px 2px">Bausteine</div>
+        <div id="kitBody" style="display:flex;flex-direction:column;gap:10px"></div>
+
+        <div class="eyebrow" style="padding:11px 2px 3px">Erzeugter Profiltext</div>
+        <div class="code"><pre id="kitCode"></pre></div>
+
+        <div class="eyebrow" style="padding:11px 2px 3px">Freier Profiltext — zur Diskussion</div>
+        <div class="danger">
+          <b>Noch unentschieden, ob das bleibt</b>
+          <p>Hier ließe sich das Profil direkt schreiben. Der Haken: Einen Syntaxfehler
+             quittiert der Server mit <code>HTTP 500</code> und <b>leerem Body</b>. Es
+             gibt keine Zeilennummer, keinen Hinweis, nichts — nur „geht nicht“. Ein
+             Tippfehler in einem Parameternamen fällt sogar völlig lautlos aus:
+             Der Server ignoriert unbekannte Namen und rechnet einfach ohne sie.</p>
+        </div>
+        <textarea id="freeText" spellcheck="false" aria-label="Freier Profiltext"></textarea>
+        <div class="actions" style="grid-template-columns:1fr 1fr">
+          <button class="btn" id="freeCheck">Prüfen</button>
+          <button class="btn" id="freeReset">Zurücksetzen</button>
+        </div>
+        <p class="note" id="freeMsg">Die Prüfung hier ist nur eine grobe Klammer- und
+           Schlüsselwortkontrolle im Browser. <b>Ob BRouter den Text akzeptiert, weiß
+           erst der Server.</b></p>
+      </div>
+    </section>
+
+    <!-- Nutzerprofil -->
+    <section class="screen" id="user" aria-label="Fahrer und Rad">
+      <div class="nav">
+        <button class="txtbtn" data-close="user">Fertig</button>
+        <h2>Fahrer &amp; Rad</h2><span style="width:52px"></span>
+      </div>
+      <div class="screenscroll" id="userBody"></div>
+    </section>
+
+    <!-- Touren -->
+    <section class="screen" id="archive" aria-label="Touren">
+      <div class="nav">
+        <button class="txtbtn" data-close="archive">Fertig</button>
+        <h2>Touren</h2><span style="width:52px"></span>
+      </div>
+      <div class="screenscroll" id="archiveBody"></div>
+    </section>
+
+    <!-- Sicherung -->
+    <section class="screen" id="backup" aria-label="Sicherung">
+      <div class="nav">
+        <button class="txtbtn" data-close="backup">Fertig</button>
+        <h2>Sicherung</h2><span style="width:52px"></span>
+      </div>
+      <div class="screenscroll">
+        <div class="flag">
+          <span class="k">!</span>
+          <p><b>Letzte Sicherung vor 23 Tagen.</b> iOS darf den Speicher der App
+             jederzeit räumen. Danach wären Touren, Profile und Einstellungen weg.</p>
+        </div>
+        <div class="card">
+          <h3>Was in die Datei kommt</h3>
+          <div class="legend">
+            <div><span class="swatch" style="background:var(--slate)"></span>
+              <span class="lbl">Touren</span><span class="pct">3</span></div>
+            <div><span class="swatch" style="background:var(--ochre)"></span>
+              <span class="lbl">Routing-Profile</span><span class="pct">2</span></div>
+            <div><span class="swatch" style="background:var(--good)"></span>
+              <span class="lbl">Fahrer &amp; Rad</span><span class="pct">1</span></div>
+            <div><span class="swatch" style="background:var(--sienna)"></span>
+              <span class="lbl">Bausteine</span><span class="pct">1</span></div>
+          </div>
+        </div>
+        <div class="actions" style="grid-template-columns:1fr 1fr">
+          <button class="btn primary" id="doExport">Sicherung teilen</button>
+          <button class="btn">Wiederherstellen</button>
+        </div>
+        <p class="note">Die Datei geht über das iOS-Teilen-Menü, zum Beispiel nach
+           iCloud Drive. <b>Automatisch geht das nicht:</b> Safari darf auf iOS keine
+           Dateien unbemerkt schreiben. Ein Tap ist immer nötig.</p>
+        <p class="note"><b>Wiederherstellen</b> heißt nur hier so — weil hier
+           tatsächlich etwas verloren war. Eine gespeicherte Tour war nie weg;
+           die wird unter <b>Touren</b> geöffnet.</p>
+      </div>
+    </section>
+
+    <!-- Profilauswahl -->
+    <div class="menu" id="profiles">
+      <div class="grab"><span></span></div>
+      <div class="menuhead"><h3>Routing-Profil</h3><span class="cnt" id="pCount"></span></div>
+      <div id="pList"></div>
+      <button class="pmore" data-go="allprofiles">
+        Mehr Profile <span id="pRest"></span>
+      </button>
+      <p class="note" id="pTip" style="padding:11px 5px 3px"></p>
+      <button class="btn" id="pDone" style="width:100%;margin-top:4px">Fertig</button>
+    </div>
+
+    <!-- Alle Profile -->
+    <section class="screen" id="allprofiles" aria-label="Alle Profile">
+      <div class="nav">
+        <button class="txtbtn" data-close="allprofiles">Fertig</button>
+        <h2>Profile</h2>
+        <button class="txtbtn" id="newProfile">Neu</button>
+      </div>
+      <div class="screenscroll" id="allBody"></div>
+    </section>
+
+    <!-- Profil sichern -->
+    <div class="menu" id="savedlg">
+      <div class="grab"><span></span></div>
+      <div class="menuhead"><h3>Profil sichern</h3></div>
+      <p class="note" id="saveHint" style="padding-bottom:11px"></p>
+      <input type="text" id="saveName" maxlength="40" autocomplete="off"
+             aria-label="Name des Profils">
+      <div class="actions" style="grid-template-columns:1fr 1fr;margin-top:11px">
+        <button class="btn" id="saveCancel">Änderungen verwerfen</button>
+        <button class="btn primary" id="saveNew">Als neues sichern</button>
+      </div>
+      <button class="btn" id="saveOver" style="margin-top:8px;width:100%">
+        Bestehendes überschreiben</button>
+    </div>
+
+    <!-- Menü -->
+    <div class="scrim" id="scrim"></div>
+    <div class="menu" id="menu">
+      <div class="grab"><span></span></div>
+      <button class="menuitem" data-go="archive">
+        <svg viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/><circle cx="8" cy="6.5" r="1.6"/><circle cx="14" cy="12" r="1.6"/><circle cx="10" cy="17.5" r="1.6"/></svg>
+        <span class="mt"><b>Touren</b><span>3 gespeichert · laden, umbenennen, löschen</span></span>
+      </button>
+      <button class="menuitem" data-go="user">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>
+        <span class="mt"><b>Fahrer &amp; Rad</b><span>Gewicht, Leistung — nur für die Zeitschätzung</span></span>
+      </button>
+      <button class="menuitem" data-go="backup">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12M8 11.5l4 4 4-4"/><path d="M4 17v2.4A1.6 1.6 0 0 0 5.6 21h12.8a1.6 1.6 0 0 0 1.6-1.6V17"/></svg>
+        <span class="mt"><b>Sicherung</b><span>Alles in eine Datei — vor 23 Tagen zuletzt</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<aside class="notes">
+  <h1>Entwurf für das neue bikeRouteriOS</h1>
+  <p class="sub">Zweiter Stand. Klickbar, ohne echte Logik. Alle Zahlen sind echte
+     Messwerte einer Harz-Runde — 43,5 km, 965 Höhenmeter, 86,6 % Asphalt.</p>
+
+  <section>
+    <h2>Elemente direkt anfassen</h2>
+    <p><b>Rückgängig kann nur in umgekehrter Reihenfolge löschen.</b> Wer sechs
+       Wegpunkte gesetzt hat und den zweiten loswerden will, müsste vier gute
+       mit zerstören. Deshalb ist jedes gesetzte Element antippbar und öffnet
+       ein kleines Menü direkt am Objekt.</p>
+    <p>Beim Sperrbereich ist der <b>Mittelpunkt</b> das Ziel, nicht die Fläche.
+       Wäre die Fläche antippbar, schluckte ein großer Kreis jeden Tap auf die
+       Karte darunter — man könnte dort keinen Wegpunkt mehr setzen. Der Rand
+       wiederum ist als dünne Linie kein Touch-Ziel.</p>
+    <p>Das Menü des Sperrbereichs enthält <b>Radius ändern</b>: Der Mittelpunkt
+       bleibt, nur der Rand wird neu angetippt. Damit braucht es keine eigene
+       Bedienung fürs Verändern.</p>
+    <p>Vorhandene Elemente <b>gewinnen immer</b> gegen den aktiven Modus. Sonst
+       legte man versehentlich einen Kreismittelpunkt auf einen Wegpunkt und käme
+       an keinen von beiden mehr heran.</p>
+  </section>
+
+  <section>
+    <h2>Die drei Ecken</h2>
+    <p>Ohne dass es geplant war, hat sich eine Regel ergeben, die jetzt gilt:</p>
+    <ul>
+      <li><b>Oben links — das Profil.</b> Welches gerade rechnet, Wechseln, Bearbeiten.</li>
+      <li><b>Oben rechts — der Nutzer.</b> Touren, Fahrer &amp; Rad, Sicherung.
+          Alles, was dir gehört und über Routen hinweg gleich bleibt.</li>
+      <li><b>Unten — die Route.</b> Kennzahlen, Berechnen, Teilen, Analyse.
+          Alles, was nur für die eine Strecke gilt.</li>
+    </ul>
+    <p>Neue Funktionen gehören künftig in eine dieser drei Ecken. Passt etwas in
+       keine, ist meist die Funktion falsch geschnitten, nicht das Layout.</p>
+  </section>
+
+  <section>
+    <h2>Profilauswahl</h2>
+    <p>Ein Tap auf die Pille öffnet nicht mehr direkt den Editor, sondern die
+       <b>Auswahl</b>: fünf Profile, dann <b>Mehr Profile</b> mit der vollständigen
+       Liste, getrennt nach eigenen und mitgelieferten.</p>
+    <p><b>Auswählen schließt das Blatt nicht.</b> Profile werden verglichen, nicht
+       einmalig gesetzt — wer jedes Mal neu aufziehen muss, um das nächste
+       anzusehen, gibt nach dem zweiten Versuch auf. Dass etwas passiert ist,
+       sieht man trotzdem sofort: Die Pille dahinter ändert sich.</p>
+    <p><b>Jede Zeile hat einen Bearbeiten-Knopf</b>, nicht nur die aktive.
+       Einsehen und Bearbeiten sind zu zentral, um hinter drei Taps zu liegen.
+       Bearbeiten <b>aktiviert nicht</b> — Ansehen ist noch keine Entscheidung.
+       Bei einem fremden Profil heißt der Knopf oben rechts deshalb
+       <b>Verwenden</b> statt <b>Fertig</b>, und ein Band oben sagt, welches
+       gerade wirklich rechnet.</p>
+    <p><b>Die Reihenfolge steht still, solange das Blatt offen ist.</b> Sie wird
+       beim Öffnen einmal festgelegt. Sortierte sie bei jedem Antippen neu,
+       tauschten die Zeilen unter dem Finger die Plätze — man verliert sofort die
+       Orientierung. Neu sortiert wird erst beim nächsten Öffnen.</p>
+    <p>Wählst du in der Vollliste aus, springt sie eine Ebene zurück — das Blatt
+       darunter bleibt stehen und zeigt die neue Auswahl an. Steht das gewählte
+       Profil nicht unter den fünf, <b>wächst die Liste auf sechs</b>, statt
+       jemanden hinauszudrängen. Sonst zeigte das Blatt eine Auswahl, die dort
+       gar nicht sichtbar ist.</p>
+    <p>Jede Zeile sagt, woran man ist: eigenes oder mitgeliefert, welches
+       Basisprofil dahintersteht, und ob Bausteine im Spiel sind — denn nur die
+       kosten eine zusätzliche Übertragung. Rechts steht, wie oft und wie zuletzt
+       benutzt.</p>
+    <p><b>Die Reihenfolge pflegt sich selbst:</b> aktives Profil zuoberst, danach
+       nach letzter Benutzung, nie benutzte zuletzt. Wer viel mit eigenen Profilen
+       arbeitet, hat sie dadurch automatisch oben — ohne Favoriten pflegen zu
+       müssen. Wähle im Entwurf ein Profil aus der Vollliste, dann rutscht es beim
+       nächsten Öffnen in die Kurzauswahl.</p>
+  </section>
+
+  <section>
+    <h2>Was eine Tour über sich verrät</h2>
+    <p>Vorschlag, sichtbar unter Menü → Touren: Der <b>Name</b> gehört dir und
+       sagt, wo es langging. Die Kennzeile darunter entsteht automatisch und
+       nennt nicht nur den Profilnamen, sondern auch das Basisprofil und die
+       stärksten Abweichungen — sonst weiß man in einem halben Jahr nicht mehr,
+       warum die Tour so verlief.</p>
+    <p><b>Jede Tour speichert eine Kopie der damals verwendeten Werte</b>, keinen
+       Verweis aufs Profil. Sonst wäre eine alte Tour rückwirkend falsch
+       beschriftet, sobald sich das Profil ändert. Bei „Goslar → Bad Harzburg“
+       ist der Fall durchgespielt.</p>
+    <p>Offen bleibt, wie ein Name automatisch entstehen könnte: Ortsnamen
+       bräuchten einen zweiten externen Dienst — eine Architekturentscheidung,
+       die noch aussteht.</p>
+  </section>
+
+  <section>
+    <h2>Ändern heißt benennen</h2>
+    <p>Sobald du im Editor etwas verstellst, fragt <b>Fertig</b> nach, was damit
+       geschehen soll. Bei einem mitgelieferten Profil gibt es nur einen Weg:
+       eine eigene Kopie unter neuem Namen — das Original bleibt unangetastet.
+       Bei einem eigenen Profil hast du die Wahl zwischen Überschreiben und
+       Kopie.</p>
+    <p>Der neue Name erscheint sofort in der Pille, im Blatt und in der
+       Profilliste. Probier es: Profil bearbeiten, einen Regler bewegen,
+       <b>Fertig</b> antippen.</p>
+  </section>
+
+  <section>
+    <h2>Weiteres in diesem Stand</h2>
+    <ul>
+      <li><b>Alle 21 Profilparameter</b> sind umgesetzt, in sechs Abschnitten mit
+          Sprungnavigation oben. So lässt sich der echte Platzbedarf beurteilen.</li>
+      <li><b>Fahrer &amp; Rad ist ausgezogen</b> — es hängt jetzt am Nutzer, nicht am
+          Routing-Profil, und liegt im Menü.</li>
+      <li><b>Sperrbereich mit zwei Taps:</b> erster Tap Mittelpunkt, zweiter Tap Rand.
+          Die Karte reagiert wirklich — Modus wählen und antippen.</li>
+      <li><b>Jedes gesetzte Element ist antippbar</b> und öffnet ein kleines Menü:
+          Wegpunkte zum Löschen, Sperrbereiche zum Löschen und Radius ändern.</li>
+      <li><b>Speichern und Sichern sind entflochten</b> und heißen nicht mehr
+          fast gleich.</li>
+      <li><b>Freier Profiltext</b> ist im Baukasten unten ergänzt, zur Entscheidung.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Warum Fahrer &amp; Rad woanders hingehört</h2>
+    <p>Technisch sind <code>totalMass</code>, <code>bikerPower</code> und
+       <code>maxSpeed</code> Parameter derselben Profildatei. Fachlich sind sie etwas
+       anderes: Sie beschreiben <b>dich</b>, nicht die Art der Route. Wer sich ein
+       Profil „Harz ruhig“ und eines „schnell ans Ziel“ anlegt, will sein Gewicht
+       nicht zweimal pflegen.</p>
+    <p>Deshalb liegen sie im Menü unter <b>Fahrer &amp; Rad</b> und werden beim
+       Berechnen automatisch an jedes Profil angehängt.</p>
+  </section>
+
+  <section>
+    <h2>Speichern, Touren, Sicherung</h2>
+    <p>Im ersten Stand hießen zwei verschiedene Dinge fast gleich. Jetzt sauber
+       getrennt:</p>
+    <ul>
+      <li><b>Tour speichern</b> — das Disketten-Symbol im Blatt. Legt die aktuelle
+          Route mit Namen ab.</li>
+      <li><b>Touren</b> — im Menü. Hier wird eine Tour <b>wiederhergestellt</b>,
+          umbenannt oder gelöscht.</li>
+      <li><b>Sicherung</b> — im Menü. Schreibt alles zusammen in eine Datei.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Offen</h2>
+    <ul>
+      <li>Wegpunkte lassen sich im Entwurf nicht ziehen — in der echten App
+          bleibt Ziehen der Weg zum Verschieben, das Menü deckt nur ab, was
+          Ziehen nicht kann.</li>
+      <li>Von den sieben Bausteinen ist nur <code>maxspeed</code> gemessen; die
+          übrigen sind als „ungetestet“ gekennzeichnet.</li>
+      <li>Ob der freie Profiltext bleibt, ist offen — meine Neigung ist nein.</li>
+      <li>Die Sprungleiste im Editor ist jetzt kompakter. Ob sie bleibt, ist
+          offen — bei durchgehendem Scrollen ist ihr Nutzen strittig, für die
+          Übersicht über sechs Abschnitte spricht sie.</li>
+      <li>Die Rangfolge nutzt Häufigkeit und letzte Benutzung. Ob zusätzlich
+          feste Favoriten nötig sind, zeigt erst der Gebrauch.</li>
+      <li>Bearbeiten schließt die aufrufende Ebene und kehrt am Ende dorthin
+          zurück. Ob das im Gebrauch angenehm ist oder ein Tap zu viel, ist
+          offen.</li>
+    </ul>
+    <button class="themebtn" id="themeBtn">Hell/Dunkel wechseln</button>
+  </section>
+</aside>
+</div>
+<script>
+(function(){
+"use strict";
+
+var ELE=[480,493,516,538,547,554,530,562,582,587,608,616,626,633,614,593,570,553,531,515,498,460,430,393,354,320,310,300,291,286,294,286,282,290,315,308,308,316,308,285,276,264,238,240,258,261,282,311,330,332,336,346,390,413,417,419,418,422,425,422,423,418,420,418,420,418,435,449,471,500,518,555,599,638,686,719,768,804,796,811,816,814,814,845,856,864,881,876,864,841,825];
+
+var ROUTE=[[10.3,51.85],[10.3063,51.8511],[10.3102,51.8534],[10.3176,51.8545],[10.3238,51.8539],[10.3272,51.8513],[10.3305,51.8492],[10.333,51.847],[10.3366,51.8444],[10.3431,51.8439],[10.3513,51.8449],[10.3622,51.8508],[10.365,51.8561],[10.3676,51.8587],[10.3718,51.86],[10.3739,51.8616],[10.3785,51.8643],[10.3808,51.8671],[10.3851,51.87],[10.3872,51.8749],[10.3855,51.8784],[10.3809,51.8807],[10.3949,51.8873],[10.4051,51.8936],[10.4142,51.8985],[10.418,51.9006],[10.4271,51.8994],[10.4342,51.9008],[10.4418,51.9027],[10.4474,51.901],[10.4506,51.8985],[10.4548,51.8984],[10.4616,51.8963],[10.4712,51.8964],[10.4746,51.8887],[10.4731,51.8853],[10.471,51.8811],[10.4755,51.8761],[10.4755,51.8716],[10.4712,51.8705],[10.4718,51.8676],[10.4751,51.8649],[10.4718,51.8609],[10.4698,51.8577],[10.4649,51.8586],[10.4567,51.8527],[10.4594,51.8511],[10.4598,51.8494],[10.4579,51.845],[10.4627,51.8422],[10.4558,51.8419],[10.4634,51.8381],[10.4661,51.8361],[10.4628,51.8339],[10.4644,51.8297],[10.474,51.8307],[10.481,51.8291],[10.4938,51.8281],[10.5038,51.8212],[10.5117,51.8156],[10.5228,51.8131],[10.526,51.8099],[10.5347,51.8051],[10.537,51.8016],[10.5395,51.7983],[10.5473,51.7896],[10.5619,51.7848],[10.5722,51.785],[10.5837,51.7808],[10.5918,51.7805],[10.5984,51.7801]];
+
+var SURFACE=[["Asphalt",86.6,"--slate"],["Wassergebunden",10.1,"--ochre"],
+             ["Schotter",1.9,"--sienna"],["Beton",0.5,"--good"],
+             ["Kopfsteinpflaster",0.2,"--muted"],["Nicht erfasst",0.6,"--faint"]];
+var ROADS=[["Wirtschaftsweg",49.7,"--ochre"],["Bundesstraße",36.0,"--sienna"],
+           ["Landstraße",6.5,"--signal"],["Wohnstraße",6.0,"--slate"],
+           ["Zufahrt",1.3,"--good"],["Pfad",0.5,"--faint"]];
+
+function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function $(s){return document.querySelector(s);}
+
+/* ---------- Karte auf Canvas ---------- */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;
+  var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;
+  return((t^t>>>14)>>>0)/4294967296;};}
+
+var canvas=$("#map"), ctx=canvas.getContext("2d"), proj=null;
+
+function project(w,h){
+  var lo=1e9,la=1e9,LO=-1e9,LA=-1e9,i;
+  for(i=0;i<ROUTE.length;i++){
+    if(ROUTE[i][0]<lo)lo=ROUTE[i][0]; if(ROUTE[i][0]>LO)LO=ROUTE[i][0];
+    if(ROUTE[i][1]<la)la=ROUTE[i][1]; if(ROUTE[i][1]>LA)LA=ROUTE[i][1];
+  }
+  var padX=w*0.15, padTop=h*0.17, padBot=h*0.42;
+  var sx=(w-padX*2)/(LO-lo), sy=(h-padTop-padBot)/(LA-la), s=Math.min(sx,sy);
+  var ox=(w-(LO-lo)*s)/2, oy=padTop+((h-padTop-padBot)-(LA-la)*s)/2;
+  return function(p){return [ox+(p[0]-lo)*s, oy+(LA-p[1])*s];};
+}
+
+function blob(r,cx,cy,rad,wob){
+  ctx.beginPath();
+  for(var a=0;a<=Math.PI*2+0.01;a+=Math.PI/9){
+    var rr=rad*(1+(r()-0.5)*wob);
+    var x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*0.72;
+    if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+}
+
+function drawMap(){
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var w=canvas.clientWidth, h=canvas.clientHeight;
+  if(!w||!h)return;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var r=rng(20260818);
+
+  ctx.fillStyle=cv("--map-bg"); ctx.fillRect(0,0,w,h);
+
+  // Wald
+  ctx.fillStyle=cv("--map-forest");
+  for(var i=0;i<9;i++) blob(r, r()*w, r()*h, 40+r()*80, 0.5), ctx.fill();
+
+  // Gewässer
+  ctx.fillStyle=cv("--map-water");
+  blob(r, w*0.22, h*0.30, 34, 0.42); ctx.fill();
+  blob(r, w*0.79, h*0.62, 24, 0.42); ctx.fill();
+
+  // Höhenlinien
+  ctx.strokeStyle=cv("--map-contour"); ctx.lineWidth=0.9;
+  var peaks=[[w*0.66,h*0.24],[w*0.30,h*0.56],[w*0.86,h*0.44]];
+  for(var p=0;p<peaks.length;p++)
+    for(var k=1;k<=7;k++){ blob(r,peaks[p][0],peaks[p][1],k*17+6,0.16); ctx.stroke(); }
+
+  // Straßennetz
+  function road(width,color,seed,count){
+    var rr=rng(seed);
+    ctx.strokeStyle=color; ctx.lineWidth=width;
+    ctx.lineCap="round"; ctx.lineJoin="round";
+    for(var n=0;n<count;n++){
+      ctx.beginPath();
+      var x=rr()*w, y=rr()*h, ang=rr()*Math.PI*2;
+      ctx.moveTo(x,y);
+      for(var s=0;s<9;s++){
+        ang+=(rr()-0.5)*0.85; x+=Math.cos(ang)*46; y+=Math.sin(ang)*46;
+        ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+  }
+  road(5.5,cv("--map-case"),7,13); road(3.2,cv("--map-road"),7,13);
+  road(7,cv("--map-case"),33,4);   road(4.6,cv("--map-main"),33,4);
+
+  // Route
+  proj=project(w,h);
+  ctx.lineCap="round"; ctx.lineJoin="round";
+  ctx.beginPath();
+  for(var j=0;j<ROUTE.length;j++){
+    var q=proj(ROUTE[j]);
+    if(j===0)ctx.moveTo(q[0],q[1]); else ctx.lineTo(q[0],q[1]);
+  }
+  ctx.strokeStyle="rgba(0,0,0,.22)"; ctx.lineWidth=9.5; ctx.stroke();
+  ctx.strokeStyle=cv("--signal"); ctx.lineWidth=5.5; ctx.stroke();
+
+  placeMarkers();
+}
+
+function placeMarkers(){}
+
+/* ---------- Höhenprofil ---------- */
+function drawElev(){
+  var svg=$("#elev"), W=340, H=104, lo=230, hi=900, i;
+  var pts=ELE.map(function(e,ix){
+    return [ix/(ELE.length-1)*W, H-4-((e-lo)/(hi-lo))*(H-16)];
+  });
+  var d="M"+pts.map(function(p){return p[0].toFixed(1)+" "+p[1].toFixed(1);}).join("L");
+  var grid="";
+  [400,600,800].forEach(function(v){
+    var y=H-4-((v-lo)/(hi-lo))*(H-16);
+    grid+='<line x1="0" y1="'+y.toFixed(1)+'" x2="'+W+'" y2="'+y.toFixed(1)+
+          '" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>'+
+          '<text class="axis" x="2" y="'+(y-3).toFixed(1)+'">'+v+'</text>';
+  });
+  var peak=pts[ELE.indexOf(Math.max.apply(null,ELE))];
+  svg.innerHTML=
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="var(--signal)" stop-opacity=".30"/>'+
+    '<stop offset="100%" stop-color="var(--signal)" stop-opacity="0"/>'+
+    '</linearGradient></defs>'+grid+
+    '<path d="'+d+'L'+W+' '+H+'L0 '+H+'Z" fill="url(#g)"/>'+
+    '<path d="'+d+'" fill="none" stroke="var(--signal)" stroke-width="1.9" '+
+    'stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<circle cx="'+peak[0].toFixed(1)+'" cy="'+peak[1].toFixed(1)+
+    '" r="3" fill="var(--signal)" stroke="var(--sheet)" stroke-width="1.6"/>'+
+    '<text class="axis" x="'+(peak[0]-8).toFixed(1)+'" y="'+(peak[1]-7).toFixed(1)+
+    '" style="font-weight:600">881</text>';
+}
+
+/* ---------- Balken ---------- */
+function bars(data,barSel,legSel){
+  var bar=$(barSel), leg=$(legSel);
+  bar.textContent=""; leg.textContent="";
+  data.forEach(function(d){
+    var i=document.createElement("i");
+    i.style.width=d[1]+"%"; i.style.background="var("+d[2]+")";
+    bar.appendChild(i);
+    var row=document.createElement("div");
+    row.innerHTML='<span class="swatch" style="background:var('+d[2]+')"></span>'+
+      '<span class="lbl">'+d[0]+'</span>'+
+      '<span class="pct">'+d[1].toFixed(1).replace(".",",")+' %</span>';
+    leg.appendChild(row);
+  });
+}
+
+/* ---------- Blatt-Rasten ---------- */
+var detents=["peek","half","full"], di=0, sheet=$("#sheet"), rail=$("#rail");
+function setDetent(n){
+  di=(n+detents.length)%detents.length;
+  sheet.setAttribute("data-detent",detents[di]);
+  positionRail();
+}
+/* Die Leiste sitzt ueber dem Blatt, wandert aber nicht beliebig hoch mit.
+   In der vollen Raste ist von der Karte ohnehin nichts mehr zu sehen — dann
+   verschwindet sie, statt sich oben in die Kopfleiste zu schieben. */
+function positionRail(){
+  var sh=sheet.getBoundingClientRect().height;
+  var full=sheet.getAttribute("data-detent")==="full";
+  rail.classList.toggle("hidden",full);
+  var maxUp=canvas.clientHeight*0.52;
+  rail.style.bottom=Math.min(sh+14,maxUp)+"px";
+}
+$("#grab").addEventListener("click",function(){setDetent(di+1);});
+$("#grab").addEventListener("keydown",function(e){
+  if(e.key==="Enter"||e.key===" "){e.preventDefault();setDetent(di+1);}
+});
+$("#calcBtn").addEventListener("click",function(){
+  var b=this, t=b.textContent;
+  b.textContent="Berechne …"; b.disabled=true;
+  setTimeout(function(){b.textContent=t;b.disabled=false;setDetent(2);},850);
+});
+
+/* ---------- Toast ---------- */
+var toastT=null;
+function toast(msg){
+  var t=$("#toast");
+  t.style.bottom=(sheet.getBoundingClientRect().height+14)+"px";
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastT);
+  toastT=setTimeout(function(){t.classList.remove("show");},2400);
+}
+
+/* ---------- Karte: Wegpunkte und Sperrbereiche ---------- */
+var WP=[], NOGO=[], PENDING=null, STACK=[], MODE="point", KMPX=0.05;
+
+function seed(){
+  if(!proj||WP.length)return;
+  var w=canvas.clientWidth,h=canvas.clientHeight;
+  [0,25,45,ROUTE.length-1].forEach(function(ix){
+    var q=proj(ROUTE[ix]); WP.push({fx:q[0]/w,fy:q[1]/h});
+  });
+  // Maßstab aus der bekannten Streckenlänge ableiten: 43,5 km über die Linie
+  var px=0,a,b;
+  for(var i=1;i<ROUTE.length;i++){
+    a=proj(ROUTE[i-1]); b=proj(ROUTE[i]);
+    px+=Math.sqrt((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1]));
+  }
+  if(px>0)KMPX=43.5/px;
+}
+
+var POP=null;       // {kind:"wp"|"nogo", idx:n}
+var EDITIDX=null;   // Sperrbereich, dessen Radius gerade neu gesetzt wird
+
+function closePop(){ if(POP){ POP=null; paintOverlay(); return true; } return false; }
+
+function popMenu(x,y,head,actions){
+  var d=document.createElement("div");
+  d.className="pop";
+  d.style.left=x+"px"; d.style.top=y+"px";
+  var t=document.createElement("div"); t.className="ph"; t.textContent=head;
+  d.appendChild(t);
+  actions.forEach(function(a){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=a[0];
+    if(a[2])b.className=a[2];
+    b.addEventListener("click",function(ev){ ev.stopPropagation(); a[1](); });
+    d.appendChild(b);
+  });
+  return d;
+}
+
+/* Undo-Verlauf mitfuehren, wenn ueber das Menue geloescht wird — sonst
+   nimmt Rueckgaengig spaeter etwas zurueck, das gar nicht mehr da ist. */
+function dropFromStack(kind){
+  for(var i=STACK.length-1;i>=0;i--){ if(STACK[i]===kind){ STACK.splice(i,1); return; } }
+}
+
+function paintOverlay(){
+  var host=$("#markers"); host.textContent="";
+  var w=canvas.clientWidth,h=canvas.clientHeight;
+
+  NOGO.forEach(function(n,i){
+    var d=document.createElement("div");
+    d.className="nogo"+(n.editing?" editing":"")+(n.fresh?" fresh":"");
+    if(n.fresh) n.fresh=false;
+    d.style.left=(n.fx*w)+"px"; d.style.top=(n.fy*h)+"px";
+    d.style.width=(n.fr*2)+"px"; d.style.height=(n.fr*2)+"px";
+    host.appendChild(d);
+
+    var c=document.createElement("button");
+    c.className="pin"; c.type="button";
+    c.setAttribute("aria-label","Sperrbereich "+(i+1));
+    c.style.left=(n.fx*w)+"px"; c.style.top=(n.fy*h)+"px";
+    c.addEventListener("click",function(ev){
+      ev.stopPropagation();
+      POP={kind:"nogo",idx:i}; paintOverlay();
+    });
+    host.appendChild(c);
+  });
+
+  if(PENDING){
+    var pd=document.createElement("div");
+    pd.className="pin ghost";
+    pd.style.left=(PENDING.fx*w)+"px"; pd.style.top=(PENDING.fy*h)+"px";
+    host.appendChild(pd);
+  }
+
+  WP.forEach(function(p,n){
+    var d=document.createElement("button");
+    d.type="button";
+    d.className="wp"+(n===0?" start":(n===WP.length-1?" end":""));
+    d.setAttribute("aria-label","Wegpunkt "+(n+1));
+    d.style.left=(p.fx*w)+"px"; d.style.top=(p.fy*h)+"px";
+    d.innerHTML="<i>"+(n+1)+"</i>";
+    d.addEventListener("click",function(ev){
+      ev.stopPropagation();
+      POP={kind:"wp",idx:n}; paintOverlay();
+    });
+    host.appendChild(d);
+  });
+
+  if(POP){
+    var el, x, y;
+    if(POP.kind==="wp"){
+      var p=WP[POP.idx];
+      if(!p){ POP=null; return; }
+      x=p.fx*w; y=p.fy*h;
+      var role = POP.idx===0 ? "Start" : (POP.idx===WP.length-1 ? "Ziel" : "Zwischenpunkt");
+      el=popMenu(x,y,role+" · Punkt "+(POP.idx+1),[
+        ["Punkt löschen",function(){
+          if(WP.length<=2){ toast("Zwei Punkte müssen bleiben."); return; }
+          WP.splice(POP.idx,1); dropFromStack("wp"); POP=null;
+          paintOverlay(); toast("Wegpunkt entfernt — Route neu berechnen.");
+        },"del"]
+      ]);
+    }else{
+      var n=NOGO[POP.idx];
+      if(!n){ POP=null; return; }
+      x=n.fx*w; y=n.fy*h;
+      el=popMenu(x,y,"Sperrbereich · "+(n.fr*KMPX).toFixed(1).replace(".",",")+" km",[
+        ["Radius ändern",function(){
+          EDITIDX=POP.idx; n.editing=true;
+          PENDING={fx:n.fx,fy:n.fy}; POP=null; setModeQuiet("nogo");
+          paintOverlay();
+          toast("Neuen Rand antippen — der Mittelpunkt bleibt.");
+        }],
+        ["Sperrbereich löschen",function(){
+          NOGO.splice(POP.idx,1); dropFromStack("nogo"); POP=null;
+          paintOverlay(); toast("Sperrbereich entfernt.");
+        },"del"]
+      ]);
+    }
+    // am Rand nicht aus dem Bild laufen lassen
+    el.style.left=Math.min(Math.max(x,96),w-96)+"px";
+    el.style.top=Math.max(y,64)+"px";
+    host.appendChild(el);
+  }
+}
+placeMarkers=function(){ seed(); paintOverlay(); };
+
+canvas.addEventListener("click",function(e){
+  // Ein offenes Elementmenue faengt den naechsten Tap ab, statt nebenbei
+  // etwas Neues zu setzen.
+  if(closePop())return;
+
+  var r=canvas.getBoundingClientRect();
+  var fx=(e.clientX-r.left)/r.width, fy=(e.clientY-r.top)/r.height;
+  var sheetTop=r.height-sheet.getBoundingClientRect().height;
+  if(e.clientY-r.top>sheetTop-8){
+    toast("Hier verdeckt das Blatt die Karte — erst zuziehen.");
+    return;
+  }
+  var w=canvas.clientWidth,h=canvas.clientHeight;
+
+  if(MODE==="point"){
+    WP.push({fx:fx,fy:fy}); STACK.push("wp");
+    paintOverlay();
+    toast("Wegpunkt "+WP.length+" gesetzt — Route neu berechnen.");
+    return;
+  }
+
+  if(!PENDING){
+    PENDING={fx:fx,fy:fy}; paintOverlay();
+    toast("Mittelpunkt gesetzt. Jetzt den Rand des Kreises antippen.");
+    return;
+  }
+
+  var dx=(fx-PENDING.fx)*w, dy=(fy-PENDING.fy)*h;
+  var fr=Math.max(18,Math.sqrt(dx*dx+dy*dy));
+  var km=fr*KMPX;
+
+  if(EDITIDX!==null){                       // vorhandenen Kreis neu bemessen
+    NOGO[EDITIDX].fr=fr; NOGO[EDITIDX].editing=false; NOGO[EDITIDX].fresh=true;
+    EDITIDX=null; PENDING=null; paintOverlay();
+    toast("Radius auf "+km.toFixed(1).replace(".",",")+" km geändert.");
+    return;
+  }
+
+  NOGO.push({fx:PENDING.fx,fy:PENDING.fy,fr:fr,fresh:true}); STACK.push("nogo");
+  PENDING=null; paintOverlay();
+  toast("Sperrbereich mit "+km.toFixed(1).replace(".",",")+" km Radius angelegt.");
+});
+
+/* ---------- Rechte Leiste ---------- */
+function setModeQuiet(m){
+  MODE=m;
+  $("#mPoint").classList.toggle("on",m==="point");
+  $("#mPoint").setAttribute("aria-pressed",m==="point"?"true":"false");
+  $("#mNogo").classList.toggle("on",m==="nogo");
+  $("#mNogo").setAttribute("aria-pressed",m==="nogo"?"true":"false");
+}
+function setMode(m){
+  if(EDITIDX!==null){ NOGO[EDITIDX].editing=false; EDITIDX=null; }
+  PENDING=null; POP=null;
+  setModeQuiet(m);
+  paintOverlay();
+  toast(m==="point" ? "Tippen auf die Karte setzt einen Wegpunkt."
+                    : "Sperrbereich: erst den Mittelpunkt, dann den Rand antippen.");
+}
+$("#mPoint").addEventListener("click",function(){setMode("point");});
+$("#mNogo").addEventListener("click",function(){setMode("nogo");});
+$("#mUndo").addEventListener("click",function(){
+  if(closePop())return;
+  if(EDITIDX!==null){
+    NOGO[EDITIDX].editing=false; EDITIDX=null; PENDING=null;
+    paintOverlay(); toast("Radius unverändert gelassen.");
+    return;
+  }
+  if(PENDING){PENDING=null;paintOverlay();toast("Mittelpunkt verworfen.");return;}
+  var last=STACK.pop();
+  if(last==="nogo"){NOGO.pop();paintOverlay();toast("Sperrbereich entfernt.");return;}
+  if(last==="wp"){WP.pop();paintOverlay();toast("Wegpunkt entfernt.");return;}
+  if(WP.length>2){WP.pop();paintOverlay();toast("Wegpunkt entfernt.");return;}
+  toast("Nichts mehr zurückzunehmen — zwei Punkte müssen bleiben.");
+});
+$("#mLoc").addEventListener("click",function(){
+  toast("Standort wird bestimmt …");
+  setTimeout(function(){toast("Auf deinen Standort zentriert.");},900);
+});
+
+/* ---------- Parameter des Routing-Profils ---------- */
+function r(min,max,val,fmt,scale){return {t:"range",min:min,max:max,val:val,fmt:fmt,scale:scale};}
+var f1=function(v){return (v/10).toFixed(1).replace(".",",");};
+var fInt=function(v){return String(v);};
+var fPct=function(v){return (v/10).toFixed(1).replace(".",",")+" %";};
+var fM=function(v){return v+" m";};
+
+var SECTIONS=[
+ {id:"verkehr",t:"Verkehr & Autos",items:[
+  ["Autoverkehr meiden","consider_traffic",
+   "Meidet Straßen mit viel Verkehr, auch wenn der Weg länger wird. Grundlage ist BRouters Verkehrsschätzung — sie liegt auf allen Straßen mit Autoverkehr vor.",
+   r(0,80,10,f1,["gar nicht","deutlich","maximal"])],
+  ["Ortschaften umfahren","consider_town",
+   "Führt außen an Städten und größeren Orten vorbei statt mitten hindurch.",
+   {t:"switch",on:false}],
+  ["Kraftfahrstraßen erlauben","allow_motorways",
+   "Normalerweise aus. Nur außerhalb Europas sinnvoll, etwa in Australien, wo Radfahren auf Schnellstraßen erlaubt sein kann.",
+   {t:"switch",on:false}]]},
+
+ {id:"wege",t:"Wege & Untergrund",items:[
+  ["Treppen erlauben","allow_steps",
+   "Auf dem Rennrad praktisch immer unerwünscht — bedeutet Absteigen und Tragen.",
+   {t:"switch",on:false}],
+  ["Fähren erlauben","allow_ferries",
+   "Fähren werden eingeplant, wenn sie den Weg deutlich verkürzen. Fahrpläne kennt die Route nicht.",
+   {t:"switch",on:true}],
+  ["Geplante Radrouten mitnutzen","use_proposed_cycleroutes",
+   "Behandelt erst vorgeschlagene Radrouten wie fertige. Kann über Wege führen, die es in der Wirklichkeit noch nicht gibt.",
+   {t:"switch",on:false}]]},
+
+ {id:"steigung",t:"Steigung",items:[
+  ["Höhenmeter einbeziehen","consider_elevation",
+   "Aus bedeutet: Die Route ignoriert das Gelände vollständig und rechnet flach.",
+   {t:"switch",on:true}],
+  ["Steigungen meiden","uphillcost",
+   "Nimmt Umwege in Kauf, um Anstiege zu vermeiden. Bei null zählt nur die Länge.",
+   r(0,120,0,fInt,["egal","mittel","stark"])],
+  ["Steigung zählt erst ab","uphillcutoff",
+   "Anstiege flacher als dieser Wert bleiben unbewertet.",
+   r(0,50,15,fPct,["0 %","2,5 %","5 %"])],
+  ["Gefälle meiden","downhillcost",
+   "Wirkt gegen Strecken, die viel Höhe verschenken und danach wieder aufholen müssen.",
+   r(0,120,60,fInt,["egal","mittel","stark"])],
+  ["Gefälle zählt erst ab","downhillcutoff",
+   "Gefälle flacher als dieser Wert bleiben unbewertet.",
+   r(0,50,15,fPct,["0 %","2,5 %","5 %"])]]},
+
+ {id:"umgebung",t:"Umgebung",items:[
+  ["Durch Wald und Parks führen","consider_forest",
+   "BRouter schätzt die Waldnähe selbst. Daten liegen auf etwa 95 % der Strecke vor.",
+   {t:"switch",on:true}],
+  ["Lärm meiden","consider_noise",
+   "Bevorzugt leise Abschnitte. Daten auf etwa 56 % der Strecke.",
+   {t:"switch",on:false}],
+  ["An Gewässern entlang","consider_river",
+   "Zieht Wege an Flüssen und Seen vor. Daten auf etwa 46 % der Strecke.",
+   {t:"switch",on:false}]]},
+
+ {id:"fein",t:"Wegführung",items:[
+  ["Abbiegeverbote beachten","considerTurnRestrictions",
+   "Beachtet Abbiegeverbote aus den Kartendaten. Für Radfahrer oft strenger als nötig, aber näher an der Beschilderung.",
+   {t:"switch",on:true}],
+  ["Umwege an Zwischenpunkten glätten","correctMisplacedViaPoints",
+   "Entfernt Hin-und-zurück-Schleifen, die entstehen, wenn ein Zwischenpunkt ungünstig neben der Straße liegt.",
+   {t:"switch",on:false}],
+  ["Nur Schleifen bis","correctMisplacedViaPointsDistance",
+   "Längere Schleifen bleiben unangetastet — sie sind vermutlich Absicht.",
+   r(0,1200,400,fM,["0 m","600 m","1200 m"])]]},
+
+ {id:"export",t:"GPX-Export",items:[
+  ["Abbiegehinweise in der Datei","turnInstructionMode",
+   "Diese App navigiert nicht. Die Hinweise landen aber in der GPX-Datei und werden von der Ziel-App gelesen — bei OsmAnd lohnt sich der passende Stil.",
+   {t:"choice",val:"1",opts:[["0","keine"],["1","automatisch wählen"],["2","Locus"],
+     ["3","OsmAnd"],["4","als Kommentar"],["5","GPSies"],["6","OruxMaps"]]}],
+  ["Hinweise zusammenfassen bis","turnInstructionCatchingRange",
+   "Mehrere Abbiegungen innerhalb dieser Strecke werden zu einem Hinweis verschmolzen.",
+   r(0,120,40,fM,["0 m","60 m","120 m"])],
+  ["Kreisverkehre eigens ansagen","turnInstructionRoundabouts",
+   "Erzeugt für Kreisverkehre eigene Hinweise statt gewöhnlicher Abbiegungen.",
+   {t:"switch",on:true}]]},
+
+ {id:"diag",t:"Diagnose",items:[
+  ["Alle Kartendaten mitliefern","processUnusedTags",
+   "Liefert auch die Angaben mit, die dieses Profil gar nicht auswertet. Nur zum Nachmessen der Datenlage sinnvoll — die Antwort wird dadurch deutlich größer.",
+   {t:"switch",on:false}]]}
+];
+
+var USERPARAMS=[
+ ["Gewicht Fahrer und Rad","totalMass",
+  "Alles zusammen: du, Rad, Gepäck, Flaschen.",
+  r(50,140,90,function(v){return v+" kg";},["50 kg","95 kg","140 kg"])],
+ ["Dauerleistung","bikerPower",
+  "Die Leistung, die du über die ganze Fahrt hältst. Nicht die Spitze.",
+  r(60,320,100,function(v){return v+" W";},["60 W","190 W","320 W"])],
+ ["Maximaltempo","maxSpeed",
+  "Deckelt die Zeitschätzung bergab. Darüber wird nicht gerechnet.",
+  r(20,80,45,function(v){return v+" km/h";},["20","50","80"])],
+ ["Luftwiderstand","S_C_x",
+  "Stirnfläche mal Widerstandsbeiwert. Tief auf dem Rennrad etwa 0,20 — aufrecht etwa 0,35.",
+  r(15,40,22,function(v){return (v/100).toFixed(2).replace(".",",");},["0,15","0,28","0,40"])],
+ ["Rollwiderstand","C_r",
+  "Schmale Rennreifen etwa 0,005. Breite oder profilierte Reifen etwa 0,015.",
+  r(4,20,10,function(v){return (v/1000).toFixed(3).replace(".",",");},["0,004","0,012","0,020"])]
+];
+
+function paramEl(p,cls){
+  var o=p[3], el=document.createElement("div");
+  el.className=cls||"param";
+  var head='<div class="ptop"><div class="pname"><b>'+p[0]+
+           '</b><span class="key">'+p[1]+'</span></div>';
+  if(o.t==="switch"){
+    el.innerHTML=head+'<span class="sw" role="switch" tabindex="0" aria-checked="'+
+      (o.on?"true":"false")+'" aria-label="'+p[0]+'"></span></div>'+
+      '<p class="pdesc">'+p[2]+'</p>';
+    var sw=el.querySelector('[role="switch"]');
+    function tog(){o.on=!o.on;sw.setAttribute("aria-checked",o.on?"true":"false");markDirty();}
+    sw.addEventListener("click",tog);
+    sw.addEventListener("keydown",function(e){
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();tog();}});
+  }else if(o.t==="choice"){
+    el.innerHTML=head+'</div><p class="pdesc">'+p[2]+'</p>'+
+      '<select aria-label="'+p[0]+'">'+o.opts.map(function(x){
+        return '<option value="'+x[0]+'"'+(x[0]===o.val?" selected":"")+'>'+x[1]+'</option>';
+      }).join("")+'</select>';
+    el.querySelector("select").addEventListener("change",function(){
+      o.val=this.value; markDirty();
+    });
+  }else{
+    el.innerHTML=head+'<span class="pval">'+o.fmt(o.val)+'</span></div>'+
+      '<p class="pdesc">'+p[2]+'</p>'+
+      '<input type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.val+
+      '" aria-label="'+p[0]+'">'+
+      '<div class="scale"><span>'+o.scale[0]+'</span><span>'+o.scale[1]+
+      '</span><span>'+o.scale[2]+'</span></div>';
+    el.querySelector("input").addEventListener("input",function(){
+      o.val=Number(this.value);
+      el.querySelector(".pval").textContent=o.fmt(o.val);
+      markDirty();
+    });
+  }
+  return el;
+}
+
+function buildEditor(){
+  var host=$("#editorBody"); host.textContent="";
+  var nav=document.createElement("div"); nav.className="jump";
+  SECTIONS.forEach(function(sec,i){
+    var b=document.createElement("button");
+    b.textContent=sec.t; b.className=i===0?"on":"";
+    b.addEventListener("click",function(){
+      // Kein scrollIntoView: das scrollt jede Scroll-Ebene mit, auch die Seite,
+      // und schiebt dabei die Kopfleiste aus dem Bild.
+      var e=document.getElementById("sec-"+sec.id);
+      host.scrollTo({top:Math.max(0,e.offsetTop-nav.offsetHeight),behavior:"smooth"});
+    });
+    nav.appendChild(b);
+  });
+  host.appendChild(nav);
+
+  var total=0;
+  SECTIONS.forEach(function(sec){
+    total+=sec.items.length;
+    var wrap=document.createElement("div");
+    wrap.className="sect"; wrap.id="sec-"+sec.id;
+    wrap.innerHTML='<div class="secthead"><h3>'+sec.t+'</h3>'+
+      '<span class="cnt">'+sec.items.length+'</span></div>';
+    var box=document.createElement("div");
+    box.className="group";
+    sec.items.forEach(function(p,i){
+      var el=paramEl(p, sec.items.length===1?"param only":"param");
+      box.appendChild(el);
+    });
+    wrap.appendChild(box);
+    host.appendChild(wrap);
+  });
+  var n=document.createElement("p");
+  n.className="note"; n.style.paddingTop="14px";
+  n.innerHTML='<b>'+total+' Parameter</b>, alle aus der Profildatei. Sie gehen als '+
+    '<code>profile:</code>-Werte direkt in die Anfrage — <b>kein Upload nötig</b>. '+
+    'Werte für Fahrer und Rad stehen bewusst nicht hier, sondern im Menü unter '+
+    '„Fahrer &amp; Rad“: Sie beschreiben dich, nicht die Art der Route.';
+  host.appendChild(n);
+
+  host.addEventListener("scroll",function(){
+    var best=0, top=host.scrollTop;
+    SECTIONS.forEach(function(sec,i){
+      var e=document.getElementById("sec-"+sec.id);
+      if(e.offsetTop-70<=top)best=i;
+    });
+    Array.prototype.forEach.call(nav.children,function(b,i){
+      b.classList.toggle("on",i===best);});
+  });
+}
+
+function buildUser(){
+  var host=$("#userBody"); host.textContent="";
+  var box=document.createElement("div"); box.className="group";
+  USERPARAMS.forEach(function(p){box.appendChild(paramEl(p));});
+  host.appendChild(box);
+  var n=document.createElement("p"); n.className="note";
+  n.innerHTML='Diese Werte ändern die <b>Route nicht</b>. Sie wirken ausschließlich '+
+    'auf die geschätzte Fahrzeit. Sie hängen am Nutzer, nicht am Routing-Profil — '+
+    'du pflegst dein Gewicht also einmal, nicht in jedem Profil erneut.';
+  host.appendChild(n);
+}
+
+/* ---------- Baukasten ---------- */
+function blk(id,on,name,key,desc,chips,scale,val,code){
+  return {id:id,on:on,name:name,key:key,desc:desc,chips:chips,scale:scale,val:val,code:code};
+}
+var KIT=[
+ blk("speed",true,"Tempolimit meiden","maxspeed",
+  "Bestraft Straßen nach erlaubtem Tempo. Eine Tempo-100-Straße ist auf dem Rennrad deutlich unangenehmer als eine Tempo-50-Straße — auch bei gleichem Verkehr.",
+  [["Getestet: −63 % schnelle Straßen","good"],["Daten auf 51 % der Strecke",""]],
+  ["aus","mittel","maximal"],10,
+  ["# Tempolimit als eigene Kostendimension",
+   "assign speedpenalty =",
+   "  if      maxspeed=100|110|120 then multiply 1.2 consider_speed",
+   "  else if maxspeed=80|90       then multiply 0.8 consider_speed",
+   "  else if maxspeed=70          then multiply 0.5 consider_speed",
+   "  else 0"]),
+ blk("lanes",false,"Mehrspurige Straßen meiden","lanes",
+  "Bestraft Straßen mit drei oder mehr Fahrspuren. Breite Straßen bedeuten meist mehr und schnelleren Verkehr.",
+  [["Ungetestet","warn"],["Daten auf 49 % der Strecke",""]],
+  ["aus","mittel","maximal"],10,
+  ["# Fahrspuren als Verkehrsindiz",
+   "assign lanepenalty =",
+   "  if      lanes=4|5|6 then multiply 0.8 consider_lanes",
+   "  else if lanes=3     then multiply 0.4 consider_lanes",
+   "  else 0"]),
+ blk("sett",false,"Kopfsteinpflaster meiden","surface",
+  "Bestraft Kopfsteinpflaster und Pflastersteine gesondert. Auf schmalen Rennradreifen der unangenehmste befestigte Belag.",
+  [["Ungetestet","warn"],["Daten auf 99 % der Strecke","good"]],
+  ["aus","meiden","strikt"],20,
+  ["# Kopfsteinpflaster gesondert bestrafen",
+   "assign cobblepenalty =",
+   "  if surface=sett|cobblestone|unhewn_cobblestone",
+   "     then multiply 1.5 consider_cobble",
+   "  else 0"]),
+ blk("lit",false,"Beleuchtete Wege bevorzugen","lit",
+  "Zieht Straßen mit Beleuchtung vor. Nur sinnvoll für Fahrten in der Dämmerung oder Dunkelheit.",
+  [["Ungetestet","warn"],["Daten auf 28 % der Strecke",""]],
+  ["aus","mittel","stark"],0,
+  ["# Beleuchtung bevorzugen",
+   "assign litbonus =",
+   "  if lit=yes then multiply -0.2 consider_lit",
+   "  else 0"]),
+ blk("side",false,"Straßen mit Gehweg bevorzugen","sidewalk",
+  "Ein Gehweg deutet auf innerörtliche Straßen mit niedrigem Tempo hin.",
+  [["Ungetestet","warn"],["Daten auf 19 % der Strecke",""]],
+  ["aus","mittel","stark"],0,
+  ["# Gehweg als Hinweis auf Innerorts",
+   "assign sidewalkbonus =",
+   "  if sidewalk=both|left|right then multiply -0.15 consider_sidewalk",
+   "  else 0"]),
+ blk("motor",false,"Autofreie Wege bevorzugen","motor_vehicle",
+  "Zieht Wege vor, auf denen Kraftfahrzeuge ausdrücklich verboten sind.",
+  [["Ungetestet","warn"],["Daten auf 8 % der Strecke","warn"]],
+  ["aus","mittel","stark"],0,
+  ["# Ausdrücklich autofreie Wege bevorzugen",
+   "assign motorfreebonus =",
+   "  if motor_vehicle=no|private then multiply -0.3 consider_motorfree",
+   "  else 0"]),
+ blk("incline",false,"Steile Rampen sperren","incline",
+  "Sperrt Abschnitte mit ausgewiesener Steigung über einem Grenzwert vollständig. Wirkt nur, wo die Steigung erfasst ist — das ist selten.",
+  [["Ungetestet","warn"],["Daten auf 5 % der Strecke","warn"]],
+  ["aus","ab 15 %","ab 10 %"],0,
+  ["# Steile Rampen sperren",
+   "assign inclineblock =",
+   "  if incline=20%|25%|30% then 10000",
+   "  else 0"])
+];
+
+function hl(line){
+  var e=line.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  if(/^\s*#/.test(e))return '<span class="c-rem">'+e+'</span>';
+  e=e.replace(/\b(assign|if|else|then|multiply|min|max|switch|not|and|or)\b/g,
+              '<span class="c-key">$1</span>');
+  e=e.replace(/\b([a-z_]+=[A-Za-z0-9%|_]+)/g,'<span class="c-tag">$1</span>');
+  e=e.replace(/(^|[\s(])(-?\d+(?:\.\d+)?)\b/g,'$1<span class="c-num">$2</span>');
+  return e;
+}
+function kitCodeText(){
+  var on=KIT.filter(function(k){return k.on;});
+  if(!on.length)return ["# Kein Baustein aktiv.",
+    "# Das Profil bleibt unverändert und braucht keinen Upload."];
+  var out=[];
+  on.forEach(function(k,i){ if(i)out.push(""); out=out.concat(k.code); });
+  out.push(""); out.push("# … wird in costfactor eingehängt");
+  return out;
+}
+function renderCode(){
+  $("#kitCode").innerHTML=kitCodeText().map(hl).join("\n");
+}
+function renderKit(){
+  var host=$("#kitBody"); host.textContent="";
+  KIT.forEach(function(k){
+    var el=document.createElement("div");
+    el.className="kit"; el.setAttribute("data-on",k.on?"true":"false");
+    el.innerHTML=
+      '<div class="ptop"><div class="pname"><b>'+k.name+'</b>'+
+      '<span class="key">'+k.key+'</span></div>'+
+      '<span class="sw" role="switch" tabindex="0" aria-checked="'+(k.on?"true":"false")+
+      '" aria-label="'+k.name+'"></span></div>'+
+      '<p class="pdesc">'+k.desc+'</p>'+
+      '<div class="kitmeta">'+k.chips.map(function(c){
+        return '<span class="chip '+c[1]+'">'+c[0]+'</span>';}).join("")+'</div>'+
+      '<div class="kitrange"><input type="range" min="0" max="40" value="'+k.val+
+      '" aria-label="Stärke '+k.name+'">'+
+      '<div class="scale"><span>'+k.scale[0]+'</span><span>'+k.scale[1]+
+      '</span><span>'+k.scale[2]+'</span></div></div>';
+    var sw=el.querySelector('[role="switch"]');
+    function tog(){
+      k.on=!k.on;
+      sw.setAttribute("aria-checked",k.on?"true":"false");
+      el.setAttribute("data-on",k.on?"true":"false");
+      renderCode(); resetFree();
+      toast(k.on?'Baustein „'+k.name+'“ hinzugefügt.':'Baustein „'+k.name+'“ entfernt.');
+    }
+    sw.addEventListener("click",tog);
+    sw.addEventListener("keydown",function(e){
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();tog();}});
+    host.appendChild(el);
+  });
+  renderCode(); resetFree();
+}
+
+/* ---------- Freier Profiltext ---------- */
+function resetFree(){ $("#freeText").value=kitCodeText().join("\n"); }
+$("#freeReset").addEventListener("click",function(){
+  resetFree(); $("#freeMsg").innerHTML="Auf den erzeugten Text zurückgesetzt.";
+});
+$("#freeCheck").addEventListener("click",function(){
+  var t=$("#freeText").value, o=(t.match(/\(/g)||[]).length, c=(t.match(/\)/g)||[]).length;
+  var msg;
+  if(o!==c) msg="<b>Klammern stimmen nicht:</b> "+o+" auf, "+c+" zu.";
+  else if(!/assign/.test(t)) msg="<b>Kein <code>assign</code> gefunden</b> — so entsteht keine Regel.";
+  else msg="Grobprüfung bestanden. <b>Das sagt wenig:</b> Ob BRouter den Text "+
+           "annimmt, zeigt erst der Server — und zwar nur mit Ja oder Nein.";
+  $("#freeMsg").innerHTML=msg;
+});
+
+/* ---------- Menü & Ebenen ---------- */
+/* Ebenen stapeln sich nach der Reihenfolge des Oeffnens.
+   Vorher entschied die Position im Markup: Bei gleichem z-index gewinnt das
+   spaetere Element, deshalb lag die Profilliste ueber dem Baukasten und zeigte
+   dessen Kopfleiste ueberdeckt. Ein fester z-index je Ebene loest das nicht —
+   sobald zwei Ebenen gleichzeitig offen sein koennen, braucht es eine
+   Reihenfolge nach Aufruf. */
+var TOPZ=70;
+function open(id){
+  var e=$("#"+id);
+  e.style.zIndex=++TOPZ;
+  e.classList.add("open");
+}
+function close(id){$("#"+id).classList.remove("open");}
+
+/* Immer ueber diese Funktion oeffnen, nie Abdunkler und Blatt einzeln.
+   Seit die Ebenen nach Aufrufreihenfolge stapeln, entscheidet die Reihenfolge
+   der beiden Aufrufe darueber, ob der Abdunkler unter oder ueber dem Blatt
+   liegt. Liegt er darueber, ist das Blatt grau und tot. */
+
+var SHEETS=["profiles","menu","savedlg"];
+
+function openSheet(id){
+  // Auf einer Ebene ist immer nur ein Fenster offen. Zwei Blaetter sitzen
+  // beide unten am Rand — offen uebereinander ergaeben sie einen Stapel,
+  // bei dem nicht mehr erkennbar ist, was wozu gehoert.
+  SHEETS.forEach(function(x){ if(x!==id) close(x); });
+
+  // Das Routenblatt gehoert zur Grundebene. Wird eine Ebene darueber
+  // geoeffnet, faehrt es auf die kleinste Raste zurueck, statt um denselben
+  // Platz am unteren Rand zu streiten.
+  if(sheet.getAttribute("data-detent")!=="peek") setDetent(0);
+
+  open("scrim");
+  open(id);
+}
+function closeMenu(){close("menu");close("profiles");close("savedlg");close("scrim");}
+$("#pillBtn").addEventListener("click",function(){
+  freezeOrder(); renderProfiles(); renderAllProfiles();
+  openSheet("profiles");
+});
+$("#editorDone").addEventListener("click",endEdit);
+$("#pDone").addEventListener("click",closeMenu);
+$("#menuBtn").addEventListener("click",function(){openSheet("menu");});
+$("#scrim").addEventListener("click",closeMenu);
+$("#toKit").addEventListener("click",function(){open("kit");});
+$("#kitSave").addEventListener("click",function(){
+  close("kit"); toast("Bausteine gesichert — Profil wird beim Berechnen übertragen.");
+});
+Array.prototype.forEach.call(document.querySelectorAll("[data-close]"),function(b){
+  b.addEventListener("click",function(){
+    var t=b.getAttribute("data-close");
+    if(t==="editor"){ endEdit(); return; }
+    close(t);
+  });
+});
+Array.prototype.forEach.call(document.querySelectorAll("[data-go]"),function(b){
+  b.addEventListener("click",function(){
+    var t=b.getAttribute("data-go");
+    // Die Vollliste ist Ebene 3 ueber der Vorauswahl — die bleibt darunter
+    // stehen, damit man beim Zurueckgehen wieder dort landet.
+    if(t!=="allprofiles") closeMenu();
+    open(t);
+  });
+});
+$("#saveBtn").addEventListener("click",function(){
+  toast("Tour gespeichert. Öffnen über Menü → Touren.");
+});
+$("#shareBtn").addEventListener("click",function(){
+  toast("GPX wird geholt — danach öffnet das Teilen-Menü.");
+});
+$("#doExport").addEventListener("click",function(){
+  close("backup"); toast("Sicherungsdatei erstellt — Teilen-Menü öffnet.");
+});
+
+/* ---------- Profile ---------- */
+/* eigen:true = vom Nutzer angelegt · basis = mitgeliefertes Profil dahinter
+   bau = Anzahl Bausteine (>0 heisst: muss hochgeladen werden) */
+var TICK=1000;   // laufende Nummer: je hoeher, desto zuletzt benutzt
+var PROFILES=[
+ {id:"harz",   name:"Harz ruhig",         eigen:true,  basis:"fastbike",                bau:1, used:998, n:41},
+ {id:"schnell",name:"Rennrad schnell",    eigen:true,  basis:"fastbike",                bau:0, used:995, n:12},
+ {id:"low",    name:"Wenig Verkehr",      eigen:false, basis:"fastbike-lowtraffic",     bau:0, used:990, n:26},
+ {id:"winter", name:"Winterrunde",        eigen:true,  basis:"trekking",                bau:2, used:940, n:4},
+ {id:"trek",   name:"Trekking",           eigen:false, basis:"trekking",                bau:0, used:930, n:3},
+ {id:"vlow",   name:"Sehr wenig Verkehr", eigen:false, basis:"fastbike-verylowtraffic", bau:0, used:0,   n:0},
+ {id:"fast",   name:"Zügig",              eigen:false, basis:"fastbike",                bau:0, used:0,   n:0}
+];
+var ACTIVE="harz";
+var SHOWN=5;
+var DIRTY=false;
+
+function pSub(p){
+  var bits=[p.eigen?"Eigenes Profil":"Mitgeliefert", p.basis];
+  if(p.bau) bits.push(p.bau===1?"1 Baustein":p.bau+" Bausteine");
+  return bits.join(" · ");
+}
+
+function pWhen(p){
+  if(p.id===ACTIVE)return "";
+  if(!p.n)return "nie benutzt";
+  var d=Math.round((TICK-p.used)/2);
+  if(d<=0)return p.n+"×";
+  if(d<30)return p.n+"× · vor "+d+" T";
+  return p.n+"× · älter";
+}
+
+/* Rangfolge: nach letzter Benutzung, nie benutzte zuletzt, eigene davor.
+   Das aktive Profil wird hier bewusst NICHT vorgezogen — siehe freezeOrder. */
+function ranked(){
+  return PROFILES.slice().sort(function(a,b){
+    if(a.used!==b.used)return b.used-a.used;
+    if(a.eigen!==b.eigen)return a.eigen?-1:1;
+    return a.name.localeCompare(b.name,"de");
+  });
+}
+function byId(id){return PROFILES.filter(function(x){return x.id===id;})[0];}
+
+/* Die Reihenfolge wird beim OEFFNEN eingefroren und bleibt stehen, solange das
+   Blatt offen ist. Sortierte man bei jedem Antippen neu, tauschten die Zeilen
+   unter dem Finger die Plaetze — man verliert sofort die Orientierung.
+   Neu sortiert wird erst beim naechsten Oeffnen. */
+var SHOWLIST=[], ALLORDER=[];
+function freezeOrder(){
+  var r=ranked();
+  ALLORDER=r.map(function(p){return p.id;});
+  SHOWLIST=r.slice(0,SHOWN).map(function(p){return p.id;});
+}
+
+/* Auswahl aus der Vollliste (Ebene 3): Das Profil rueckt in der Vorauswahl an
+   die erste Stelle, alle anderen ruecken eine Position nach unten, die Liste
+   bleibt fuenf lang — der letzte Eintrag faellt heraus.
+   Bewusst anders als eine Auswahl innerhalb der Vorauswahl, wo sich nur der
+   Punkt bewegt: Wer aus einer anderen Ebene kommt, kommt neu hinzu, und das
+   soll man sehen. Ein Klick mehr, dafuer bleibt die Wahrnehmung geordnet. */
+function promoteToTop(id){
+  SHOWLIST=[id].concat(SHOWLIST.filter(function(x){return x!==id;})).slice(0,SHOWN);
+}
+function visibleList(){
+  var ids=SHOWLIST.slice();
+  if(ids.indexOf(ACTIVE)===-1) ids.unshift(ACTIVE);   // Sicherheitsnetz
+  return ids.slice(0,SHOWN).map(byId);
+}
+
+/* Auswaehlen schliesst das Blatt bewusst NICHT.
+   Grund: Profile werden verglichen, nicht einmalig gesetzt. Wer jedes Mal neu
+   aufziehen muss, um das naechste anzusehen, gibt nach dem zweiten Versuch auf.
+   Sichtbar wird die Wirkung trotzdem sofort — die Pille dahinter aendert sich. */
+function selectProfile(id,fromAll){
+  ACTIVE=id;
+  var p=PROFILES.filter(function(x){return x.id===id;})[0];
+  TICK+=2; p.used=TICK; p.n=(p.n||0)+1; DIRTY=false;
+  $("#pillName").textContent=p.name;
+  $("#sheetProfile").textContent="Berechnet · "+p.name;
+  renderProfiles(); renderAllProfiles();
+  // Aus der Vollliste: nach oben ruecken, dann eine Ebene zurueck. Die
+  // Vorauswahl darunter stand die ganze Zeit offen und zeigt die Aenderung.
+  if(fromAll){ promoteToTop(id); renderProfiles(); close("allprofiles"); }
+  toast(p.bau ? 'Profil „'+p.name+'“ — mit Bausteinen, wird beim Berechnen übertragen.'
+              : 'Profil „'+p.name+'“ gewählt — Route neu berechnen.');
+}
+
+/* Jede Zeile traegt einen Bearbeiten-Knopf, nicht nur die aktive:
+   Einsehen und Bearbeiten sind zentral und duerfen nicht hinter Klicks liegen. */
+function profileRow(p,fromAll){
+  var row=document.createElement("div");
+  row.className="prow";
+  var on=p.id===ACTIVE;
+  var when=pWhen(p);
+  row.innerHTML=
+    '<button class="psel"><span class="pdot'+(on?" on":"")+'"></span>'+
+    '<span class="mt"><b>'+p.name+'</b>'+
+    '<span class="sub">'+pSub(p)+'</span></span></button>'+
+    (when?'<span class="pwhen">'+when+'</span>':'')+
+    '<button class="pedit">Bearbeiten</button>';
+  row.querySelector(".psel").addEventListener("click",function(){
+    selectProfile(p.id,fromAll);
+  });
+  // Bearbeiten aktiviert NICHT — Ansehen ist noch keine Entscheidung.
+  row.querySelector(".pedit").addEventListener("click",function(){
+    openEditor(p.id, fromAll?"all":"picker");
+  });
+  return row;
+}
+
+function renderProfiles(){
+  var host=$("#pList"); host.textContent="";
+  var vis=visibleList();
+  vis.forEach(function(p){ host.appendChild(profileRow(p,false)); });
+  $("#pTip").textContent="Tippen wählt aus — das Blatt bleibt offen, die Reihenfolge steht still.";
+  $("#pCount").textContent=PROFILES.length+" insgesamt";
+  var r=PROFILES.length-SHOWN;
+  $("#pRest").textContent=r>0?("+"+r+" weitere"):"alle anzeigen";
+}
+
+function renderAllProfiles(){
+  var host=$("#allBody"); host.textContent="";
+  [["Eigene Profile",true],["Mitgeliefert",false]].forEach(function(g){
+    var list=ALLORDER.map(byId).filter(function(p){return p.eigen===g[1];});
+    if(!list.length)return;
+    var w=document.createElement("div"); w.className="sect";
+    w.innerHTML='<div class="secthead"><h3>'+g[0]+'</h3>'+
+                '<span class="cnt">'+list.length+'</span></div>';
+    var box=document.createElement("div");
+    box.className="card"; box.style.padding="2px 12px";
+    list.forEach(function(p){ box.appendChild(profileRow(p,true)); });
+    w.appendChild(box); host.appendChild(w);
+  });
+  var n=document.createElement("p"); n.className="note"; n.style.paddingTop="14px";
+  n.innerHTML='<b>Mitgelieferte Profile lassen sich bearbeiten</b> — dabei entsteht '+
+    'automatisch eine eigene Kopie, das Original bleibt unberührt. Profile mit '+
+    'Bausteinen werden vor dem Berechnen einmalig zum Routing-Server übertragen; '+
+    'alle anderen kosten genau eine Anfrage.<br><br>'+
+    '<b>Reihenfolge:</b> aktives Profil zuoberst, danach nach letzter Benutzung, '+
+    'nie benutzte zuletzt. So wandern die Profile, mit denen du wirklich arbeitest, '+
+    'von selbst nach oben — ohne dass du Favoriten pflegen musst.';
+  host.appendChild(n);
+}
+
+$("#newProfile").addEventListener("click",function(){
+  toast("Neues Profil — erst Basis wählen, dann benennen.");
+});
+
+/* ---------- Editor öffnen ---------- */
+var EDITING=null;   // Profil, das gerade im Editor liegt
+var FROM=null;      // woher der Editor aufgerufen wurde
+
+/* Das Profilblatt liegt auf einer hoeheren Ebene als die Vollbild-Fenster.
+   Bliebe es offen, laege der Editor dahinter und waere unsichtbar. Deshalb
+   wird die aufrufende Ebene geschlossen — und beim Zurueckgehen wieder
+   geoeffnet, damit man dort landet, wo man losgegangen ist. */
+function openEditor(id,from){
+  FROM=from||null;
+  if(FROM==="picker"){ close("profiles"); close("scrim"); }
+  if(FROM==="all"){ close("allprofiles"); }
+  EDITING=id; DIRTY=false;
+  var p=PROFILES.filter(function(x){return x.id===id;})[0];
+  $("#editorTitle").textContent=p.name;
+  var foreign=(id!==ACTIVE);
+  $("#editorDone").textContent = foreign ? "Verwenden" : "Fertig";
+  $("#editorNote").innerHTML = foreign
+    ? 'Du siehst <b>'+p.name+'</b> an — aktiv ist weiterhin <b>'+
+      PROFILES.filter(function(x){return x.id===ACTIVE;})[0].name+
+      '</b>. „Verwenden“ wechselt.'
+    : '';
+  $("#editorNote").style.display = foreign ? "" : "none";
+  open("editor");
+}
+
+/* ---------- Änderungen sichern ---------- */
+function markDirty(){ DIRTY=true; }
+
+function askSave(){
+  var p=PROFILES.filter(function(x){return x.id===(EDITING||ACTIVE);})[0];
+  $("#saveName").value = p.eigen ? p.name : p.name+" (geändert)";
+  $("#saveOver").style.display = p.eigen ? "" : "none";
+  $("#saveHint").innerHTML = p.eigen
+    ? 'Du hast <b>'+p.name+'</b> geändert. Überschreiben ersetzt das Profil, '+
+      '„Als neues sichern“ legt eine Kopie unter neuem Namen an.'
+    : '<b>'+p.name+'</b> ist ein mitgeliefertes Profil und bleibt unverändert. '+
+      'Deine Änderungen kommen in eine eigene Kopie — gib ihr einen Namen.';
+  openSheet("savedlg");
+}
+
+function backFromEditor(){
+  close("editor");
+  if(FROM==="picker"){ openSheet("profiles"); }
+  if(FROM==="all"){ open("allprofiles"); }
+  FROM=null; EDITING=null;
+}
+
+function endEdit(){
+  if(DIRTY){ askSave(); return; }
+  if(EDITING && EDITING!==ACTIVE) selectProfile(EDITING,false);
+  backFromEditor();
+}
+
+$("#saveCancel").addEventListener("click",function(){
+  DIRTY=false; close("savedlg"); backFromEditor();
+  toast("Änderungen verworfen.");
+});
+$("#saveNew").addEventListener("click",function(){
+  var nm=$("#saveName").value.trim();
+  if(!nm){ toast("Bitte einen Namen eingeben."); return; }
+  var src=PROFILES.filter(function(x){return x.id===(EDITING||ACTIVE);})[0];
+  TICK+=2;
+  PROFILES.push({id:"p"+TICK,name:nm,eigen:true,basis:src.basis,
+                 bau:src.bau,used:TICK,n:1});
+  DIRTY=false;
+  selectProfile("p"+TICK);
+  freezeOrder();
+  backFromEditor();
+  toast('„'+nm+'“ angelegt und aktiv.');
+});
+$("#saveOver").addEventListener("click",function(){
+  var nm=$("#saveName").value.trim();
+  var p=PROFILES.filter(function(x){return x.id===(EDITING||ACTIVE);})[0];
+  if(!nm){ toast("Bitte einen Namen eingeben."); return; }
+  p.name=nm; DIRTY=false;
+  selectProfile(p.id);
+  backFromEditor();
+  toast('„'+nm+'“ überschrieben.');
+});
+
+/* ---------- Touren ---------- */
+/* Vorschlag zu P2: Name vom Nutzer, Kennzeile automatisch.
+   Die Kennzeile nennt die Abweichungen, nicht nur den Profilnamen — sonst
+   weiss man in einem halben Jahr nicht mehr, warum die Tour so verlief. */
+var TOURS=[
+ {name:"Okertal-Runde",   datum:"14.08.2026", zahl:"43,5 km · 965 hm · 3:36 h",
+  profil:"Harz ruhig",  basis:"fastbike",
+  abw:["Verkehr max","Tempo mittel","Steigung 0","Ortschaften umfahren"], alt:false},
+ {name:"Goslar → Bad Harzburg", datum:"09.08.2026", zahl:"46,6 km · 312 hm · 2:41 h",
+  profil:"Rennrad schnell", basis:"fastbike", abw:["Verkehr gering"], alt:true},
+ {name:"Osterausfahrt",   datum:"02.08.2026", zahl:"30,3 km · 148 hm · 1:44 h",
+  profil:"Trekking",    basis:"trekking",  abw:[], alt:false}
+];
+/* Hoechstens zwei Abweichungen nennen, der Rest wird gezaehlt. Ohne Deckel
+   waechst die Zeile mit jedem verstellten Regler und sprengt die Karteikarte. */
+var ABW_MAX=2;
+function profLine(t){
+  var bits=[t.profil,t.basis];
+  if(!t.abw.length){ bits.push("unverändert"); }
+  else {
+    bits=bits.concat(t.abw.slice(0,ABW_MAX));
+    var rest=t.abw.length-ABW_MAX;
+    if(rest>0) bits.push("+"+rest+" weitere");
+  }
+  return bits.join(" · ");
+}
+
+(function(){
+  var host=$("#archiveBody");
+  TOURS.forEach(function(t){
+    var d=document.createElement("div"); d.className="tour";
+    d.innerHTML='<div class="t1"><b>'+t.name+'</b>'+
+      '<span class="meta">'+t.datum+'</span></div>'+
+      '<span class="meta">'+t.zahl+'</span>'+
+      '<span class="meta tprof">'+profLine(t)+'</span>'+
+      (t.alt?'<p class="pdesc" style="color:var(--ochre)">Das Profil wurde seit '+
+        'dieser Tour geändert. Öffnen rechnet mit den <b>damals</b> '+
+        'gespeicherten Werten.</p>':'')+
+      '<div class="row"><button class="btn">Öffnen</button>'+
+      '<button class="btn">Umbenennen</button>'+
+      '<button class="btn">Löschen</button></div>';
+    host.appendChild(d);
+  });
+  var n=document.createElement("p"); n.className="note";
+  n.innerHTML='<b>Öffnen</b> holt Wegpunkte, Sperrbereiche und die '+
+    'damals verwendeten Werte zurück und rechnet die Route neu. Jede Tour '+
+    'speichert eine <b>Kopie</b> dieser Werte, keinen Verweis aufs Profil — sonst '+
+    'wäre eine alte Tour falsch beschriftet, sobald das Profil sich ändert. '+
+    'Touren liegen nur auf diesem Gerät; eine Kopie in einer Datei gibt es im '+
+    'Menü unter <b>Sicherung</b>.';
+  host.appendChild(n);
+})();
+
+/* ---------- Thema ---------- */
+$("#themeBtn").addEventListener("click",function(){
+  var root=document.documentElement;
+  var dark=matchMedia("(prefers-color-scheme:dark)").matches;
+  var cur=root.getAttribute("data-theme")||(dark?"dark":"light");
+  root.setAttribute("data-theme",cur==="dark"?"light":"dark");
+  drawMap();
+});
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",drawMap);
+
+/* ---------- Start ---------- */
+buildEditor();
+buildUser();
+freezeOrder();
+renderProfiles();
+renderAllProfiles();
+renderKit();
+bars(SURFACE,"#barSurface","#legSurface");
+bars(ROADS,"#barRoad","#legRoad");
+drawElev();
+drawMap();
+positionRail();
+addEventListener("resize",function(){drawMap();positionRail();});
+})();
+</script>

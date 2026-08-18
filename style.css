@@ -1,291 +1,375 @@
-:root {
-  --bg: #0f2430;
-  --panel: #1b3a4b;
-  --panel-line: #2c5468;
-  --text: #eaf2f6;
-  --muted: #9db6c4;
-  --accent: #7dd3fc;
-  --accent-ink: #05202e;
-  --error: #fca5a5;
+/* bikeRouteriOS — Gestaltung nach doku/ui-entwurf-2026-08-18.html
+   Regeln dazu in CLAUDE.md, Abschnitt „Gestaltung". */
+
+:root{
+  --ground:#E9EBE3; --sheet:#F7F8F3; --raised:#FFFFFF;
+  --ink:#171A13; --muted:#6B7362; --faint:#98A08C;
+  --line:#D5D9CB; --line-soft:#E3E6DA;
+  --signal:#DC4514; --signal-ink:#FFFFFF;
+  --slate:#4B6E88; --ochre:#B0812B; --sienna:#96502E; --good:#3F7F58;
+  --shadow:0 1px 2px rgba(20,26,16,.10), 0 8px 28px rgba(20,26,16,.14);
+  --shadow-sm:0 1px 2px rgba(20,26,16,.10), 0 2px 8px rgba(20,26,16,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0D100B; --sheet:#181C15; --raised:#1F2419;
+    --ink:#E9EDE1; --muted:#8B937F; --faint:#69715E;
+    --line:#2B3125; --line-soft:#232819;
+    --signal:#FF6B33; --signal-ink:#1A0C05;
+    --slate:#7FA6C2; --ochre:#DBA748; --sienna:#C8744C; --good:#5FB07E;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 34px rgba(0,0,0,.55);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 3px 10px rgba(0,0,0,.35);
+  }
 }
 
-* { box-sizing: border-box; }
+*{box-sizing:border-box;}
 
-html, body {
-  margin: 0;
-  height: 100%;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
-  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* iOS: kein Gummiband-Scrollen der Seite hinter der Karte */
-  overscroll-behavior: none;
+/* Zwingend, sobald Klassen ein `display` setzen: Das UA-Stylesheet gibt
+   [hidden] nur `display:none` mit niedriger Spezifität mit. Eine Regel wie
+   `#analysis{display:flex}` schlägt sie — das Element bliebe sichtbar,
+   obwohl das Attribut gesetzt ist. Am 18.08.2026 genau so aufgefallen. */
+[hidden]{display:none !important;}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;}
+body{
+  background:var(--ground); color:var(--ink);
+  font:16px/1.45 "IBM Plex Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
 }
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;
+  touch-action:manipulation;-webkit-appearance:none;appearance:none;}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:5px;}
+.num{font-variant-numeric:tabular-nums;}
+a{color:var(--signal);}
 
-body {
-  display: flex;
-  flex-direction: column;
-  padding-top: env(safe-area-inset-top);
-}
+.app{position:fixed;inset:0;overflow:hidden;}
 
-#map {
-  flex: 1 1 auto;
-  min-height: 35vh;
-  background: var(--bg);
-}
+/* z-index:0 ist hier kein Schmuck, sondern zwingend: Leaflet gibt seinen
+   Kartenebenen intern z-index 400 bis 700. Ohne eigenen z-index bildet #map
+   keinen Stapelkontext — dann konkurrieren diese 400er direkt mit der
+   Bedienung darüber und verdecken sie vollständig. Mit z-index:0 bleiben
+   sie innerhalb der Karte. */
+#map{position:absolute;inset:0;z-index:0;background:var(--ground);}
 
-/* Panel unten – Attribution bleibt sichtbar, weil die Karte darüber endet */
-#panel {
-  flex: 0 0 auto;
-  background: var(--panel);
-  border-top: 1px solid var(--panel-line);
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  padding-left: calc(12px + env(safe-area-inset-left));
-  padding-right: calc(12px + env(safe-area-inset-right));
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  /* Bei geöffnetem Archiv darf das Panel wachsen, aber nicht die Karte
-     verdrängen — der Rest scrollt innerhalb des Panels. */
-  max-height: 65vh;
-  overflow-y: auto;
-}
+/* ------------------------------------------------------------- Chrome */
 
-.row { display: flex; gap: 8px; }
-.row > * { flex: 1; }
+.chrome{position:absolute;top:0;left:0;right:0;z-index:20;
+  padding:calc(env(safe-area-inset-top) + 12px) 13px 0;
+  display:flex;gap:10px;align-items:flex-start;pointer-events:none;}
+.chrome > *{pointer-events:auto;}
+.spacer{flex:1 1 auto;}
 
-button, select {
-  min-height: 44px;
-  font-size: 16px;           /* < 16px löst auf iOS Auto-Zoom aus */
-  font-family: inherit;
-  border-radius: 10px;
-  border: 1px solid var(--panel-line);
-  background: #16303e;
-  color: var(--text);
-  touch-action: manipulation;
-  -webkit-appearance: none;
-  appearance: none;
-}
+.pill{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 15px;
+  background:var(--raised);border-radius:22px;box-shadow:var(--shadow-sm);
+  border:1px solid var(--line-soft);max-width:72%;}
+.pill .dot{width:9px;height:9px;border-radius:50%;background:var(--signal);flex:0 0 auto;}
+.pill b{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;}
+.pill .chev{color:var(--faint);font-size:11px;}
 
-select {
-  padding: 0 34px 0 12px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%239db6c4' stroke-width='2'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 12px;
-}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--raised);
+  box-shadow:var(--shadow-sm);border:1px solid var(--line-soft);
+  display:grid;place-items:center;flex:0 0 auto;}
+.iconbtn svg{width:19px;height:19px;stroke:var(--ink);fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;}
 
-button { font-weight: 600; }
-button:active { filter: brightness(1.25); }
+.rail{position:absolute;right:13px;z-index:20;display:flex;flex-direction:column;gap:9px;
+  transition:bottom .34s cubic-bezier(.32,.72,0,1),opacity .2s;}
+.rail.hidden{opacity:0;pointer-events:none;}
+.rail .iconbtn.on{background:var(--signal);border-color:var(--signal);}
+.rail .iconbtn.on svg{stroke:var(--signal-ink);}
 
-button.primary {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: var(--accent);
-}
+.toast{position:absolute;left:50%;z-index:40;
+  transform:translateX(-50%) translateY(9px);
+  background:var(--ink);color:var(--ground);font-size:12.5px;font-weight:500;
+  padding:9px 15px;border-radius:20px;box-shadow:var(--shadow);
+  max-width:86%;opacity:0;pointer-events:none;
+  transition:opacity .22s,transform .22s;}
+.toast.show{opacity:.96;transform:translateX(-50%) translateY(0);}
 
-button.ghost {
-  background: transparent;
-  color: var(--muted);
-  font-weight: 500;
-}
+/* -------------------------------------------------------------- Blatt */
 
-button.danger {
-  color: var(--error);
-  border-color: #5c3340;
-}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;
+  background:var(--sheet);border-top:1px solid var(--line);
+  border-radius:20px 20px 0 0;box-shadow:0 -2px 26px rgba(0,0,0,.16);
+  display:flex;flex-direction:column;
+  height:186px;transition:height .34s cubic-bezier(.32,.72,0,1);}
+.sheet[data-detent="half"]{height:58%;}
+.sheet[data-detent="full"]{height:calc(100% - 92px);}
+.grab{flex:0 0 auto;padding:9px 0 3px;display:grid;place-items:center;cursor:grab;}
+.grab span{width:38px;height:4.5px;border-radius:3px;background:var(--line);display:block;}
+.sheetscroll{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:4px 17px calc(env(safe-area-inset-bottom) + 17px);
+  display:flex;flex-direction:column;gap:16px;}
 
-button[disabled] { opacity: .45; }
+.readout{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:5px;}
+.readout .big{font-size:30px;font-weight:600;letter-spacing:-.024em;line-height:1;}
+.readout .big small{font-size:15px;font-weight:500;color:var(--muted);margin-left:3px;}
+.readout .sep{width:1px;height:23px;background:var(--line);}
 
-.stats {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);font-weight:500;}
+.axisrow{display:flex;justify-content:space-between;}
+.status{margin:6px 0 0;font-size:13px;color:var(--muted);}
+.status.error{color:var(--sienna);}
+.status.busy{color:var(--signal);}
+.note{margin:0;font-size:12px;line-height:1.55;color:var(--muted);}
+.note b{color:var(--ink);font-weight:600;}
+.note code{font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  background:var(--line-soft);padding:1.5px 5px;border-radius:4px;}
+.attrib{padding-bottom:4px;}
 
-.status {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-  min-height: 1.4em;
-}
-.status.error { color: var(--error); }
+.actions{display:grid;grid-template-columns:1fr auto auto;gap:9px;}
+.actions.two{grid-template-columns:1fr 1fr;}
+.btn{min-height:47px;border-radius:13px;font-weight:600;font-size:15.5px;
+  display:grid;place-items:center;border:1px solid var(--line);
+  background:var(--raised);padding:0 16px;}
+.btn.primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal);}
+.btn.danger{color:var(--sienna);border-color:color-mix(in srgb,var(--sienna) 45%,transparent);}
+.btn.sq{width:47px;padding:0;}
+.btn.wide{width:100%;}
+.btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;}
+.btn:active{filter:brightness(.94);}
+.btn[disabled]{opacity:.42;}
 
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
+/* ------------------------------------------------------------ Analyse */
 
-/* --- Wegpunkt-Marker ---
-   Die Trefferfläche ist 44x44 px (Touch-Vorgabe), sichtbar ist nur
-   der 26-px-Punkt in ihrer Mitte. */
-.wp-hit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+#analysis{display:flex;flex-direction:column;gap:16px;}
+.card{background:var(--raised);border:1px solid var(--line-soft);border-radius:15px;
+  padding:14px;display:flex;flex-direction:column;gap:11px;}
+.card h3{margin:0;font-size:13.5px;font-weight:600;}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.cardhead .v{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;}
+.chart{width:100%;height:104px;display:block;overflow:visible;}
+.axis{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:var(--faint);}
 
-.wp {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid #0f2430;
-  box-shadow: 0 1px 4px rgba(0,0,0,.5);
-  color: #05202e;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 22px;
-  text-align: center;
-  background: #7dd3fc;
-}
-.wp--start { background: #86efac; }
-.wp--end   { background: #fca5a5; }
+.bar{display:flex;height:11px;border-radius:6px;overflow:hidden;gap:1.5px;
+  background:var(--line-soft);}
+.bar i{display:block;height:100%;}
+.legend{display:flex;flex-direction:column;gap:7px;}
+.legend div{display:flex;align-items:center;gap:9px;font-size:12.5px;}
+.legend .swatch{width:9px;height:9px;border-radius:2.5px;flex:0 0 auto;}
+.legend .lbl{flex:1 1 auto;color:var(--muted);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.legend .pct{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-weight:500;font-size:12.5px;}
 
-/* Hervorhebung, wenn der Server keinen Weg gefunden hat */
-.wp--flagged {
-  box-shadow: 0 0 0 4px rgba(252, 165, 165, .9), 0 1px 6px rgba(0, 0, 0, .6);
-  animation: wp-pulse 1.4s ease-in-out infinite;
-}
+.flag{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:12px;
+  background:color-mix(in srgb,var(--signal) 11%,transparent);
+  border:1px solid color-mix(in srgb,var(--signal) 26%,transparent);}
+.flag .k{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;
+  color:var(--signal);line-height:1.15;font-variant-numeric:tabular-nums;}
+.flag p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45;}
+.flag p b{color:var(--ink);font-weight:600;}
 
-@keyframes wp-pulse {
-  50% { box-shadow: 0 0 0 9px rgba(252, 165, 165, .25), 0 1px 6px rgba(0, 0, 0, .6); }
-}
+/* --------------------------------------------------------- Vollbilder */
 
-@media (prefers-reduced-motion: reduce) {
-  .wp--flagged { animation: none; }
-}
+.screen{position:absolute;inset:0;z-index:50;background:var(--sheet);
+  display:flex;flex-direction:column;visibility:hidden;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);}
+.screen.open{transform:translateY(0);visibility:visible;}
+.nav{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 11px) 13px 11px;
+  border-bottom:1px solid var(--line);background:var(--sheet);}
+.nav h2{margin:0;font-size:16.5px;font-weight:600;flex:1 1 auto;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.txtbtn{font-size:15px;font-weight:600;color:var(--signal);padding:6px 4px;
+  flex:0 0 auto;min-width:56px;}
+.nav .txtbtn:last-child{text-align:right;}
+.navpad{flex:0 0 auto;min-width:56px;}
+.screenscroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:16px 17px calc(env(safe-area-inset-bottom) + 24px);
+  display:flex;flex-direction:column;gap:13px;}
+.screenscroll.flush{padding-top:0;}
 
-/* Leaflet-Popup an das dunkle Panel angleichen */
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
-  background: var(--panel);
-  color: var(--text);
-}
-.leaflet-popup-content { margin: 10px 12px; }
-.leaflet-popup-content button {
-  width: 100%;
-  padding: 0 14px;
-  white-space: nowrap;
-}
-.leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+.editnote{margin:0;padding:10px 17px;font-size:12.5px;line-height:1.45;
+  color:var(--muted);background:color-mix(in srgb,var(--signal) 9%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--signal) 24%,transparent);}
+.editnote b{color:var(--ink);font-weight:600;}
 
-/* Attribution lesbar halten */
-.leaflet-control-attribution {
-  background: rgba(15,36,48,.85);
-  color: var(--muted);
-  font-size: 11px;
-}
-.leaflet-control-attribution a { color: var(--accent); }
+/* Sprungleiste — kompakt gehalten, siehe OFFENE-PUNKTE.md P3 */
+.jump{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:4px;
+  margin:0 -17px;padding:7px 17px 8px;background:var(--sheet);
+  border-bottom:1px solid var(--line);}
+.jump button{padding:4px 9px;border-radius:7px;font-size:11.5px;font-weight:500;
+  color:var(--muted);border:1px solid var(--line-soft);white-space:nowrap;line-height:1.5;}
+.jump button.on{background:var(--ink);color:var(--ground);font-weight:600;
+  border-color:var(--ink);}
 
-/* --- Archiv --- */
+.sect{display:flex;flex-direction:column;gap:2px;scroll-margin-top:58px;}
+.secthead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:14px 2px 9px;}
+.secthead h3{margin:0;font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-family:"IBM Plex Mono",monospace;font-weight:500;}
+.secthead .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);}
 
-.archive {
-  border-top: 1px solid var(--panel-line);
-  padding-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* --------------------------------------------------------- Parameter */
 
-button.toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  color: var(--text);
-}
+.group{display:flex;flex-direction:column;gap:2px;}
+.param{background:var(--raised);border:1px solid var(--line-soft);padding:14px;
+  display:flex;flex-direction:column;gap:9px;}
+.param:first-child{border-radius:14px 14px 0 0;}
+.param:last-child{border-radius:0 0 14px 14px;}
+.param:only-child{border-radius:14px;}
+.param + .param{border-top:0;}
+.ptop{display:flex;align-items:flex-start;gap:12px;}
+.pname{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;min-width:0;}
+.pname b{font-size:14.5px;font-weight:600;}
+.pname .key{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);}
+.pdesc{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted);}
+.pval{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600;
+  color:var(--signal);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.pchanged{color:var(--signal);font-size:10.5px;font-family:"IBM Plex Mono",monospace;}
 
-button.toggle .chev {
-  transition: transform .15s ease;
-  color: var(--muted);
-}
-button.toggle.open .chev { transform: rotate(180deg); }
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;
+  background:transparent;margin:0;}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;
+  background:var(--line);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:25px;height:25px;
+  border-radius:50%;background:var(--raised);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);margin-top:-10px;}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:var(--line);}
+input[type=range]::-moz-range-thumb{width:23px;height:23px;border-radius:50%;
+  background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow-sm);}
+.scale{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+  font-size:10px;color:var(--faint);margin-top:-4px;}
 
-#archivePanel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* An die Rolle gebunden, nicht an die Klasse allein: Ein blosses .sw
+   (etwa ein Farbkästchen) darf sich hier nichts abholen. */
+.sw[role="switch"]{width:50px;height:30px;border-radius:16px;background:var(--line);
+  position:relative;flex:0 0 auto;transition:background .2s;}
+.sw[role="switch"]::after{content:"";position:absolute;top:2.5px;left:2.5px;
+  width:25px;height:25px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s;}
+.sw[role="switch"][aria-checked="true"]{background:var(--good);}
+.sw[role="switch"][aria-checked="true"]::after{transform:translateX(20px);}
 
-.tours {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+select,input[type=text]{-webkit-appearance:none;appearance:none;width:100%;
+  min-height:44px;font:inherit;font-size:16px;color:var(--ink);
+  background:var(--ground);border:1px solid var(--line);border-radius:11px;
+  padding:0 13px;}
+select{padding-right:34px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='2'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:11px;}
 
-.tour {
-  border: 1px solid var(--panel-line);
-  border-radius: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+/* ------------------------------------------------------------- Ebene 2 */
 
-.tour-name {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
+.menu{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--sheet);
+  border-radius:20px 20px 0 0;border-top:1px solid var(--line);
+  box-shadow:0 -2px 30px rgba(0,0,0,.3);
+  padding:9px 13px calc(env(safe-area-inset-bottom) + 13px);
+  max-height:82%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:9px;
+  visibility:hidden;transform:translateY(101%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1);}
+.menu.open{transform:translateY(0);visibility:visible;}
+.menu .grab{padding:0 0 4px;}
+.scrim{position:absolute;inset:0;z-index:55;background:rgba(0,0,0,.38);
+  opacity:0;visibility:hidden;transition:opacity .3s;}
+.scrim.open{opacity:1;visibility:visible;}
 
-.tour-meta {
-  font-size: 12px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
+.menuhead{display:flex;align-items:baseline;justify-content:space-between;
+  padding:0 5px;gap:10px;}
+.menuhead h3{margin:0;font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-family:"IBM Plex Mono",monospace;font-weight:500;}
+.menuhead .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);}
 
-.tour-actions {
-  display: flex;
-  gap: 6px;
-}
-.tour-actions button {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 0 4px;
-}
+.menuitem{display:flex;align-items:center;gap:13px;width:100%;padding:14px 5px;
+  border-bottom:1px solid var(--line-soft);text-align:left;}
+.menuitem:last-of-type{border-bottom:0;}
+.menuitem svg{width:21px;height:21px;stroke:var(--muted);fill:none;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
+.menuitem .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.menuitem b{font-size:15px;font-weight:600;}
+.menuitem .mt span{font-size:12.5px;color:var(--muted);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
 
-/* --- Dialoge --- */
+/* -------------------------------------------------------- Profilzeilen */
 
-dialog {
-  border: 1px solid var(--panel-line);
-  border-radius: 14px;
-  background: var(--panel);
-  color: var(--text);
-  padding: 16px;
-  width: min(92vw, 380px);
-  margin: auto;
-}
+.prow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-soft);}
+.prow:last-of-type{border-bottom:0;}
+.psel{flex:1 1 auto;display:flex;align-items:center;gap:12px;padding:13px 4px;
+  text-align:left;min-width:0;}
+.pdot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);
+  flex:0 0 auto;position:relative;}
+.pdot.on{border-color:var(--signal);}
+.pdot.on::after{content:"";position:absolute;inset:3px;border-radius:50%;
+  background:var(--signal);}
+.psel .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.psel b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.psel .sub{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pwhen{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
+  flex:0 0 auto;white-space:nowrap;}
+.pedit{padding:9px 13px;border-radius:10px;border:1px solid var(--signal);
+  color:var(--signal);font-size:13px;font-weight:600;flex:0 0 auto;}
+.pmore{display:flex;align-items:center;justify-content:space-between;width:100%;
+  padding:13px 5px 4px;border-top:1px solid var(--line);
+  font-size:14.5px;font-weight:600;}
+.pmore span{color:var(--faint);font-size:13px;font-weight:400;}
 
-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+/* -------------------------------------------------------------- Touren */
 
-dialog form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.tour{background:var(--raised);border:1px solid var(--line-soft);border-radius:14px;
+  padding:14px;display:flex;flex-direction:column;gap:9px;}
+.tour .t1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.tour b{font-size:14.5px;font-weight:600;min-width:0;overflow-wrap:anywhere;}
+.tour .meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
+  font-variant-numeric:tabular-nums;}
+.tour .t1 .meta{flex:0 0 auto;}
+/* Bleibt zwingend einzeilig — die Angaben sind Beiwerk und dürfen die
+   Karteikarte nicht in die Höhe treiben. */
+.tour .tprof{font-size:11px;color:var(--faint);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.tour .warn{margin:0;font-size:12px;line-height:1.45;color:var(--ochre);}
+/* Drei gleich breite Textknöpfe. Bewusst Text statt Symbolen: Bei einer
+   löschenden Aktion ist Eindeutigkeit mehr wert als Zeitgeist. */
+.tour .row{display:flex;gap:7px;}
+.tour .row .btn{flex:1;min-width:0;min-height:38px;border-radius:10px;
+  font-size:13.5px;padding:0 6px;}
 
-dialog label, dialog p {
-  margin: 0;
-  font-size: 15px;
-  overflow-wrap: anywhere;
-}
+/* -------------------------------------------------- Karte: Leaflet */
 
-dialog input[type="text"] {
-  min-height: 44px;
-  font-size: 16px;          /* < 16px löst auf iOS Auto-Zoom aus */
-  font-family: inherit;
-  border-radius: 10px;
-  border: 1px solid var(--panel-line);
-  background: #16303e;
-  color: var(--text);
-  padding: 0 12px;
-  width: 100%;
+.leaflet-container{background:var(--ground);font:inherit;}
+.leaflet-control-attribution{display:none;}   /* steht im Blatt, siehe .attrib */
+.leaflet-control-zoom{display:none;}          /* Zoom per Geste, spart Fläche */
+
+.wp-hit{display:flex;align-items:center;justify-content:center;}
+.wp{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--raised);
+  box-shadow:0 2px 7px rgba(0,0,0,.34);color:#12160F;
+  font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;
+  line-height:21px;text-align:center;background:var(--signal);}
+.wp--start{background:#5FB07E;} .wp--end{background:#E0574B;}
+.wp--flagged{box-shadow:0 0 0 4px color-mix(in srgb,var(--sienna) 75%,transparent),
+  0 2px 7px rgba(0,0,0,.4);animation:wp-pulse 1.4s ease-in-out infinite;}
+@keyframes wp-pulse{50%{box-shadow:0 0 0 9px color-mix(in srgb,var(--sienna) 22%,transparent),
+  0 2px 7px rgba(0,0,0,.4);}}
+
+.nogo-hit{display:flex;align-items:center;justify-content:center;}
+.nogo-dot{width:12px;height:12px;border-radius:50%;background:var(--sienna);
+  border:2.5px solid var(--raised);box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.nogo-dot.pending{opacity:.6;}
+
+/* Kontextmenü am Element — bewusst leicht, es ist eine Nebenhandlung */
+.leaflet-popup-content-wrapper{background:var(--raised);color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);
+  padding:0;}
+.leaflet-popup-content{margin:0;padding:4px;width:auto !important;}
+.leaflet-popup-tip{background:var(--raised);border:1px solid var(--line);}
+.leaflet-container a.leaflet-popup-close-button{display:none;}
+.pop{display:flex;flex-direction:column;white-space:nowrap;}
+.pop .ph{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--faint);padding:4px 8px 5px;}
+.pop button{min-height:30px;border-radius:6px;font-size:12.5px;font-weight:500;
+  padding:0 8px;text-align:left;color:var(--ink);}
+.pop button + button{border-top:1px solid var(--line-soft);border-radius:0;}
+.pop button:active{background:var(--line-soft);}
+.pop button.del{color:var(--sienna);}
+
+@media (prefers-reduced-motion:reduce){
+  .sheet,.rail,.screen,.menu,.scrim,.toast{transition:none;}
+  .wp--flagged{animation:none;}
 }
