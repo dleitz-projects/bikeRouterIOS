@@ -147,3 +147,86 @@ Als verständlich benannte Schalter im Editor („Durch Wald und Parks führen",
 Implementierungsaufwand — sie existieren bereits, man muss sie nur anbieten.
 
 **Vorher klären:** Test 4 in `BROUTER.md` — was kosten sie an Umweg?
+
+---
+
+## Idee 7 — Kartenwahl als eigenes Werkzeug
+
+**Status:** offen, für den nächsten Entwurf vorgemerkt · **Aufwand:** klein
+
+Die App zeigt heute nur die Standard-Kacheln von OpenStreetMap. Andere Planer
+bieten an derselben Stelle ein Schnellmenü mit Kartenbildern an — Standard,
+Fahrradkarte, Gelände, Satellit. Für ein Rad-Werkzeug ist besonders eine
+Fahrradkarte interessant, die Radwege und Radrouten eigens hervorhebt.
+
+Das Symbol dafür ist auf allen Karten dasselbe (gestapelte Ebenen) und gehört
+in die Werkzeugleiste rechts. Es ist kein Modus, sondern öffnet ein kleines
+Menü — schließt sich also mit dem Modus-Paar nicht aus.
+
+**Nicht zu verwechseln mit der Nominatim-Entscheidung (Idee 10).** Kacheln sind
+kein API-Dienst: keine Anmeldung, kein Schlüssel, keine zweite Fehlerquelle im
+Routing. CyclOSM und OpenTopoMap sind frei nutzbar, Thunderforests
+OpenCycleMap braucht dagegen einen Schlüssel — und Satellitenbilder gibt es
+ohne Vertrag praktisch nirgends. Zu klären ist also je Quelle, ob sie
+zumutbar ist, nicht die Architektur.
+
+---
+
+## Idee 8 — Zoomknöpfe
+
+**Status:** offen, für den nächsten Entwurf vorgemerkt · **Aufwand:** klein
+
+Zwei Finger zum Zoomen sind auf dem Rad mit Handschuh unbequem; Plus und Minus
+wären der schnellere Weg. Vorschlag: klein und auf der **linken** Seite — rechts
+sammeln sich bereits vier Werkzeuge, und mit der Kartenwahl aus Idee 7 werden es
+fünf.
+
+**Achtung, Altlast:** Leaflets eigenes `zoomControl` ist in `app.js` mit
+Begründung abgeschaltet — es galt auf älteren iOS-Fassungen als Ursache dafür,
+dass Antippen nicht ankommt. Eigene Knöpfe umgehen das, Leaflets Control
+wiedereinzuschalten wäre der falsche Weg.
+
+---
+
+## Idee 9 — Berechnete Routen bleiben liegen, Vergleich durch Auswählen
+
+**Status:** offen, inhaltlich der stärkste Punkt · **Aufwand:** groß
+
+Heute ersetzt jede Berechnung die vorige. Wer das Profil wechselt und neu
+rechnet, sieht das Ergebnis — aber nie den **Unterschied**. Genau der ist der
+Zweck dieses Projekts: sichtbar machen, was ein Profil anders macht.
+
+Der Vorschlag braucht dafür keinen eigenen Vergleichsmodus. Eine berechnete
+Route bleibt einfach liegen, blass und schraffiert im Hintergrund, wenn die
+nächste dazukommt. Angetippt wird eine Route aktiv; das Routenblatt zeigt dann
+ihre Kennzahlen und ihre Analyse, und alles Weitere — Teilen, Speichern —
+bezieht sich auf die markierte Route. Damit ist der Vergleich ein Nebenprodukt
+des normalen Arbeitens statt eine zusätzliche Funktion.
+
+**Was daran noch nicht geklärt ist:**
+
+- Ein Werkzeug zum Aufräumen wird gebraucht: alle Routen bis auf die aktive weg,
+  oder alle weg. Sonst wächst die Karte zu.
+- Jede zusätzliche Route ist eine zusätzliche Anfrage an gespendete
+  Infrastruktur. Nur auf ausdrückliche Aktion, nie automatisch über alle Profile.
+- Woran erkennt man die Routen auseinander, ohne die Karte zu überladen?
+  Farbe je Profil, Nummer, oder nur die aktive farbig?
+- Wieviele Routen sind sinnvoll, bevor es unübersichtlich wird?
+
+Ein Entwurf muss das zeigen, bevor gebaut wird.
+
+---
+
+## Idee 10 — Ortssuche
+
+**Status:** offen, hängt an der Nominatim-Entscheidung · **Aufwand:** mittel
+
+Ein Suchfeld, in das man „Bad Harzburg" tippt und die Karte springt dorthin.
+Naheliegend — aber es ist **dieselbe** Entscheidung wie das Snapping der
+Wegpunkte und die automatischen Tourennamen: alle drei brauchen einen zweiten
+externen Dienst (Nominatim oder gleichwertig).
+
+Deshalb steht die Suche hier nur als Anwendung, nicht als eigene Frage. Fällt
+die Entscheidung in der `CLAUDE.md`, sind alle drei möglich; fällt sie nicht,
+keines davon. Wer den Aufwand abwägt, muss die drei zusammen betrachten — jede
+einzeln sieht zu klein aus, um eine neue Abhängigkeit zu rechtfertigen.

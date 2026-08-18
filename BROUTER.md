@@ -97,6 +97,23 @@ liefert **HTTP 500 mit leerem Body** — nicht unterscheidbar von anderen Fehler
 Die App muss beim Fehlschlag mit einer Custom-ID deshalb einmal blind neu
 hochladen und erneut versuchen, bevor sie einen Fehler meldet.
 
+### Test 6 — Ab welcher Länge bricht der Server ab? offen, wichtig
+
+*Beobachtet, nicht gemessen:* Zu lange Strecken beantwortet der Server nicht,
+sondern bricht mit `operation killed by thread-priority-watchdog after N
+seconds` ab (N > 0). Ab wann, ist unbekannt.
+
+*Aufbau:* Dieselbe Richtung, wachsende Distanz — etwa 50, 100, 150, 200, 300 km
+Luftlinie, je zweimal mit `fastbike-lowtraffic` und `trekking`. Festhalten:
+Luftlinie, Streckenlänge, Antwortzeit, Ausgang. Wegen der Mengenbegrenzung
+(`SERVER.md`) mit Abstand fahren, nicht in Serie.
+
+*Warum das zählt:* Ohne Zahl kann die App weder vorher warnen noch anbieten,
+eine Strecke in Abschnitte zu teilen. Und der Abbruchtext lässt sich nicht von
+„Punkte liegen ungünstig" unterscheiden, ohne die Größenordnung zu kennen.
+Vermutlich hängt die Grenze zusätzlich am Profil und an der Auslastung — dann
+ist das Ergebnis eine Faustregel, kein Grenzwert.
+
 ---
 
 ## Ein Profil ist ein Programm, keine Werteliste
@@ -214,6 +231,21 @@ dokumentierten Bereich hinaus sauber weiter:
 | 2.0 | 41,1 % |
 | 4.0 | 36,8 % |
 | 8.0 | 27,6 % |
+
+---
+
+## Profile und Server — jetzt in eigenen Dateien
+
+Am 19.08.2026 sind zwei Themen aus dieser Datei ausgezogen, weil sie eigene
+Fragen sind und nicht die Rechenweise der Engine betreffen:
+
+- **Welche Profile es gibt**, wie sie heißen, was ihre Namen verschweigen und
+  welche wir übernehmen → `PROFILE.md`
+- **Wer die Server betreibt**, was sie aushalten und wie sie scheitern
+  (Mengenbegrenzung, Längengrenze, Versionen, CORS) → `SERVER.md`
+
+Hier bleibt, was die **Engine** betrifft: Profilsprache, Parameter, Tags,
+Kostenmodell und die Messungen dazu.
 
 ---
 

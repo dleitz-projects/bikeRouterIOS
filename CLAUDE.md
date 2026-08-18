@@ -18,20 +18,30 @@ Lücke schließt dieses Projekt.
 ## Begleitende Dokumente
 
 Diese Datei enthält **Verbindliches**: Entscheidungen, Regeln, Nicht-Ziele.
-Was hier steht, gilt. Zwei Dateien daneben halten bewusst Unverbindliches:
+Was hier steht, gilt. Die Dateien daneben halten bewusst Unverbindliches:
 
-- **`BROUTER.md`** — wie die Routing-Engine arbeitet und was davon nachgemessen
-  ist, dazu eine Liste offener Tests. Wissen, das sich mit der nächsten Messung
-  ändern darf.
+- **`BROUTER.md`** — wie die Routing-Engine **rechnet** und was davon
+  nachgemessen ist, dazu eine Liste offener Tests. Wissen, das sich mit der
+  nächsten Messung ändern darf.
+- **`SERVER.md`** — wer die Server **betreibt**, was sie aushalten und wie sie
+  scheitern: Instanzen, Endpunkte, Versionen, Grenzen, Ausweichwege. Die ganze
+  App hängt an fremder Infrastruktur; hier steht, was darüber bekannt ist.
+- **`PROFILE.md`** — welche Profile es **gibt**, was ihre Namen verschweigen und
+  welche wir übernehmen, umbenennen oder selbst schreiben. Eine Frage, die auf
+  einen Schlag nicht zu entscheiden ist.
 - **`IDEEN.md`** — Ideensammlung mit Status. Auch Verworfenes bleibt dort mit
   Begründung stehen.
 - **`OFFENE-PUNKTE.md`** — Entscheidungen, die an bereits Gebautem hängen und
   noch nicht gefallen sind. Benennungen, Verhalten, Grenzfälle.
-- **`doku/`** — Material, das nicht ausgeliefert wird. Darin der klickbare
-  UI-Entwurf, auf den sich der Abschnitt „Gestaltung" bezieht.
+- **`doku/`** — Material, das nicht ausgeliefert wird. Darin die klickbaren
+  UI-Entwürfe, auf die sich der Abschnitt „Gestaltung" bezieht.
 
 Wer die Engine anfasst, liest vorher `BROUTER.md`. Vieles, was naheliegend
 aussieht, ist dort bereits gemessen und teils widerlegt.
+
+**Die Trennung der drei technischen Dateien in einem Satz:** `BROUTER.md`
+beantwortet „wie wird gerechnet", `SERVER.md` „wer rechnet und was hält er aus",
+`PROFILE.md` „womit wird gerechnet".
 
 ## Zielnutzer
 
@@ -188,6 +198,34 @@ gesetzt, Profil gewählt, Tour gespeichert — eine kurze Einblendung am unteren
 Rand sagt, was passiert ist. Ohne sie ist auf einer Karte nicht zu erraten, was
 ein Symbol bewirkt hat.
 
+**Einblendung und Statuszeile haben verschiedene Aufgaben.** Die Einblendung
+über der Karte quittiert die **Geste** und verschwindet wieder; die Statuszeile
+im Blatt trägt den **Zustand** der Route und bleibt stehen. Wandert die Quittung
+in die Statuszeile, steht beides doppelt da — und die Quittung landet ausgerechnet
+dort, wo man beim Tippen auf die Karte nicht hinsieht. Genau so war es am
+18.08.2026 gebaut. Daraus folgt auch die Wortwahl: „Wegpunkt 3 gesetzt."
+gehört in die Einblendung, „3 Punkte — bereit zum Berechnen." in die Statuszeile.
+
+**Nach der Berechnung fährt das Blatt in die volle Raste.** Sonst bleibt die
+Analyse hinter einem schmalen Griff verborgen und es sieht aus, als sei außer
+der Linie nichts passiert.
+
+**Der Griff ist anzufassen, nicht nur anzutippen.** 44 px Trefferfläche wie bei
+jedem anderen Bedienelement, und Ziehen führt das Blatt der Hand nach. Ein Blatt,
+das nur auf Antippen weiterschaltet, wirkt am Telefon kaputt: Man zieht, und
+nichts folgt. Am 18.08.2026 war der Griff 16,5 px hoch — daran allein scheiterte
+das Auf- und Zuziehen.
+
+**In der kleinen Raste ist das Blatt starr.** Ließe sich darin scrollen, käme man
+ohne die Rasten an denselben Inhalt — und die Rasten wirkten willkürlich.
+
+**Die Nennung der Datenquellen sitzt auf der Karte, nicht im Blatt.** Ein
+antippbares „©" unten links, das die volle Zeile aufklappt, dazu dieselbe Zeile
+im Menü. OpenStreetMap verlangt eine sichtbare Nennung, erlaubt auf kleinen
+Displays aber, sie hinter ein Zeichen zu legen. Im Blatt stand sie am 18.08.2026
+direkt unter *Route berechnen*, sobald keine Analyse da war — und nahm dort den
+meisten Platz ein.
+
 **Ebenen stapeln sich nach Aufrufreihenfolge, nicht nach Position im Markup.**
 Bei gleichem `z-index` gewinnt sonst das später im Dokument stehende Element —
 und eine Ebene verdeckt eine andere, die eigentlich obenauf gehört. Genau das ist
@@ -307,6 +345,7 @@ Meldungen aus:
 | `to-position not mapped in existing datafile` | dasselbe, andere Schreibweise — auch `from-position` |
 | `operation killed by thread-priority-watchdog after N seconds` | N > 0: Server bricht ab, meist zu weite Distanz |
 | `operation killed by thread-priority-watchdog after 0 seconds` | **N = 0 ist etwas anderes:** gedrosselt, nicht gerechnet |
+| `Please, retry later!` (kommt als **HTTP 403**) | Mengenbegrenzung — zu viele Anfragen in kurzer Zeit |
 
 **Die Sekundenzahl im Watchdog-Text trennt zwei Sachverhalte.** `after 0
 seconds` heißt, dass der Server gar nicht erst gerechnet hat — er drosselt,
@@ -320,6 +359,13 @@ falsch ist.
 Region" gibt es mindestens zwei Formulierungen, und sie teilen sich nur das Wort
 `datafile`. Wer auf `datafile` **und** `not found` prüft, übersieht die zweite und
 gibt eine nichtssagende Meldung aus. Gefunden am 18.08.2026 beim Testen.
+
+**Die Mengenbegrenzung ist ein eigener Fall.** Gemessen am 19.08.2026: Nach rund
+30 Anfragen in kurzer Folge antwortet der Server auf jede weitere mit `403` und
+`Please, retry later!`; nach etwa einer Minute läuft es wieder. Das ist nicht der
+Watchdog — der kommt als `400`, wenn sich zwei Anfragen überschneiden. Wer beides
+zusammenwirft, schickt den Nutzer beim einen Fall warten und beim anderen seine
+Wegpunkte umbauen. Wichtig für alles, was mehrere Routen auf einmal rechnen will.
 
 Der Body kann auch leer sein — dann bleibt nur eine generische Meldung. Das
 trifft auch auf **HTTP 500 mit leerem Body** zu, den es mindestens in zwei
@@ -500,10 +546,14 @@ Ein Tourenname, der automatisch entsteht — „Goslar → Bad Harzburg" statt
 Ortsnamen zu machen ist umgekehrte Geokodierung, also Nominatim oder
 gleichwertig.
 
-Das ist wichtig für die Bewertung: Es sind **nicht zwei kleine Wünsche**, sondern
-zwei Anwendungen derselben einen Entscheidung. Fällt sie einmal, sind beide
-möglich; fällt sie nicht, ist keines von beiden machbar. Wer den Aufwand
-abwägt, sollte deshalb beide Seiten zusammen betrachten — und mögliche weitere
+Seit dem 18.08.2026 kommt eine dritte Anwendung dazu: eine **Ortssuche**
+(„Bad Harzburg" eintippen, Karte springt hin) ist Geokodierung in der anderen
+Richtung — derselbe Dienst, dieselbe Entscheidung. Siehe `IDEEN.md`, Idee 10.
+
+Das ist wichtig für die Bewertung: Es sind **nicht drei kleine Wünsche**, sondern
+drei Anwendungen derselben einen Entscheidung. Fällt sie einmal, sind alle
+möglich; fällt sie nicht, ist keine davon machbar. Wer den Aufwand abwägt,
+sollte deshalb alle Seiten zusammen betrachten — und mögliche weitere
 Anwendungen, die sich daraus ergeben.
 
 Bis dahin gilt: Der Tourenname wird beim Speichern aus Datum und Distanz
