@@ -567,7 +567,17 @@ function explain(status, body) {
          : 'Mindestens ein Punkt liegt');
     return { text: which + ' außerhalb der abgedeckten Kartenregion — dort gibt es keine Daten zum Rechnen.' };
   }
+  /* Zwei verschiedene Sachverhalte, gleiche Meldung — unterschieden nur an
+     der Sekundenzahl. „after 0 seconds" heisst: Der Server hat gar nicht erst
+     gerechnet, sondern gedrosselt, weil kurz zuvor schon eine Anfrage von
+     derselben Adresse lief. Gemessen am 18.08.2026 beim Testen: Dieselbe
+     Anfrage lief kurz darauf fehlerfrei durch. Wer hier „zu weit auseinander"
+     ausgibt, schickt den Nutzer seine Wegpunkte umbauen, obwohl nichts an
+     ihnen falsch ist. */
   if (b.indexOf('watchdog') !== -1) {
+    if (/after 0 seconds/.test(b)) {
+      return { text: 'Der Routing-Server hat die Anfrage sofort abgewiesen — meist, weil kurz zuvor schon eine lief. Kurz warten und noch einmal berechnen.' };
+    }
     return { text: 'Der Server hat die Berechnung abgebrochen, weil sie zu lange gedauert hat. Meist liegen die Punkte zu weit auseinander.' };
   }
   if (status >= 500) {
@@ -607,7 +617,11 @@ async function request(target) {
 
 async function calculate(override) {
   if (state.wps.length < 2 || state.busy) return;
-  const profile = override || activeProfile();
+  /* Nur ein echtes Profil zaehlt als Ueberschreibung. Alles andere — etwa
+     ein versehentlich durchgereichtes Event — wird ignoriert, statt als
+     Profil weiterverarbeitet zu werden. */
+  const ok = override && typeof override === 'object' && typeof override.basis === 'string';
+  const profile = ok ? override : activeProfile();
   const pts = lonlats();
   const ngs = nogoParam();
 
@@ -639,7 +653,7 @@ async function calculate(override) {
     };
     state.gpx = null;
     setStatus('Route berechnet.');
-    if (!override) { noteUse(profile.id); persist(); }
+    if (!ok) { noteUse(profile.id); persist(); }
   } catch (err) {
     clearRoute();
     clearFlags();
@@ -1917,7 +1931,12 @@ $('#grab').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetent(detent + 1); }
 });
 
-$('#calcBtn').addEventListener('click', calculate);
+/* Nicht `calculate` direkt haengen: Ein Listener bekommt das Event als
+   erstes Argument, und das landete in `override` — dem Platz fuer ein
+   Profil. `profile.params` war dann undefined, und die Berechnung brach
+   mit „Cannot convert undefined or null to object" ab, noch bevor eine
+   Anfrage rausging. Gefunden am 18.08.2026. */
+$('#calcBtn').addEventListener('click', function () { calculate(); });
 $('#shareBtn').addEventListener('click', share);
 $('#saveBtn').addEventListener('click', saveTour);
 

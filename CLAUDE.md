@@ -305,7 +305,16 @@ Meldungen aus:
 | `no track found at pass=0` | Ein Wegpunkt liegt zu weit von einer erfassten Straße entfernt |
 | `datafile <name>.rd5 not found` | Punkt außerhalb der abgedeckten Region |
 | `to-position not mapped in existing datafile` | dasselbe, andere Schreibweise — auch `from-position` |
-| `operation killed by thread-priority-watchdog after N seconds` | Server bricht ab, meist zu weite Distanz |
+| `operation killed by thread-priority-watchdog after N seconds` | N > 0: Server bricht ab, meist zu weite Distanz |
+| `operation killed by thread-priority-watchdog after 0 seconds` | **N = 0 ist etwas anderes:** gedrosselt, nicht gerechnet |
+
+**Die Sekundenzahl im Watchdog-Text trennt zwei Sachverhalte.** `after 0
+seconds` heißt, dass der Server gar nicht erst gerechnet hat — er drosselt,
+weil kurz zuvor schon eine Anfrage von derselben Adresse lief. Gemessen am
+18.08.2026: dieselbe Anfrage lief zehn Sekunden später fehlerfrei durch, und
+über `curl` parallel ohnehin. Wer hier „die Punkte liegen zu weit auseinander"
+ausgibt, schickt den Nutzer seine Wegpunkte umbauen, obwohl nichts an ihnen
+falsch ist.
 
 **Auf Teilzeichenketten prüfen, nicht auf ganze Sätze.** Für „außerhalb der
 Region" gibt es mindestens zwei Formulierungen, und sie teilen sich nur das Wort

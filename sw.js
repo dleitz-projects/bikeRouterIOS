@@ -4,7 +4,7 @@
 
    Beim Ausliefern einer geaenderten Version CACHE hochzaehlen. */
 
-const CACHE = 'bikerouterios-v4';
+const CACHE = 'bikerouterios-v5';
 
 const SHELL = [
   './',
