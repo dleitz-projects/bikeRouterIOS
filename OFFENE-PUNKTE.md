@@ -782,3 +782,59 @@ gespeichert wird, sondern **wie oft sie dabei durch die Serialisierung läuft**.
 
 **Aufgefallen:** 19.08.2026, beim Umbau — als Folge davon, nicht als Fehler
 darin.
+
+---
+
+## P21 — Die Differenzzeile bricht um · offen, Vorschlag steht
+
+**Beobachtet am 19.08.2026** (`IMG_4723_varA_kopf62_unten893.PNG`): Der
+Vergleich zweier Routen steht heute in zwei Zeilen —
+
+```
+gegenüber A  +1,7 km  +39 hm  +6 min
+Tempo 70+: 0,3 % statt 2,2 %
+```
+
+— und mit dreistelligen Differenzen werden daraus drei. Gefordert ist eine
+Lösung, die **einzeilig bleibt, ohne Information zu kürzen**.
+
+**Der Vorschlag: die Wiederholung streichen, nicht den Inhalt.** Die Einheiten
+stehen schon in den Kennzahlen darüber. Also die Differenzen spaltenweise
+darunter, in derselben Aufteilung:
+
+```
+60,1 km  |  125 hm  |  2:46 h
+  +1,7   |   +39    |   +6 min        gegenüber A
+```
+
+Damit wächst die Zeile nur noch mit den Ziffern und nicht mehr mit den
+Wörtern — bei dreistelligen Differenzen kann sie nicht umbrechen.
+
+**Was daran offen ist: `Tempo 70+`.** Im ersten Entwurf sollte der Wert in die
+Analyse wandern, weil er keine Kennzahl der Route ist und in der Spaltenform
+keinen Platz hat. Dagegen spricht, dass er die einzige Zahl in der App ist, die
+etwas über den **Verkehr** sagt — und genau darum geht es dem Nutzer
+(`CLAUDE.md`, Zielnutzer: „Asphaltqualität und wenig Autoverkehr"). Viele
+fahren ungern auf Bundesstraßen, und der Unterschied zwischen 0,3 % und 2,2 %
+ist beim Vergleich zweier Routen die interessanteste Zahl von allen.
+
+**Zugleich ist die Aussage unvollständig:** Tempolimit ist nicht
+Verkehrsdichte. Eine Landstraße mit Tempo 70 und zehn Autos am Tag ist etwas
+anderes als eine mit Tempo 70 und tausend. Was dazu in den Kartendaten
+überhaupt steht, ist ungeprüft — `BROUTER.md` kennt bisher nur `maxspeed` und
+die Straßenart.
+
+**Damit drei Fragen, in dieser Reihenfolge:**
+
+1. Gibt es in OSM ein Feld, das Verkehrsdichte annähert und flächendeckend
+   genug erfasst ist, um es zu zeigen? (Zu messen wie in `messungen/` — nicht
+   zu diskutieren.)
+2. Falls ja: Dann gehören Tempolimit **und** Dichte in die Analyse, als eigene
+   Karte, und die Differenzzeile wird frei für die drei Kennzahlen.
+3. Falls nein: Dann bleibt `Tempo 70+` die beste vorhandene Näherung — und
+   muss in der Differenzzeile bleiben. Dann wäre die Spaltenform nur die halbe
+   Lösung, und die zweite Zeile bräuchte ihre eigene knappe Form.
+
+**Nicht gebaut**, weil es die Reihenfolge aus dem Entwurf umstellt
+(`CLAUDE.md`: „Der Vergleich steht als Differenz unter den Kennzahlen") und an
+Frage 1 hängt.

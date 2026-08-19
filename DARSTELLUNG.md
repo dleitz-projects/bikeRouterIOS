@@ -67,6 +67,31 @@ Gerechnet wird mit diesen Zahlen nicht — sie sind Beleg, kein Bedienelement.
 Für ein neues Gerät ist die Zeile der erste Griff: ein Screenshot des Menüs
 füllt die Gerätetabelle oben, ohne dass jemand Pixel zählt.
 
+## Screenshots benennen
+
+Der Ordner `Screenshot/` liegt nicht im Repo (`.gitignore`), die Namen dienen
+nur der Zuordnung. **Der Originalname bleibt vorn** — er hält die Reihenfolge,
+in der das Gerät die Bilder abgelegt hat. Dahinter kommt, was sich am Bild
+**messen** lässt:
+
+```
+IMG_4723_varA_kopf62_unten893.PNG
+IMG_4703_varB_kopf75_unten938.PNG
+```
+
+| Teil | Bedeutung | woran erkannt |
+|---|---|---|
+| `varA` / `varB` | mit oder ohne `black-translucent` | oberste Bildpunktzeile: Karte oder Systemfarbe |
+| `kopf62` | Oberkante der Profilpille in CSS-Pixeln | trennt die Stände: 75 = vor der Kopfzeilen-Korrektur, 62 = danach |
+| `unten893` | wo der Inhalt endet | die Zahl, um die es den ganzen 19.08. ging |
+
+Alle drei sind mit `bildmass.py` reproduzierbar und **keine Vermutung** — kein
+Versionsstand aus dem Gedächtnis, keine Zuordnung nach Uhrzeit. Wo eine
+Vollbild-Ebene offen ist, sieht die oberste Zeile aus wie Variante B; solche
+Bilder tragen `varA-ebene-offen`.
+
+Wer will, hängt hinten noch den Befund an: `…_unten894_knopf-zu-tief.PNG`.
+
 ## Geräte
 
 | Gerät | Bildschirm | dpr | Fenster | `inset-top` | `inset-bottom` | geprüft |
@@ -122,6 +147,32 @@ obersten Bildpunktzeile. Der Zuschlag `+ env(safe-area-inset-top)` an den
 Stellen, die am oberen Rand angefasst werden, meldet auf diesem Gerät jetzt
 null — die Regel bleibt trotzdem stehen, denn auf einem Gerät oder in einem
 Modus, wo der Wert nicht null ist, ist sie weiterhin nötig.
+
+## Variante B in einer Zeile
+
+Beide Varianten unterscheiden sich in genau einer Zeile in `index.html`:
+
+```html
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+```
+
+| | Variante A (Zeile gesetzt) | Variante B (Zeile fehlt) |
+|---|---|---|
+| Karte oben | randlos bis zur obersten Bildpunktzeile | beginnt unter der Statusleiste |
+| oberste Zeile | Karte | Statusleiste in `theme-color` |
+| `env(safe-area-inset-top)` | 62 px | 0 |
+| unterer Rand | 62 px unerreichbar, in Blattfarbe | Inhalt reicht bis 955,7 |
+| Platz für Inhalt | 832 px | 894 px |
+
+**Mehr ist nicht zu tun.** Alle Abstände rechnen gegen
+`env(safe-area-inset-top)`; in Variante B meldet der null, und damit werden
+alle Abzüge von selbst zu Nullen. Deshalb gibt es auch keinen zweiten Zweig im
+Repo — eine Kopie, die gepflegt werden müsste, wäre teurer als der Wechsel.
+Variante A ist als Tag `variante-a` gesichert (Stand v24, am Gerät geprüft).
+
+**Nach jedem Wechsel muss das Home-Bildschirm-Symbol gelöscht und neu angelegt
+werden.** iOS liest diese Zeile beim Anlegen des Symbols, nicht bei jedem
+Start.
 
 ## Die Fallen
 
