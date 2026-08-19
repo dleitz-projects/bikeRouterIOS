@@ -176,6 +176,7 @@ Behauptung über das Routing ist gegen den echten Server gemessen, mit Datum.
 | [`BROUTER.md`](BROUTER.md) | Wie die Engine rechnet — mit allen Messungen |
 | [`SERVER.md`](SERVER.md) | Wer die Server betreibt und was sie aushalten |
 | [`PROFILE.md`](PROFILE.md) | Welche Profile es gibt und was ihre Namen verschweigen |
+| [`DARSTELLUNG.md`](DARSTELLUNG.md) | Wie die Oberfläche auf echten Geräten misst — und woran sie schon gescheitert ist |
 | [`UMSETZUNG.md`](UMSETZUNG.md) | Was beim Bauen entschieden wurde |
 | [`OFFENE-PUNKTE.md`](OFFENE-PUNKTE.md) | Was noch offen ist |
 | [`IDEEN.md`](IDEEN.md) | Was man bauen könnte — auch Verworfenes mit Begründung |

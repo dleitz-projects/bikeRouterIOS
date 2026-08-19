@@ -8,3 +8,6 @@ PROMPT-Runde-*.md
 # die Originale sind gross und koennen persoenliche Daten enthalten.
 Screenshot/
 Screenshots/
+
+# Beiwerk von Python
+__pycache__/

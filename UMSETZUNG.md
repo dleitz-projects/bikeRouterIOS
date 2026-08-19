@@ -370,6 +370,54 @@ persönliche Daten enthalten.
 
 ---
 
+## U24 — Der graue Balken *unter* dem Blatt: das Fenster ist nicht der Bildschirm
+
+Nach U22 stand weiterhin ein Streifen unter dem Rechnen-Knopf. Es war aber
+nicht derselbe Fehler: Der Streifen liegt **außerhalb** des Blattes und trägt
+`--ground` statt `--sheet`.
+
+**Nicht geschätzt, sondern ausgemessen** — mit dem neuen
+`werkzeuge/bildmass.py`, das jeden Farbwechsel entlang einer Linie mit
+Bildpunkt, CSS-Pixel und Farbnamen aus `style.css` ausgibt:
+
+```
+y  2617–2681    872.3–893.7  css   65 px  #F7F8F2  --sheet (hell)
+y  2682–2867    894.0–955.7  css  186 px  #E9EBE3  --ground (hell)
+```
+
+Bildschirm 956 px, Blattunterkante bei 893,7 px, und die Seite beginnt am
+obersten Bildschirmpunkt (die erste Bildpunktzeile trägt Kartenfarbe). Die
+fehlenden **62 px sind auf den Punkt `env(safe-area-inset-top)`** — dieselben
+62 px, die oben zusätzlich da sind. Die App wird über die volle Höhe
+gezeichnet, das Layout rechnet ohne den oberen Systemstreifen.
+
+**Zwei Änderungen, die zweite sichert die erste ab:**
+
+1. `.app` ist so hoch wie der Bildschirm, nicht wie das Fenster. Die Differenz
+   wird gemessen und dreifach eingezäunt — nur in der installierten App,
+   höchstens der obere Systemstreifen, nie negativ. Wo der Browser richtig
+   rechnet, kommt null heraus und nichts ändert sich. Alle Höhenrechnungen
+   gehen seitdem gegen den Rahmen (`appH()`), nicht gegen das Fenster.
+2. Die Leinwand trägt `--sheet` statt `--ground`. Unten sitzt in jedem Zustand
+   ein Blatt; malt das System außerhalb des Fensters, malt es jetzt in der
+   Farbe, die dort ohnehin hingehört.
+
+**Offen und am Bild zu erkennen:** Ob iOS unterhalb des Fensters überhaupt
+Inhalt zeichnet, ist ungeprüft — belegt ist nur, dass es dort die
+Hintergrundfarbe malt. Sitzt der Knopf nach dem Deployment tiefer als vorher
+und ist die Karte höher, wurden die 62 px zurückgewonnen; sieht alles aus wie
+vorher, nur ohne Balken, verdeckt Punkt 2 sie bloß. Dann wäre der nächste
+Schritt, `black-translucent` zu streichen — was womöglich die randlose Karte
+am oberen Rand kostet und deshalb nicht ungefragt passiert ist.
+
+**Neu dazu: `DARSTELLUNG.md`.** Acht Darstellungsfallen sind inzwischen am
+Gerät aufgelaufen und keine einzige davon im Browser aufgefallen. Sie standen
+verstreut in `CLAUDE.md`; jetzt stehen sie zusammen, mit Messverfahren,
+Gerätetabelle und einer Prüfliste für die Sichtkontrolle. `CLAUDE.md` behält
+nur, was gilt.
+
+---
+
 ## U17 — Was noch nicht umgesetzt ist
 
 - **Route auf der Karte antippen** funktioniert, ist aber mit einer dünnen

@@ -29,6 +29,11 @@ Was hier steht, gilt. Die Dateien daneben halten bewusst Unverbindliches:
 - **`PROFILE.md`** — welche Profile es **gibt**, was ihre Namen verschweigen und
   welche wir übernehmen, umbenennen oder selbst schreiben. Eine Frage, die auf
   einen Schlag nicht zu entscheiden ist.
+- **`DARSTELLUNG.md`** — wie die Oberfläche auf **echten Geräten** wirklich
+  misst: Bildschirme, Systemstreifen, gemessene Werte, die Fallen, die dabei
+  schon zugeschlagen haben, und die Prüfliste für die Sichtkontrolle. Der
+  Abschnitt „Gestaltung" hier sagt, wie es aussehen **soll**; dort steht, was
+  das Gerät daraus macht.
 - **`messungen/`** — Referenzstrecken, Messwerkzeug und Rohdaten. Wer eine Zahl
   in Frage stellt, misst dort nach statt zu diskutieren. Zusammenfassung in
   `messungen/ERKENNTNISSE.md`.
@@ -40,7 +45,10 @@ Was hier steht, gilt. Die Dateien daneben halten bewusst Unverbindliches:
   UI-Entwürfe, auf die sich der Abschnitt „Gestaltung" bezieht.
 
 Wer die Engine anfasst, liest vorher `BROUTER.md`. Vieles, was naheliegend
-aussieht, ist dort bereits gemessen und teils widerlegt.
+aussieht, ist dort bereits gemessen und teils widerlegt. Dasselbe gilt für die
+Oberfläche und `DARSTELLUNG.md`: Jede Zahl darin ist an einem Gerät
+nachgemessen, und mehrere davon widersprechen dem, was der Browser am
+Schreibtisch anzeigt.
 
 **Die Trennung der drei technischen Dateien in einem Satz:** `BROUTER.md`
 beantwortet „wie wird gerechnet", `SERVER.md` „wer rechnet und was hält er aus",
@@ -339,6 +347,27 @@ Daraus die allgemeine Regel: **Was am oberen Rand angefasst werden muss, wird
 gegen `safe-area-inset-top` gerechnet, nicht gegen die Fensterhöhe.** Der Wert
 ist in JavaScript nicht direkt lesbar — die App misst ihn über einen
 unsichtbaren Klotz mit genau dieser Höhe.
+
+**Das Fenster ist nicht der Bildschirm.** Am 19.08.2026 am Gerät nachgemessen:
+Die installierte App wird über die volle Bildschirmhöhe gezeichnet, Safari
+rechnet das Layout aber um den oberen Systemstreifen kürzer. Daraus zwei
+Regeln, die für jedes Gerät gelten sollen und nicht nur für das eine, an dem
+es aufgefallen ist:
+
+- **Der Rahmen ist so hoch wie der Bildschirm, nicht wie das Fenster.** Was
+  fehlt, wird **gemessen** und begrenzt — nur in der installierten App,
+  höchstens der obere Systemstreifen, nie negativ. Wo der Browser richtig
+  rechnet, kommt null heraus und nichts ändert sich. Alle Höhenrechnungen
+  beziehen sich auf den **Rahmen** (`.app`), nicht auf das Fenster.
+- **Die Leinwand trägt die Farbe des Blattes, nicht die der Karte.** Was das
+  System außerhalb des Fensters streicht, sitzt immer unter dem Blatt — und
+  unten ist in jedem Zustand ein Blatt: Routenblatt, Menü oder Vollbild-Ebene,
+  alle drei in `--sheet`. Mit `--ground` stand dort ein grauer Balken, der wie
+  ein Fehler aussah. Die Karte färbt sich selbst.
+
+Die gemessenen Zahlen, das Messverfahren und die Geräte, an denen sie geprüft
+sind, stehen in `DARSTELLUNG.md` — hier nicht, weil sie sich mit jedem neuen
+Gerät ändern.
 
 **Unsichtbare Trefferflächen dürfen nur über toten Raum wachsen.** Die auf 44 px
 vergrößerte Fläche des Griffs lag zunächst über der Reiterzeile — ein Tap auf

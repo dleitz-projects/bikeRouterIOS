@@ -401,6 +401,76 @@ async function regionHolen() {
   }
 }
 
+/* ------------------------------------------------------- Fenstermass
+
+   Wie viel nimmt sich das System oben — Statusleiste, Notch, Dynamic Island?
+   Die Seite laeuft mit `viewport-fit=cover`, der Ursprung liegt also am oberen
+   Bildschirmrand und nicht unterhalb davon. In JS ist `env(safe-area-inset-top)`
+   nicht auszulesen; ein Messklotz mit genau dieser Hoehe schon. `visibility`
+   statt `display`, sonst gaebe es nichts zu messen. */
+let safeProbe = null;
+function safeTop() {
+  if (!safeProbe) {
+    safeProbe = document.createElement('div');
+    safeProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;' +
+      'height:env(safe-area-inset-top);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(safeProbe);
+  }
+  return safeProbe.offsetHeight;
+}
+
+/* Wie viel Bildschirm bekommt die Seite NICHT zu sehen, obwohl sie darauf
+   gezeichnet wird?
+
+   Am 19.08.2026 am Geraet gemessen (iPhone 16 Pro Max, installierte App):
+   Der Bildschirm ist 956 px hoch, die Seite beginnt am obersten Punkt — aber
+   das Fenster meldet nur 894 px. Die Differenz ist auf den Punkt
+   env(safe-area-inset-top): Safari zeichnet die App wegen
+   `black-translucent` ueber die volle Hoehe, rechnet das Layout aber ohne
+   den oberen Systemstreifen. Unter dem Blatt blieb dadurch ein 62 px hoher
+   Streifen der Leinwandfarbe stehen — der Balken unter dem Rechnen-Knopf.
+
+   Gemessen statt geraten, und dreifach eingezaeunt, damit die Korrektur dort
+   verschwindet, wo sie nicht hingehoert:
+
+   1. nur in der installierten App — im Browsertab fehlt Hoehe wegen der
+      Safari-Leisten, und die darf man nicht ueberdecken;
+   2. hoechstens der obere Systemstreifen — mehr kann dieser Fehler nicht
+      erklaeren;
+   3. nie negativ.
+
+   Wo Safari richtig rechnet, kommt 0 heraus und im Stylesheet steht wieder
+   schlicht 100 %. */
+function fensterMangel() {
+  const installiert = navigator.standalone === true ||
+    (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (!installiert) return 0;
+  const el = document.documentElement;
+  /* iOS meldet screen.width/height je nach Fassung mit oder ohne Drehung.
+     Deshalb nicht die Achse glauben, sondern die laengere Kante nehmen,
+     solange das Fenster hochkant steht. */
+  const stehend = el.clientHeight >= el.clientWidth;
+  const bildschirm = stehend
+    ? Math.max(screen.width, screen.height)
+    : Math.min(screen.width, screen.height);
+  const fehlt = Math.round(bildschirm - el.clientHeight);
+  return Math.max(0, Math.min(fehlt, safeTop()));
+}
+
+/* Muss laufen, BEVOR Leaflet die Karte anlegt: Die Karte misst ihren
+   Container beim Anlegen, und der ist danach 62 px hoeher. */
+function fensterKorrigieren() {
+  document.documentElement.style.setProperty(
+    '--fenstermangel', fensterMangel() + 'px');
+}
+fensterKorrigieren();
+
+/* Die Hoehe, gegen die alles gerechnet wird, ist ab hier die des Rahmens —
+   nicht die des Fensters. Auf dem iPhone unterscheiden die beiden sich um
+   den korrigierten Streifen; wer weiter das Fenster misst, setzt Leiste und
+   Rasten um genau diesen Betrag zu hoch an. */
+function appH() { return $('.app').clientHeight; }
+
 const map = L.map('map', { zoomControl: false }).setView([51.85, 10.30], 10);
 
 /* --------------------------------------------------------- Kartenbild
@@ -1899,25 +1969,9 @@ function measureSheet(zustand) {
 let detentCache = null;
 function detentsInvalidieren() { detentCache = null; }
 
-/* Wie viel nimmt sich das System oben — Statusleiste, Notch, Dynamic Island?
-   Die Seite laeuft mit `viewport-fit=cover`, der Ursprung liegt also am oberen
-   Bildschirmrand und nicht unterhalb davon. In JS ist `env(safe-area-inset-top)`
-   nicht auszulesen; ein Messklotz mit genau dieser Hoehe schon. `visibility`
-   statt `display`, sonst gaebe es nichts zu messen. */
-let safeProbe = null;
-function safeTop() {
-  if (!safeProbe) {
-    safeProbe = document.createElement('div');
-    safeProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;' +
-      'height:env(safe-area-inset-top);pointer-events:none;visibility:hidden;';
-    document.body.appendChild(safeProbe);
-  }
-  return safeProbe.offsetHeight;
-}
-
 function detentPx() {
   if (detentCache) return detentCache;
-  const H = document.documentElement.clientHeight;
+  const H = appH();
   const leer = measureSheet('empty');
   const klein = Math.min(measureSheet('peek'), H * 0.55);
   /* Die halbe Raste endet unter der Höhenprofil-Karte. Ein fester Prozentwert
@@ -2003,7 +2057,7 @@ function positionRail(target) {
   const rail = $('#rail');
   const height = rail.getBoundingClientRect().height || 250;
   const bottom = sh + 14;
-  const frei = document.documentElement.clientHeight - bottom;
+  const frei = appH() - bottom;
   rail.classList.toggle('hidden', frei - height < 70);
   rail.style.bottom = bottom + 'px';
 
@@ -3513,6 +3567,10 @@ let resizeTimer = null;
 window.addEventListener('resize', function () {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(function () {
+    /* Zuerst das Fenstermass: Beim Drehen wechselt der Systemstreifen die
+       Seite, und alles Weitere misst gegen den Rahmen. */
+    fensterKorrigieren();
+    map.invalidateSize({ pan: false });
     detentsInvalidieren();
     if (state.routes.length) setDetent(detent);
     else positionRail();
