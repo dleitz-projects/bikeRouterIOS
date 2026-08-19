@@ -440,9 +440,16 @@ function systemOben() {
 
    In der installierten App mit `black-translucent` zieht iOS die Seite ueber
    die volle Bildschirmhoehe, rechnet das Layout aber um den oberen
-   Systemstreifen kuerzer: 956 gegen 894, gemessen am 19.08.2026. Das Dokument
-   bekommt die Differenz zurueck, damit sein Inhalt bis zur untersten
-   Bildpunktzeile reicht.
+   Systemstreifen kuerzer: 956 gegen 894, gemessen am 19.08.2026. Diese 62 px
+   sind nicht zu bespielen — zwei Versuche, sie zu erreichen, sind am Geraet
+   gescheitert (DARSTELLUNG.md, Falle 8).
+
+   Wissen muss die App den Wert trotzdem: Unter dem Fenster liegt damit ein
+   Streifen in Blattfarbe, der denselben Dienst leistet wie der Innenabstand
+   unten am Blatt — Abstand zum Rand und Platz fuer den Home-Indikator. Wer
+   beides addiert, schiebt den Rechnen-Knopf fast 100 px nach oben. Das
+   Stylesheet zieht `--fenstermangel` deshalb von den unteren Innenabstaenden
+   ab.
 
    Dreifach eingezaeunt, damit die Korrektur dort verschwindet, wo sie nicht
    hingehoert: nur in der installierten App (im Browsertab fehlt Hoehe wegen
@@ -468,16 +475,6 @@ function fensterKorrigieren() {
   el.style.setProperty('--fenstermangel', fehlt + 'px');
 }
 fensterKorrigieren();
-
-/* Das Dokument ist damit hoeher als der Rechenbereich, also grundsaetzlich
-   verschiebbar. Sichtbar sein soll trotzdem immer der Anfang: Ist der Bereich
-   in Wahrheit so gross wie der Bildschirm, gibt es unten nichts nachzuholen,
-   und ist er es nicht, wandert die Seite sonst bei jeder Geste ein Stueck weg.
-   `overflow:hidden` waere der einfachere Weg, schnitte aber genau an der
-   Kante ab, um die es geht. */
-window.addEventListener('scroll', function () {
-  if (window.scrollY) window.scrollTo(0, 0);
-}, { passive: true });
 
 /* Derselbe Abstand über wie unter: Was über dem Blatt schwebt, sitzt 14 px
    darüber und braucht nach oben dieselben 14 px, sonst klebt es an der

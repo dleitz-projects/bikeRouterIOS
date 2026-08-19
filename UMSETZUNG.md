@@ -554,13 +554,45 @@ Die Korrektur ist wie in U24 dreifach eingezäunt: nur in der installierten App,
 höchstens der obere Systemstreifen, nie negativ. Im Browser und überall, wo
 Safari richtig rechnet, ist sie 0 und ändert nichts — nachgeprüft.
 
-**Ausgang offen, beide Ergebnisse sind eine Antwort.** Reicht das Blatt bis zur
-untersten und die Karte bis zur obersten Bildpunktzeile, gibt es das Vollbild.
-Bleibt unten ein Streifen, ist der sichtbare Bereich doch 894, und die Frage ist
-endgültig beantwortet statt vermutet.
+**Ergebnis am Gerät: gescheitert.** Der Streifen bleibt. Safari schneidet auch
+im normalen Fluss am Fensterrand ab. Damit ist die Frage endgültig beantwortet
+statt vermutet: **Der sichtbare Bereich ist das Fenster.** Dass das System
+darunter die Hintergrundfarbe malt, heißt nur, dass es die Leinwand weiterführt.
 
-**Zum Prüfen muss das Symbol neu angelegt werden** — `black-translucent` steckt
-im Home-Bildschirm-Symbol.
+**Entschieden: `black-translucent` bleibt.** Die Karte reicht bis zur obersten
+Bildpunktzeile, die 62 px liegen unten unter dem Blatt in dessen Farbe. Der
+Preis sind 62 px weniger Platz für Inhalt. Die Gegenprobe ist eine Zeile weit
+entfernt, und beide Zustände sind am Gerät gesehen — die Wahl fiel auf die
+Karte. Im Querformat stellt sich die Frage nicht, dort ist der Systemstreifen
+null.
+
+---
+
+## U30 — Doppelte Ränder: 96 px über dem Bildschirmrand
+
+Der Rechnen-Knopf stand 96 px über der untersten Bildpunktzeile: 62 px
+unerreichbarer Streifen **plus** 34 px Innenabstand des Blattes für den
+Home-Indikator. Beides leistet dasselbe. Oben dieselbe Rechnung: 62 px
+Systemstreifen **plus** 12 px Innenabstand der Kopfzeile.
+
+**Jetzt wird abgezogen statt addiert:**
+
+| | vorher | jetzt |
+|---|---|---|
+| Profilpille, Oberkante | 74 px | **62 px** — direkt unter der Dynamic Island |
+| Rechnen-Knopf über dem Rand | 96 px | **62 px** |
+
+Oben und unten dieselbe Zahl — kein Zufall, es ist derselbe Streifen. Im
+Stylesheet: `max(max(env(...), 17px) - var(--fenstermangel), 0px)` unten und
+`max(env(...), 12px)` oben. Ohne Systemstreifen ändert sich nichts, dort greifen
+die alten Werte.
+
+**Das ist die dritte Fassung derselben Regel** — nach dem 51-px-Balken im Blatt
+(U22) und dem Kartenstreifen gegen die Kopfzeile (U28): Ein Systemstreifen ist
+ein Rand, kein Zuschlag zu einem Rand.
+
+**Zum Prüfen genügen zwei Aufrufe** — an den `apple-mobile-web-app-*`-Zeilen hat
+sich nichts geändert, das Symbol muss nicht neu angelegt werden.
 
 ---
 

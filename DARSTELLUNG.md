@@ -78,11 +78,17 @@ Seite bekommt — es sind beide Male 894 —, sondern **wo die 62 px liegen**.
 | unterer Rand | 62 px unerreichbar | Seite reicht bis 955,7 |
 | davon für Inhalt nutzbar | 832 px | **894 px** |
 
-Die letzte Zeile ist der Grund, warum es beim jetzigen Zustand bleibt: Mit
-`black-translucent` waren die 62 px **zweimal** weg — oben als reservierter
-Systemstreifen, unten als unerreichbarer Rand. Jetzt sind sie einmal weg, und
-die Dynamic Island überlappt die Seite überhaupt nicht mehr. Eine ganze Klasse
-von Fehlern (Falle 6) kann damit nicht mehr auftreten.
+**Entschieden ist die linke Spalte:** Die Karte reicht bis zur obersten
+Bildpunktzeile, der Streifen liegt unten unter dem Blatt und trägt dessen Farbe.
+Bezahlt wird das mit 62 px weniger Platz für Inhalt. Die rechte Spalte hätte
+den Platz, dafür läge oben ein Streifen über der Karte — beides ist am Gerät
+gesehen, und die Wahl fiel auf die Karte.
+
+Was in der linken Spalte trotzdem nicht sein muss, ist der **doppelte** Rand:
+Der unerreichbare Streifen leistet dasselbe wie der Innenabstand für den
+Home-Indikator, und der Systemstreifen oben dasselbe wie der Innenabstand der
+Kopfzeile. Beides wird jetzt abgezogen statt addiert (Falle 12), womit oben wie
+unten genau 62 px stehen.
 
 Die weiteren gemessenen Werte:
 
@@ -172,9 +178,25 @@ heißt nicht, dass die Seite darauf **zeichnen** darf.)*
 System außerhalb des Fensters streicht, sitzt immer unter einem Blatt —
 Routenblatt, Menü oder Vollbild-Ebene, alle drei in derselben Farbe.
 
-**Behoben durch das Streichen von `black-translucent`**, also an der Ursache
-statt an der Wirkung. `viewport-fit=cover` bleibt. Am Gerät bestätigt am
-19.08.2026, 17:56: Die Seite reicht bis 955,7 css, unten fehlt nichts mehr.
+**Zweiter Versuch, und er ging auch schief.** Nicht mehr ein
+`position:fixed`-Rahmen, sondern ein **Dokument** in Bildschirmhöhe mit absolut
+positioniertem Inhalt darin — im normalen Fluss, nicht am Rechenbereich
+hängend. Am Gerät am 19.08.2026 abends geprüft: Der Streifen bleibt. Safari
+schneidet auch so am Fensterrand ab.
+
+**Damit ist die Frage endgültig beantwortet: Der sichtbare Bereich IST das
+Fenster.** Dass das System darunter noch die Hintergrundfarbe malt, heißt nur,
+dass es die Leinwand weiterführt — nicht, dass die Seite dort zeichnen darf.
+Die 62 px sind nicht zu holen, sie sind nur zu verschieben.
+
+**Entschieden: `black-translucent` bleibt.** Die Karte reicht bis zur obersten
+Bildpunktzeile, die 62 px liegen unten unter dem Blatt und tragen dessen Farbe.
+Der Preis sind 62 px weniger Platz für Inhalt. Die Gegenprobe — Zeile raus,
+Streifen wandert nach oben über die Karte — ist eine Zeile weit entfernt und
+in beiden Zuständen am Gerät gesehen.
+
+**Im Querformat gibt es das Problem nicht:** Dort ist der obere Systemstreifen
+null, Fenster und Bildschirm sind gleich hoch.
 
 **Wichtig dabei:** Die Zeile wirkte erst, nachdem das Symbol vom
 Home-Bildschirm **gelöscht und neu angelegt** war. Zwei Deployments und
@@ -234,8 +256,21 @@ Blatt oben      107,0 css      Streifen:  44 px ab Seitenanfang
 dort tatsächlich im Weg ist — die Kopfzeile, nicht der Systemstreifen. Sie
 enthält ihn ohnehin. Ein gemessener Wert statt zweier gerechneter.)*
 
-**Was die elf gemeinsam haben:** Keine war ein Schönheitsfehler. Zehn von
-elf machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+**12. Der Rechnen-Knopf stand 96 px über dem Bildschirmrand** (19.08.). Unter
+dem Fenster liegen 62 px, die die Seite nicht bespielen kann — und darüber legte
+das Blatt noch einmal 34 px Innenabstand für den Home-Indikator. Beides leistet
+dasselbe, beides zusammen ist doppelt. Dieselbe Rechnung oben: 62 px
+Systemstreifen **plus** 12 px Innenabstand der Kopfzeile.
+
+Jetzt wird abgezogen statt addiert: `max(max(env(...), 17px) - Streifen, 0)`
+unten, `max(env(...), 12px)` oben. Ergebnis auf dem gemessenen iPhone **62 oben,
+62 unten** — dieselbe Zahl, und das ist kein Zufall, sondern derselbe Streifen.
+
+*(Die Regel, zum dritten Mal in derselben Datei: Ein Systemstreifen ist ein
+Rand, kein Zuschlag zu einem Rand. `max()`, nie Addition — oben wie unten.)*
+
+**Was die zwölf gemeinsam haben:** Keine war ein Schönheitsfehler. Elf von
+zwölf machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle
@@ -282,23 +317,9 @@ Streifen, unterer Rand, Analyse und Farbschema in einem Bild.
 - **iPad und Schreibtisch.** Die Oberfläche ist für schmale Displays entworfen.
   Was auf 1000 px Breite daraus wird, ist eine offene Gestaltungsfrage, kein
   Fehler.
-- **Läuft: der Versuch, beides zu bekommen.** Seit dem 19.08.2026, 21 Uhr,
-  ist `black-translucent` zurück — die Karte reicht damit wieder bis zur
-  obersten Bildpunktzeile — und zusätzlich ist das **Dokument** so hoch wie
-  der Bildschirm, mit dem Rahmen absolut darin.
-
-  Der Grund, es überhaupt zu versuchen, ist ein Messwert: Der Streifen unten
-  trug am 19.08. um 17:16 `--sheet`, also die Farbe der **Seite**, während das
-  Manifest noch `#E9EBE3` sagte. Die Seite malt dort hinein — der sichtbare
-  Bereich reicht bis 956, nur der Rechenbereich endet bei 894. Der gescheiterte
-  Versuch vom Mittag dehnte einen `position:fixed`-Rahmen, und der hängt am
-  Rechenbereich. Ein Dokument im normalen Fluss ist etwas anderes.
-
-  **Zu erwarten sind zwei Ausgänge, und beide sind eine Antwort:** Reicht das
-  Blatt bis zur untersten Bildpunktzeile und die Karte bis zur obersten, ist
-  die Frage nach dem Vollbild mit Ja beantwortet. Bleibt unten ein Streifen,
-  ist sie endgültig mit Nein beantwortet — dann ist der sichtbare Bereich doch
-  894, und es bleibt die Wahl, an welchem Ende die 62 px sitzen.
+- **Die Farbe der Statusleiste** spielt jetzt keine Rolle mehr, solange
+  `black-translucent` bleibt: Es gibt oben keine Statusleistenfläche, die Karte
+  läuft dahinter weiter.
 - **Die Farbe der Statusleiste kommt womöglich ebenfalls aus dem Symbol.**
   Am 19.08.2026, 19:35 stand sie weiter auf `--ground`, obwohl die Seite seit
   18:20 `--sheet` ausliefert. Zwei Erklärungen, beide nicht ausgeschlossen: Die

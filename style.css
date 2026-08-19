@@ -29,24 +29,20 @@
    `#analysis{display:flex}` schlägt sie — das Element bliebe sichtbar,
    obwohl das Attribut gesetzt ist. Am 18.08.2026 genau so aufgefallen. */
 [hidden]{display:none !important;}
-/* Das Dokument ist so hoch wie der BILDSCHIRM, nicht wie das Fenster.
+/* Die Seite endet am Fensterrand. Punkt.
 
-   In der installierten App zieht iOS die Seite ueber die volle Bildschirmhoehe,
-   rechnet das Layout aber um den oberen Systemstreifen kuerzer. Der sichtbare
-   Bereich reicht trotzdem bis unten — belegt am 19.08.2026: Der Streifen unter
-   dem Blatt trug --sheet, die Farbe der Seite, und nicht die des Systems.
+   Zweimal versucht, darueber hinauszukommen, zweimal am Geraet gescheitert
+   (19.08.2026): einmal mit einem `position:fixed`-Rahmen ueber die Fensterhoehe
+   hinaus, einmal mit einem DOKUMENT in Bildschirmhoehe und absolut
+   positioniertem Inhalt darin. Safari schneidet beide Male am Fensterrand ab.
+   Der sichtbare Bereich IST das Fenster; dass das System darunter noch die
+   Hintergrundfarbe malt, heisst nur, dass es die Leinwand weiterfuehrt.
 
-   Ein `position:fixed`-Rahmen half nicht, der wird am Rechenbereich
-   abgeschnitten. Ein DOKUMENT, das selbst hoeher ist, ist etwas anderes: Sein
-   Inhalt liegt im normalen Fluss, und was der sichtbare Bereich hergibt, wird
-   gezeigt. Darum `position:relative` am body und `.app` absolut darin.
-
-   `--fenstermangel` misst das Skript aus Bildschirm minus Fenster und ist
-   ueberall sonst 0 — dann steht hier wieder schlicht 100 %. `overflow:hidden`
-   ist bewusst weg: Es schnitte genau an der Kante ab, um die es geht. Gegen
-   versehentliches Verschieben haelt app.js die Seite auf 0. */
-html{margin:0;height:calc(100% + var(--fenstermangel, 0px));overscroll-behavior:none;}
-body{margin:0;height:100%;position:relative;overscroll-behavior:none;
+   Was bleibt, steht in DARSTELLUNG.md: In der installierten App fehlen hochkant
+   62 px, und man kann nur waehlen, ob sie oben oder unten liegen. Genutzt wird
+   der Wert jetzt nur noch, um doppelte Abstaende abzuziehen — siehe unten. */
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;}
+body{
   /* Die Leinwand traegt die Blattfarbe, nicht die Kartenfarbe. Sie ist das,
      was das System unterhalb des Fensters streicht — und unten sitzt in jedem
      Zustand das Blatt: das Routenblatt, ein Menue oder eine Vollbild-Ebene,
@@ -63,11 +59,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;
 .num{font-variant-numeric:tabular-nums;}
 a{color:var(--signal);}
 
-/* Absolut, nicht fest: Der Rahmen soll das ganze Dokument fuellen — und das ist
-   so hoch wie der Bildschirm, siehe oben. `position:fixed` haengt dagegen am
-   Rechenbereich und wird an dessen Kante abgeschnitten; genau daran ist der
-   erste Versuch am 19.08.2026 gescheitert. */
-.app{position:absolute;inset:0;overflow:hidden;}
+.app{position:fixed;inset:0;overflow:hidden;}
 
 /* z-index:0 ist hier kein Schmuck, sondern zwingend: Leaflet gibt seinen
    Kartenebenen intern z-index 400 bis 700. Ohne eigenen z-index bildet #map
@@ -78,8 +70,14 @@ a{color:var(--signal);}
 
 /* ------------------------------------------------------------- Chrome */
 
+/* Der Systemstreifen IST der Rand, er wird nicht dazugerechnet: `max()` statt
+   Addition, dieselbe Regel wie unten am Blatt. Auf dem Geraet sitzt die
+   Profilpille damit unmittelbar unter der Dynamic Island statt 12 px darunter —
+   die Karte laeuft ja hinter der Insel weiter, der Abstand waere doppelt. Wo
+   es keinen Systemstreifen gibt, bleiben die 12 px, sonst klebte die Pille am
+   Fensterrand. */
 .chrome{position:absolute;top:0;left:0;right:0;z-index:20;
-  padding:calc(env(safe-area-inset-top) + 12px) 13px 0;
+  padding:max(env(safe-area-inset-top), 12px) 13px 0;
   display:flex;gap:10px;align-items:flex-start;pointer-events:none;}
 .chrome > *{pointer-events:auto;}
 .spacer{flex:1 1 auto;}
@@ -154,8 +152,17 @@ a{color:var(--signal);}
      env(safe-area-inset-bottom) bereits 34 px. Zusaetzlich 17 px addiert ergab
      einen 51 px hohen leeren Streifen unter dem Rechnen-Knopf — sichtbar als
      Balken, der wie ein Fehler aussieht. Jetzt gilt der groessere der beiden
-     Werte: 34 px auf dem Geraet, 17 px im Browser und auf aelteren Modellen. */
-  padding:4px 17px max(env(safe-area-inset-bottom), 17px);
+     Werte: 34 px auf dem Geraet, 17 px im Browser und auf aelteren Modellen.
+
+     Davon abgezogen wird, was unterhalb des Fensters ohnehin leer bleibt
+     (--fenstermangel). Dort liegt in der installierten App ein Streifen in
+     Blattfarbe, den die Seite nicht bespielen kann — er leistet dasselbe wie
+     der Innenabstand, naemlich Abstand zum Rand und Platz fuer den
+     Home-Indikator. Beides zusammen schoebe den Rechnen-Knopf fast 100 px
+     nach oben. Auf dem gemessenen iPhone bleibt so 0, ueberall sonst aendert
+     sich nichts. */
+  padding:4px 17px max(max(env(safe-area-inset-bottom), 17px)
+                       - var(--fenstermangel, 0px), 0px);
   display:flex;flex-direction:column;gap:16px;}
 
 /* In der kleinen Raste bleibt das Blatt starr. Sonst laesst sich die ganze
@@ -321,7 +328,10 @@ a{color:var(--signal);}
 .nav .txtbtn:last-child{text-align:right;}
 .navpad{flex:0 0 auto;min-width:56px;}
 .screenscroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:16px 17px max(env(safe-area-inset-bottom), 24px);
+  /* Wie beim Blatt: Der Streifen unterhalb des Fensters leistet denselben
+     Dienst wie der Innenabstand, siehe .sheetscroll. */
+  padding:16px 17px max(max(env(safe-area-inset-bottom), 24px)
+                       - var(--fenstermangel, 0px), 0px);
   display:flex;flex-direction:column;gap:13px;}
 .screenscroll.flush{padding-top:0;}
 
@@ -405,7 +415,8 @@ select{padding-right:34px;
 .menu{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--sheet);
   border-radius:20px 20px 0 0;border-top:1px solid var(--line);
   box-shadow:0 -2px 30px rgba(0,0,0,.3);
-  padding:9px 13px max(env(safe-area-inset-bottom), 13px);
+  padding:9px 13px max(max(env(safe-area-inset-bottom), 13px)
+                       - var(--fenstermangel, 0px), 0px);
   max-height:82%;overflow-y:auto;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:9px;
   visibility:hidden;transform:translateY(101%);

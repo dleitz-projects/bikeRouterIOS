@@ -370,13 +370,23 @@ Systemstreifen kürzer — und schnitt am Fensterrand ab. Der Versuch, den Rahme
 und war schlimmer als der Fehler. Ein zu kleines Fenster ist an seiner
 **Ursache** zu beheben, nicht durch Übergröße im Inneren.
 
-**Die Ursache war `apple-mobile-web-app-status-bar-style: black-translucent`,
-und die Zeile ist gestrichen.** Damit beginnt die Seite unter der Statusleiste
-statt am obersten Bildschirmpunkt. Der Tausch ist bewusst: Mit der Zeile waren
-dieselben 62 px **zweimal** weg — oben als reservierter Systemstreifen, unten
-als unerreichbarer Rand. Ohne sie ist die Karte am oberen Rand nicht mehr
-randlos, dafür hat der Inhalt 62 px mehr, unten fehlt nichts, und die Dynamic
-Island überlappt die Seite überhaupt nicht mehr.
+**Die 62 px sind nicht zu holen, man kann sie nur verschieben.** Zweimal am
+Gerät versucht, zweimal gescheitert: mit einem `position:fixed`-Rahmen über die
+Fensterhöhe hinaus und mit einem Dokument in Bildschirmhöhe samt absolut
+positioniertem Inhalt. Safari schneidet beide Male am Fensterrand ab. Dass das
+System darunter noch die Hintergrundfarbe malt, heißt nur, dass es die Leinwand
+weiterführt — es heißt nicht, dass die Seite dort zeichnen darf.
+
+Damit bleibt hochkant eine Wahl, und sie ist getroffen:
+**`apple-mobile-web-app-status-bar-style: black-translucent` bleibt.** Die Karte
+reicht bis zur obersten Bildpunktzeile, die 62 px liegen unten unter dem Blatt —
+in Blattfarbe, wo sie als Rand gelesen werden statt als Fehler. Der Preis sind
+62 px weniger Platz für Inhalt. Im Querformat gibt es den Systemstreifen nicht,
+dort stellt sich die Frage nicht.
+
+Die Gegenprobe ist eine Zeile: Ohne die Zeile beginnt die Seite unter der
+Statusleiste, der Inhalt hat 62 px mehr, und der Streifen sitzt stattdessen
+oben über der Karte.
 
 **Eine geänderte `apple-mobile-web-app-*`-Zeile wirkt erst nach dem Neuanlegen
 des Symbols.** Sie steckt im Home-Bildschirm-Symbol, nicht in der Seite — kein
@@ -400,6 +410,13 @@ dem sie aufgefallen sind:
   unten ist in jedem Zustand ein Blatt: Routenblatt, Menü oder Vollbild-Ebene,
   alle drei in `--sheet`. Mit `--ground` stand dort ein grauer Balken, der wie
   ein Fehler aussah. Die Karte färbt sich selbst.
+- **Ein Systemstreifen ist ein Rand, kein Zuschlag zu einem Rand.** `max()`,
+  nie Addition — oben wie unten. Wo die Dynamic Island 62 px belegt, sitzt die
+  Profilpille unmittelbar darunter und nicht noch 12 px tiefer; wo unter dem
+  Fenster ein unerreichbarer Streifen liegt, ersetzt er den Innenabstand des
+  Blattes, statt zu ihm zu kommen. Beides addiert schob den Rechnen-Knopf
+  96 px über den Bildschirmrand. Jetzt sind es oben wie unten 62 — dieselbe
+  Zahl, und das ist kein Zufall, sondern derselbe Streifen.
 - **`theme-color` ist keine Dekoration, sondern der Grund der Statusleiste.**
   Das System malt diese Fläche für uns, also muss dort eine **Flächenfarbe der
   App** stehen und keine Kartenfarbe — sonst liegt ein Streifen Kartenfarbe
