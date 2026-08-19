@@ -591,8 +591,44 @@ die alten Werte.
 (U22) und dem Kartenstreifen gegen die Kopfzeile (U28): Ein Systemstreifen ist
 ein Rand, kein Zuschlag zu einem Rand.
 
+**Erster Anlauf am Gerät gescheitert, zweiter gebaut.** Der Abzug hing an einer
+JS-Messung (`screen.height` minus Fensterhöhe, als CSS-Variable) — die ergab am
+Gerät **0**, obwohl der Streifen da war. Oben griff die Änderung (Pille bei 62
+statt 75 css, nachgemessen), unten nicht.
+
+Jetzt ohne JavaScript:
+
+```css
+padding-bottom: max(0px, calc(max(env(safe-area-inset-bottom), 17px)
+                              - env(safe-area-inset-top)));
+```
+
+Der obere Systemstreifen **ist** der fehlende untere: 956 − 894 = 62 =
+`env(safe-area-inset-top)`. Wo oben nichts genommen wird, ist der Abzug null —
+und dort gibt es auch unten keinen Streifen. Die Lehre: Was in CSS bleiben kann,
+bleibt in CSS.
+
 **Zum Prüfen genügen zwei Aufrufe** — an den `apple-mobile-web-app-*`-Zeilen hat
 sich nichts geändert, das Symbol muss nicht neu angelegt werden.
+
+---
+
+## U31 — Das Gerät sagt seine Maße selbst
+
+Im Menü, unter der Nennung der Datenquellen, steht jetzt eine Zeile:
+
+```
+Fenster 440×894 · Bildschirm 440×956 · fehlt 62 · System oben 62, unten 34 · dpr 3 · installiert
+```
+
+**Warum:** Aus einem Screenshot lässt sich alles zurückrechnen, aber nur mit dem
+Bild in der Hand — und manches gar nicht. Dass die JS-Messung oben null ergab,
+war am Bild nicht zu sehen, sondern nur daran, dass eine Korrektur ausblieb. Bei
+einem neuen Gerät ist die Zeile der erste Griff: Ein Screenshot des Menüs füllt
+die Gerätetabelle in `DARSTELLUNG.md`, ohne dass jemand Pixel zählt.
+
+Gerechnet wird mit den Zahlen **nicht**. Sie sind Beleg, kein Bedienelement —
+klein, einfarbig, in derselben Schreibmaschinenschrift wie die übrigen Messwerte.
 
 ---
 

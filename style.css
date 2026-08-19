@@ -39,8 +39,9 @@
    Hintergrundfarbe malt, heisst nur, dass es die Leinwand weiterfuehrt.
 
    Was bleibt, steht in DARSTELLUNG.md: In der installierten App fehlen hochkant
-   62 px, und man kann nur waehlen, ob sie oben oder unten liegen. Genutzt wird
-   der Wert jetzt nur noch, um doppelte Abstaende abzuziehen — siehe unten. */
+   62 px, und man kann nur waehlen, ob sie oben oder unten liegen. Wieviel es
+   ist, sagt env(safe-area-inset-top) — der Streifen unten ist genau so hoch
+   wie der oben. Abgezogen wird er bei den unteren Innenabstaenden. */
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;}
 body{
   /* Die Leinwand traegt die Blattfarbe, nicht die Kartenfarbe. Sie ist das,
@@ -154,15 +155,23 @@ a{color:var(--signal);}
      Balken, der wie ein Fehler aussieht. Jetzt gilt der groessere der beiden
      Werte: 34 px auf dem Geraet, 17 px im Browser und auf aelteren Modellen.
 
-     Davon abgezogen wird, was unterhalb des Fensters ohnehin leer bleibt
-     (--fenstermangel). Dort liegt in der installierten App ein Streifen in
-     Blattfarbe, den die Seite nicht bespielen kann — er leistet dasselbe wie
-     der Innenabstand, naemlich Abstand zum Rand und Platz fuer den
-     Home-Indikator. Beides zusammen schoebe den Rechnen-Knopf fast 100 px
-     nach oben. Auf dem gemessenen iPhone bleibt so 0, ueberall sonst aendert
-     sich nichts. */
-  padding:4px 17px max(max(env(safe-area-inset-bottom), 17px)
-                       - var(--fenstermangel, 0px), 0px);
+     Davon abgezogen wird der obere Systemstreifen. Das klingt schraeg, ist
+     aber genau die gemessene Beziehung: Was das System oben nimmt, fehlt der
+     Seite unten — 956 gegen 894, Differenz 62, und 62 ist
+     env(safe-area-inset-top). Unter dem Fenster liegt dadurch ein Streifen in
+     Blattfarbe, den die Seite nicht bespielen kann. Er leistet dasselbe wie
+     dieser Innenabstand: Abstand zum Rand und Platz fuer den Home-Indikator.
+     Beides zusammen schob den Rechnen-Knopf fast 100 px nach oben.
+
+     Ohne oberen Systemstreifen — im Browser, im Querformat, ohne
+     black-translucent — ist der Abzug null und alles bleibt, wie es war.
+     Genau dort gibt es naemlich auch keinen Streifen unten.
+
+     env() statt einer JS-Messung: Die Messung ueber screen.height ergab am
+     19.08.2026 auf dem Geraet 0, obwohl der Streifen da war. Was in CSS
+     bleiben kann, bleibt in CSS. */
+  padding:4px 17px max(0px, calc(max(env(safe-area-inset-bottom), 17px)
+                                 - env(safe-area-inset-top)));
   display:flex;flex-direction:column;gap:16px;}
 
 /* In der kleinen Raste bleibt das Blatt starr. Sonst laesst sich die ganze
@@ -219,6 +228,10 @@ a{color:var(--signal);}
 .note code{font-family:"IBM Plex Mono",monospace;font-size:11.5px;
   background:var(--line-soft);padding:1.5px 5px;border-radius:4px;}
 .menuattrib{padding:2px 2px 4px;}
+/* Die Geraetezahlen: klein, einfarbig, in der Schreibmaschinenschrift der
+   uebrigen Messwerte. Sie sind Beleg, kein Bedienelement. */
+.diag{padding:0 2px 2px;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  line-height:1.5;color:var(--faint);}
 
 /* Sitzt wie die Leiste ueber dem Blatt und wandert mit ihm. */
 .zoom{position:absolute;left:13px;z-index:20;display:flex;flex-direction:column;
@@ -330,8 +343,8 @@ a{color:var(--signal);}
 .screenscroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
   /* Wie beim Blatt: Der Streifen unterhalb des Fensters leistet denselben
      Dienst wie der Innenabstand, siehe .sheetscroll. */
-  padding:16px 17px max(max(env(safe-area-inset-bottom), 24px)
-                       - var(--fenstermangel, 0px), 0px);
+  padding:16px 17px max(0px, calc(max(env(safe-area-inset-bottom), 24px)
+                                  - env(safe-area-inset-top)));
   display:flex;flex-direction:column;gap:13px;}
 .screenscroll.flush{padding-top:0;}
 
@@ -415,8 +428,8 @@ select{padding-right:34px;
 .menu{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--sheet);
   border-radius:20px 20px 0 0;border-top:1px solid var(--line);
   box-shadow:0 -2px 30px rgba(0,0,0,.3);
-  padding:9px 13px max(max(env(safe-area-inset-bottom), 13px)
-                       - var(--fenstermangel, 0px), 0px);
+  padding:9px 13px max(0px, calc(max(env(safe-area-inset-bottom), 13px)
+                                 - env(safe-area-inset-top)));
   max-height:82%;overflow-y:auto;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:9px;
   visibility:hidden;transform:translateY(101%);

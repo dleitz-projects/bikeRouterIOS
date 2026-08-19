@@ -49,6 +49,24 @@ Stelle, an der ein Blatt sein müsste, benennt den Fehler bereits.
 **Kein Auge im Spiel.** Wer misst statt zu schätzen, bekommt 62 statt „ungefähr
 50 bis 70" — und 62 war die Zahl, an der die Ursache hing.
 
+## Das Gerät sagt seine Maße selbst
+
+Aus einem Screenshot lässt sich alles zurückrechnen, aber nur mit dem Bild in
+der Hand — und manches gar nicht: Ob `navigator.standalone` gilt, was
+`screen.height` meldet, ob eine JS-Messung überhaupt gegriffen hat. Genau daran
+ist am 19.08.2026 eine Korrektur still gescheitert.
+
+Deshalb steht im **Menü unter der Nennung der Datenquellen** eine Zeile mit den
+Maßen des Geräts:
+
+```
+Fenster 440×894 · Bildschirm 440×956 · fehlt 62 · System oben 62, unten 34 · dpr 3 · installiert
+```
+
+Gerechnet wird mit diesen Zahlen nicht — sie sind Beleg, kein Bedienelement.
+Für ein neues Gerät ist die Zeile der erste Griff: ein Screenshot des Menüs
+füllt die Gerätetabelle oben, ohne dass jemand Pixel zählt.
+
 ## Geräte
 
 | Gerät | Bildschirm | dpr | Fenster | `inset-top` | `inset-bottom` | geprüft |
@@ -262,9 +280,25 @@ das Blatt noch einmal 34 px Innenabstand für den Home-Indikator. Beides leistet
 dasselbe, beides zusammen ist doppelt. Dieselbe Rechnung oben: 62 px
 Systemstreifen **plus** 12 px Innenabstand der Kopfzeile.
 
-Jetzt wird abgezogen statt addiert: `max(max(env(...), 17px) - Streifen, 0)`
-unten, `max(env(...), 12px)` oben. Ergebnis auf dem gemessenen iPhone **62 oben,
-62 unten** — dieselbe Zahl, und das ist kein Zufall, sondern derselbe Streifen.
+Jetzt wird abgezogen statt addiert — und zwar in reinem CSS:
+
+```css
+padding-bottom: max(0px, calc(max(env(safe-area-inset-bottom), 17px)
+                              - env(safe-area-inset-top)));
+```
+
+**Warum ausgerechnet der obere Wert unten abgezogen wird:** weil er dieselbe
+Zahl ist. 956 − 894 = 62 = `env(safe-area-inset-top)`. Was das System oben
+nimmt, fehlt der Seite unten. Wo es oben nichts nimmt — im Browser, im
+Querformat, ohne `black-translucent` — ist der Abzug null, und genau dort gibt
+es auch unten keinen Streifen.
+
+**Der erste Anlauf ging über JavaScript** (`screen.height` minus Fensterhöhe,
+als CSS-Variable) und ergab am Gerät **0**, obwohl der Streifen sichtbar da war.
+Woran es lag, war aus dem Screenshot nicht zu erkennen — siehe „Das Gerät sagt
+seine Maße selbst". Die Lehre: Was in CSS bleiben kann, bleibt in CSS. Eine
+`env()`-Rechnung hat keine Ladereihenfolge, keine Browserweiche und kein
+Zeitfenster, in dem sie noch nicht gilt.
 
 *(Die Regel, zum dritten Mal in derselben Datei: Ein Systemstreifen ist ein
 Rand, kein Zuschlag zu einem Rand. `max()`, nie Addition — oben wie unten.)*

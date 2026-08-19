@@ -410,6 +410,18 @@ dem sie aufgefallen sind:
   unten ist in jedem Zustand ein Blatt: Routenblatt, Menü oder Vollbild-Ebene,
   alle drei in `--sheet`. Mit `--ground` stand dort ein grauer Balken, der wie
   ein Fehler aussah. Die Karte färbt sich selbst.
+- **Was in CSS bleiben kann, bleibt in CSS.** Der fehlende Streifen wurde
+  zuerst in JavaScript gemessen (`screen.height` minus Fensterhöhe) und als
+  Variable ins Stylesheet gegeben — am Gerät kam null heraus, obwohl der
+  Streifen da war. Eine `env()`-Rechnung hat keine Ladereihenfolge, keine
+  Browserweiche und kein Zeitfenster, in dem sie noch nicht gilt. Er ist
+  ohnehin genau so hoch wie der obere Systemstreifen: Was das System oben
+  nimmt, fehlt der Seite unten.
+- **Das Gerät sagt seine Maße selbst.** Eine Zeile im Menü nennt Fenster,
+  Bildschirm, Systemstreifen und Pixelverhältnis. Sie ist Beleg, kein
+  Bedienelement, und mit ihren Zahlen wird nicht gerechnet — aber ohne sie
+  ist auf einem fremden Gerät nicht zu erkennen, ob eine Korrektur überhaupt
+  gegriffen hat.
 - **Ein Systemstreifen ist ein Rand, kein Zuschlag zu einem Rand.** `max()`,
   nie Addition — oben wie unten. Wo die Dynamic Island 62 px belegt, sitzt die
   Profilpille unmittelbar darunter und nicht noch 12 px tiefer; wo unter dem
