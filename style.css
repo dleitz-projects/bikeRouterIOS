@@ -29,8 +29,24 @@
    `#analysis{display:flex}` schlägt sie — das Element bliebe sichtbar,
    obwohl das Attribut gesetzt ist. Am 18.08.2026 genau so aufgefallen. */
 [hidden]{display:none !important;}
-html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;}
-body{
+/* Das Dokument ist so hoch wie der BILDSCHIRM, nicht wie das Fenster.
+
+   In der installierten App zieht iOS die Seite ueber die volle Bildschirmhoehe,
+   rechnet das Layout aber um den oberen Systemstreifen kuerzer. Der sichtbare
+   Bereich reicht trotzdem bis unten — belegt am 19.08.2026: Der Streifen unter
+   dem Blatt trug --sheet, die Farbe der Seite, und nicht die des Systems.
+
+   Ein `position:fixed`-Rahmen half nicht, der wird am Rechenbereich
+   abgeschnitten. Ein DOKUMENT, das selbst hoeher ist, ist etwas anderes: Sein
+   Inhalt liegt im normalen Fluss, und was der sichtbare Bereich hergibt, wird
+   gezeigt. Darum `position:relative` am body und `.app` absolut darin.
+
+   `--fenstermangel` misst das Skript aus Bildschirm minus Fenster und ist
+   ueberall sonst 0 — dann steht hier wieder schlicht 100 %. `overflow:hidden`
+   ist bewusst weg: Es schnitte genau an der Kante ab, um die es geht. Gegen
+   versehentliches Verschieben haelt app.js die Seite auf 0. */
+html{margin:0;height:calc(100% + var(--fenstermangel, 0px));overscroll-behavior:none;}
+body{margin:0;height:100%;position:relative;overscroll-behavior:none;
   /* Die Leinwand traegt die Blattfarbe, nicht die Kartenfarbe. Sie ist das,
      was das System unterhalb des Fensters streicht — und unten sitzt in jedem
      Zustand das Blatt: das Routenblatt, ein Menue oder eine Vollbild-Ebene,
@@ -47,12 +63,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;
 .num{font-variant-numeric:tabular-nums;}
 a{color:var(--signal);}
 
-/* Der Rahmen ist das Fenster, nicht der Bildschirm. Der Versuch, ihn ueber das
-   Fenster hinaus zu ziehen, ist am 19.08.2026 am Geraet gescheitert: Safari
-   schneidet am Fensterrand ab, dort war danach die Unterkante des Blattes weg.
-   Reicht das Fenster nicht bis zum Bildschirmrand, ist das im Fenster nicht zu
-   heilen — siehe DARSTELLUNG.md. */
-.app{position:fixed;inset:0;overflow:hidden;}
+/* Absolut, nicht fest: Der Rahmen soll das ganze Dokument fuellen — und das ist
+   so hoch wie der Bildschirm, siehe oben. `position:fixed` haengt dagegen am
+   Rechenbereich und wird an dessen Kante abgeschnitten; genau daran ist der
+   erste Versuch am 19.08.2026 gescheitert. */
+.app{position:absolute;inset:0;overflow:hidden;}
 
 /* z-index:0 ist hier kein Schmuck, sondern zwingend: Leaflet gibt seinen
    Kartenebenen intern z-index 400 bis 700. Ohne eigenen z-index bildet #map

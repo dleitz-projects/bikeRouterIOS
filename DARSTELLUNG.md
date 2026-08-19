@@ -282,11 +282,23 @@ Streifen, unterer Rand, Analyse und Farbschema in einem Bild.
 - **iPad und Schreibtisch.** Die Oberfläche ist für schmale Displays entworfen.
   Was auf 1000 px Breite daraus wird, ist eine offene Gestaltungsfrage, kein
   Fehler.
-- **Die randlose Karte am oberen Rand ist weg** — bezahlt dafür, dass unten
-  nichts mehr abgeschnitten wird und 62 px mehr Inhalt Platz haben. Ob das der
-  richtige Tausch bleibt, ist eine Gestaltungsfrage und keine technische. Der
-  Rückweg ist eine Zeile (`black-translucent` zurück) plus einmal Symbol neu
-  anlegen; er kostet dann wieder den unerreichbaren Rand unten.
+- **Läuft: der Versuch, beides zu bekommen.** Seit dem 19.08.2026, 21 Uhr,
+  ist `black-translucent` zurück — die Karte reicht damit wieder bis zur
+  obersten Bildpunktzeile — und zusätzlich ist das **Dokument** so hoch wie
+  der Bildschirm, mit dem Rahmen absolut darin.
+
+  Der Grund, es überhaupt zu versuchen, ist ein Messwert: Der Streifen unten
+  trug am 19.08. um 17:16 `--sheet`, also die Farbe der **Seite**, während das
+  Manifest noch `#E9EBE3` sagte. Die Seite malt dort hinein — der sichtbare
+  Bereich reicht bis 956, nur der Rechenbereich endet bei 894. Der gescheiterte
+  Versuch vom Mittag dehnte einen `position:fixed`-Rahmen, und der hängt am
+  Rechenbereich. Ein Dokument im normalen Fluss ist etwas anderes.
+
+  **Zu erwarten sind zwei Ausgänge, und beide sind eine Antwort:** Reicht das
+  Blatt bis zur untersten Bildpunktzeile und die Karte bis zur obersten, ist
+  die Frage nach dem Vollbild mit Ja beantwortet. Bleibt unten ein Streifen,
+  ist sie endgültig mit Nein beantwortet — dann ist der sichtbare Bereich doch
+  894, und es bleibt die Wahl, an welchem Ende die 62 px sitzen.
 - **Die Farbe der Statusleiste kommt womöglich ebenfalls aus dem Symbol.**
   Am 19.08.2026, 19:35 stand sie weiter auf `--ground`, obwohl die Seite seit
   18:20 `--sheet` ausliefert. Zwei Erklärungen, beide nicht ausgeschlossen: Die

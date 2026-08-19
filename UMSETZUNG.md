@@ -523,6 +523,47 @@ nie überlappt.
 
 ---
 
+## U29 — Der Versuch, Vollbild und vollen unteren Rand zugleich zu bekommen
+
+**Die Frage:** Muss man sich wirklich entscheiden, ob die 62 px oben über der
+Karte oder unten unter dem Blatt liegen?
+
+**Der Messwert, der dagegen spricht.** Am 19.08.2026 um 17:16 stand im Manifest
+noch `background_color: #E9EBE3`, die Seite malte ihre Leinwand aber schon in
+`#F7F8F3`. Der Streifen unter dem Blatt trug:
+
+```
+y 2682–2867   894,0–955,7 css   #F7F8F3   --sheet
+```
+
+Die Farbe der **Seite**, nicht die des Systems. Die Seite malt also bis 956 —
+der sichtbare Bereich reicht bis unten, nur der Rechenbereich endet bei 894.
+
+**Warum der erste Versuch trotzdem scheiterte** (U24): Er dehnte einen
+`position:fixed`-Rahmen. `fixed` hängt am Rechenbereich und wird an dessen Kante
+abgeschnitten. Ein **Dokument**, das selbst höher ist, mit Inhalt im normalen
+Fluss, ist etwas anderes — und war ungetestet.
+
+**Jetzt gebaut:** `black-translucent` zurück (Karte wieder bis zur obersten
+Bildpunktzeile), `html` so hoch wie der Bildschirm, `body` mit
+`position:relative`, `.app` absolut darin. `overflow:hidden` ist weg — es
+schnitte genau an der Kante ab, um die es geht; stattdessen hält ein
+Scroll-Handler die Seite auf 0.
+
+Die Korrektur ist wie in U24 dreifach eingezäunt: nur in der installierten App,
+höchstens der obere Systemstreifen, nie negativ. Im Browser und überall, wo
+Safari richtig rechnet, ist sie 0 und ändert nichts — nachgeprüft.
+
+**Ausgang offen, beide Ergebnisse sind eine Antwort.** Reicht das Blatt bis zur
+untersten und die Karte bis zur obersten Bildpunktzeile, gibt es das Vollbild.
+Bleibt unten ein Streifen, ist der sichtbare Bereich doch 894, und die Frage ist
+endgültig beantwortet statt vermutet.
+
+**Zum Prüfen muss das Symbol neu angelegt werden** — `black-translucent` steckt
+im Home-Bildschirm-Symbol.
+
+---
+
 ## U17 — Was noch nicht umgesetzt ist
 
 - **Route auf der Karte antippen** funktioniert, ist aber mit einer dünnen

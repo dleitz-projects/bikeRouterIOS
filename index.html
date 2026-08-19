@@ -17,13 +17,23 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<!-- Kein apple-mobile-web-app-status-bar-style mehr. Mit `black-translucent`
-     zeichnete iOS die App ueber die volle Bildschirmhoehe, rechnete das Layout
-     aber ohne den oberen Systemstreifen: Bildschirm 956 px, Fenster 894 px.
-     Die fehlenden 62 px waren nicht zu fuellen — Safari schneidet am
-     Fensterrand ab, gemessen am 19.08.2026. Ohne die Zeile soll Fenster und
-     Bildschirm wieder zusammenpassen; `viewport-fit=cover` oben bleibt und
-     liefert weiter die Systemabstaende. Ganze Messung in DARSTELLUNG.md. -->
+<!-- black-translucent zieht die Seite ueber die volle Bildschirmhoehe: Die
+     Karte reicht dann bis zur obersten Bildpunktzeile, hinter Uhrzeit und
+     Dynamic Island. iOS rechnet das Layout dabei um den oberen Systemstreifen
+     kuerzer (Bildschirm 956, Fenster 894) — eine Altlast aus der Zeit vor der
+     Notch. Der sichtbare Bereich ist aber nachweislich 956: Am 19.08.2026 trug
+     der Streifen unten die Farbe der SEITE (--sheet) und nicht die des Systems,
+     die Seite malt dort also hinein.
+
+     Deshalb ist das Dokument selbst so hoch wie der Bildschirm und der Rahmen
+     darin absolut positioniert — siehe style.css und fensterKorrigieren() in
+     app.js. Der frueher gescheiterte Versuch dehnte einen position:fixed-Rahmen,
+     und der wird am Rechenbereich abgeschnitten.
+
+     ACHTUNG: iOS liest diese Zeile beim ANLEGEN des Home-Bildschirm-Symbols,
+     nicht bei jedem Start. Wer sie aendert, muss das Symbol loeschen und neu
+     hinzufuegen — sonst aendert sich gar nichts. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="bikeRouter">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"

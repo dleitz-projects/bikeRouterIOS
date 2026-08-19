@@ -420,6 +420,65 @@ function chromeUnten() {
   return $('.chrome').getBoundingClientRect().bottom;
 }
 
+/* Wie viel nimmt sich das System oben? In JS ist `env(safe-area-inset-top)`
+   nicht auszulesen; ein Messklotz mit genau dieser Hoehe schon. `visibility`
+   statt `display`, sonst gaebe es nichts zu messen. Gebraucht wird der Wert
+   nur als Deckel fuer die Korrektur darunter — mehr als den Systemstreifen
+   kann der Unterschied zwischen Bildschirm und Fenster nicht erklaeren. */
+let systemProbe = null;
+function systemOben() {
+  if (!systemProbe) {
+    systemProbe = document.createElement('div');
+    systemProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;' +
+      'height:env(safe-area-inset-top);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(systemProbe);
+  }
+  return systemProbe.offsetHeight;
+}
+
+/* Um wie viel ist das Fenster kleiner als der Bildschirm?
+
+   In der installierten App mit `black-translucent` zieht iOS die Seite ueber
+   die volle Bildschirmhoehe, rechnet das Layout aber um den oberen
+   Systemstreifen kuerzer: 956 gegen 894, gemessen am 19.08.2026. Das Dokument
+   bekommt die Differenz zurueck, damit sein Inhalt bis zur untersten
+   Bildpunktzeile reicht.
+
+   Dreifach eingezaeunt, damit die Korrektur dort verschwindet, wo sie nicht
+   hingehoert: nur in der installierten App (im Browsertab fehlt Hoehe wegen
+   der Safari-Leisten, und die darf man nicht ueberdecken), hoechstens der
+   obere Systemstreifen, nie negativ. Wo Safari richtig rechnet, kommt 0
+   heraus und im Stylesheet steht wieder schlicht 100 %. */
+function fensterKorrigieren() {
+  const el = document.documentElement;
+  const installiert = navigator.standalone === true ||
+    (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  let fehlt = 0;
+  if (installiert) {
+    /* iOS meldet screen.width/height je nach Fassung mit oder ohne Drehung.
+       Deshalb nicht die Achse glauben, sondern die laengere Kante nehmen,
+       solange das Fenster hochkant steht. */
+    const stehend = el.clientHeight >= el.clientWidth;
+    const bildschirm = stehend
+      ? Math.max(screen.width, screen.height)
+      : Math.min(screen.width, screen.height);
+    fehlt = Math.round(bildschirm - el.clientHeight);
+    fehlt = Math.max(0, Math.min(fehlt, systemOben()));
+  }
+  el.style.setProperty('--fenstermangel', fehlt + 'px');
+}
+fensterKorrigieren();
+
+/* Das Dokument ist damit hoeher als der Rechenbereich, also grundsaetzlich
+   verschiebbar. Sichtbar sein soll trotzdem immer der Anfang: Ist der Bereich
+   in Wahrheit so gross wie der Bildschirm, gibt es unten nichts nachzuholen,
+   und ist er es nicht, wandert die Seite sonst bei jeder Geste ein Stueck weg.
+   `overflow:hidden` waere der einfachere Weg, schnitte aber genau an der
+   Kante ab, um die es geht. */
+window.addEventListener('scroll', function () {
+  if (window.scrollY) window.scrollTo(0, 0);
+}, { passive: true });
+
 /* Derselbe Abstand über wie unter: Was über dem Blatt schwebt, sitzt 14 px
    darüber und braucht nach oben dieselben 14 px, sonst klebt es an der
    Kopfzeile. Ein Wert, keine zwei — die Rasten und die Sichtbarkeit der Leiste
@@ -3565,6 +3624,9 @@ let resizeTimer = null;
 window.addEventListener('resize', function () {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(function () {
+    /* Zuerst das Fenstermass: Beim Drehen wechselt der Systemstreifen die
+       Seite, und alles Weitere misst gegen den Rahmen. */
+    fensterKorrigieren();
     map.invalidateSize({ pan: false });
     detentsInvalidieren();
     if (state.routes.length) setDetent(detent);
