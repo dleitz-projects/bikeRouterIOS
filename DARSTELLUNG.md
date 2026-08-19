@@ -327,8 +327,19 @@ Innenabstand aus dem Stylesheet. Ein Wert, den niemand interpretiert.
 weshalb das Blatt zum Messen auf null gefaltet wird. Zwei Tücken in einer
 Eigenschaft sind eine zu viel — deshalb ist sie hier ganz raus.)*
 
-**Was die dreizehn gemeinsam haben:** Keine war ein Schönheitsfehler. Zwölf von
-dreizehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+**14. Nach dem Vollbild lag der Knopf halb unter dem Blattrand** (19.08.).
+Folgefehler von Falle 13: Die neue Messung nimmt die Unterkante des letzten
+sichtbaren Kindes — und die verschiebt sich mit dem **Scrollstand**. Wer im
+Vollbild die Analyse nach unten geschoben hatte und dann auf die Karte tippte,
+bekam ein Blatt, das um genau diesen Betrag zu kurz war.
+
+Gemessen wird jetzt bei Scrollstand null, danach wird er zurückgesetzt.
+*(Am Schreibtisch nicht nachstellbar — im unsichtbaren Testfenster bleibt
+`scrollTop` auf null. Die Korrektur ist dort folgenlos und hier belegt durch
+die Situation, in der sie auftrat.)*
+
+**Was die vierzehn gemeinsam haben:** Keine war ein Schönheitsfehler. Dreizehn von
+vierzehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle

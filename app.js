@@ -1968,6 +1968,13 @@ function measureSheet(zustand) {
      interpretiert. `getClientRects().length` unterscheidet dabei sichtbar von
      `display:none` — genau das, was die Zustandsregeln oben schalten. */
   const scroll = $('.sheetscroll');
+  /* Der Scrollstand muss raus, sonst misst man zu wenig: Wer im Vollbild die
+     Analyse nach unten geschoben hat, verschiebt damit auch die Unterkanten
+     der Kinder — und das Blatt kaeme um genau diesen Betrag zu kurz heraus.
+     Am 19.08.2026 am Geraet: nach dem Vollbild auf die Karte getippt, und der
+     Rechnen-Knopf lag halb unter dem Blattrand. */
+  const stand = scroll.scrollTop;
+  scroll.scrollTop = 0;
   const oben = scroll.getBoundingClientRect().top;
   let unten = oben;
   Array.prototype.forEach.call(scroll.children, function (kind) {
@@ -1977,6 +1984,7 @@ function measureSheet(zustand) {
   });
   const polster = parseFloat(getComputedStyle(scroll).paddingBottom) || 0;
   const h = Math.ceil(unten - oben + polster) + $('#grab').offsetHeight + 1;
+  scroll.scrollTop = stand;
   sheet.setAttribute('data-detent', vorher);
   sheet.style.height = hoehe;
   void sheet.offsetHeight;
