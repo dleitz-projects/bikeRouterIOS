@@ -82,10 +82,13 @@ Unten fehlt deshalb genau so viel, wie oben zusätzlich da ist.
 **Gemessen ist das. Die Erklärung ist eine Vermutung:** `viewport-fit=cover`
 zusammen mit `apple-mobile-web-app-status-bar-style: black-translucent`. Dass
 `env(safe-area-inset-top)` überhaupt 62 meldet, belegt, dass `cover` wirkt —
-ohne `cover` wäre der Wert null. Belegt ist die Vermutung damit nicht. Sie zu
-prüfen hieße, `black-translucent` zu streichen, und das kostet womöglich die
-randlose Karte am oberen Rand. Solange die Korrektur trägt, ist der Preis zu
-hoch.
+ohne `cover` wäre der Wert null. Mehr ist nicht belegt.
+
+Die Vermutung wird seit dem 19.08.2026, 17:20 Uhr, geprüft: `black-translucent`
+ist gestrichen. Der Preis wäre womöglich die randlose Karte am oberen Rand
+gewesen — dass er zu hoch sei, war eine Fehleinschätzung. Die 62 px waren
+ohnehin nicht nutzbar, und der Versuch, sie von innen zu füllen, hat mehr
+kaputt gemacht als der Fehler selbst (Falle 8).
 
 ## Die Fallen
 
@@ -135,24 +138,54 @@ nötig wären.)*
 **8. Ein grauer Streifen unter dem Blatt** (19.08., 62 px). Nicht derselbe
 Fehler wie 7, obwohl er an derselben Stelle aussieht: Der Streifen liegt
 **außerhalb** des Blattes und trägt `--ground` statt `--sheet`. Ursache ist die
-Differenz zwischen Bildschirm und Fenster, siehe oben. Zwei Änderungen:
+Differenz zwischen Bildschirm und Fenster, siehe oben.
 
-- Der Rahmen (`.app`) ist so hoch wie der Bildschirm, nicht wie das Fenster.
-  Was fehlt, wird gemessen und begrenzt: nur in der installierten App,
-  höchstens der obere Systemstreifen, nie negativ. Wo der Browser richtig
-  rechnet, kommt null heraus. Alle Höhenrechnungen beziehen sich seitdem auf
-  den Rahmen, nicht auf das Fenster.
-- Die Leinwand trägt `--sheet` statt `--ground`. Was das System außerhalb des
-  Fensters streicht, sitzt immer unter einem Blatt — Routenblatt, Menü oder
-  Vollbild-Ebene, alle drei in derselben Farbe.
+**Erster Versuch, und er ging schief.** Der Rahmen (`.app`) wurde um die
+gemessene Differenz über das Fenster hinaus gezogen — in der Annahme, iOS
+zeichne dort Inhalt, weil es dort schon die Hintergrundfarbe malt. Am Gerät
+nachgemessen: **tut es nicht.** Safari schneidet am Fensterrand ab. Der
+Streifen blieb, und nun lag die Unterkante des Blattes darin: Analysekarten
+angeschnitten, das ganze Blatt 62 px zu tief. Belegt an neun Screenshots vom
+19.08.2026, 17:09 — in jedem endet der Inhalt bei **893,7** und darunter steht
+Leinwand:
 
-*(Der zweite Punkt ist die Absicherung des ersten: Ob iOS unterhalb des
-Fensters überhaupt Inhalt zeichnet, ist ungeprüft — die Hintergrundfarbe malt
-es dort, das ist belegt, mehr nicht. Zeichnet es nichts, bleibt der Streifen
-leer, ist aber nicht mehr von der Unterkante des Blattes zu unterscheiden.)*
+```
+y  2624–2626    874.7–875.3  css    3 px  #E3E6DA  --line-soft (hell)
+y  2627–2681    875.7–893.7  css   55 px  #FFFFFF  --raised (hell)
+y  2682–2867    894.0–955.7  css  186 px  #F7F8F3  --sheet (hell)
+```
 
-**Was die acht gemeinsam haben:** Keine war ein Schönheitsfehler. Sieben von
-acht machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+*(Die Regel daraus: Ein zu kleines Fenster ist an seiner Ursache zu beheben,
+nicht durch Übergröße im Inneren. Und: Dass das System eine Fläche **färbt**,
+heißt nicht, dass die Seite darauf **zeichnen** darf.)*
+
+**Was geblieben ist:** die Leinwand in `--sheet` statt `--ground`. Was das
+System außerhalb des Fensters streicht, sitzt immer unter einem Blatt —
+Routenblatt, Menü oder Vollbild-Ebene, alle drei in derselben Farbe. Der
+Streifen ist damit nicht mehr von der Unterkante des Blattes zu unterscheiden,
+auch wenn er weiterhin da ist.
+
+**Was danach kam:** `apple-mobile-web-app-status-bar-style: black-translucent`
+ist gestrichen. Das ist der Griff an die Ursache statt an die Wirkung.
+`viewport-fit=cover` bleibt. Am Gerät noch nicht bestätigt — siehe „Offen".
+
+**9. Das „©" schob sich im Vollbild auf die Profilpille** (19.08.). Alles, was
+über dem Blatt schwebt — Werkzeugleiste, Zoom, Nennung der Datenquellen —,
+verschwindet, sobald der Streifen Karte zu schmal wird. Die Schwelle rechnete
+aber gegen den **ganzen** Streifen statt gegen den nutzbaren und kam damit auf
+genau 92, während sie erst unter 92 abschnitt. Ein Gleichstand auf die Stelle,
+den es auf einem Gerät mit anderem Systemstreifen nie gegeben hätte.
+
+Neu gilt: gemessen wird gegen den Streifen **ohne** den oberen Systembereich,
+jedes Element an **seiner eigenen Höhe**, und es braucht nach oben dieselbe
+Luft, die es nach unten hat. Damit fällt der Vollbild-Fall von selbst richtig
+heraus — der Streifen ist 44 px, das kleinste Element 30 px, und 30 + 14 + 14
+passt nicht hinein. Auf jedem Gerät, ohne eine einzige Gerätezahl im Code.
+*(Feste Schwellen tragen den Systemstreifen des Geräts in sich, an dem sie
+ermittelt wurden.)*
+
+**Was die neun gemeinsam haben:** Keine war ein Schönheitsfehler. Acht von
+neun machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle
@@ -164,8 +197,10 @@ steht, hat schon einmal alles darunter verdeckt.
    Aufruf holt, der zweite zeigt — siehe `CLAUDE.md`, Abschnitt Deployment.
 2. **Ist die Bedienung überhaupt da?** Pille oben links, Menü oben rechts,
    fünf Werkzeuge rechts, Zoom und „©" links unten.
-3. **Oberer Rand:** Pille und Menü stehen unter der Insel, nicht darin. Die
-   Karte reicht randlos bis zur obersten Bildpunktzeile.
+3. **Oberer Rand:** Pille und Menü stehen unter der Insel, nicht darin. Trägt
+   die oberste Bildpunktzeile Kartenfarbe oder Systemfarbe? Das ist seit dem
+   Streichen von `black-translucent` die entscheidende Beobachtung — sie sagt,
+   welcher der beiden Ausgänge eingetreten ist (siehe „Offen").
 4. **Unterer Rand:** kein andersfarbiger Streifen unter dem Blatt, in keinem
    der vier Zustände. Im Zweifel `bildmass.py spalte` darauf ansetzen — 62 px
    sieht man, 6 px nicht.
@@ -194,10 +229,19 @@ Streifen, unterer Rand, Analyse und Farbschema in einem Bild.
 - **iPad und Schreibtisch.** Die Oberfläche ist für schmale Displays entworfen.
   Was auf 1000 px Breite daraus wird, ist eine offene Gestaltungsfrage, kein
   Fehler.
-- **Zeichnet iOS unterhalb des Fensters?** Die Antwort entscheidet, ob die App
-  die 62 px zurückgewinnt oder nur verdeckt. Am Bild zu erkennen: Sitzt der
-  Rechnen-Knopf tiefer als vorher und ist die Karte höher, wurden sie
-  zurückgewonnen.
-- **`black-translucent` streichen?** Würde die Ursache statt der Wirkung
-  treffen, kostet aber womöglich die randlose Karte oben. Erst zu entscheiden,
-  wenn die Korrektur nicht trägt.
+- **Trägt das Streichen von `black-translucent`?** Der offene Punkt seit
+  17:20 Uhr. Zwei Ausgänge, beide besser als der Zustand davor:
+  *Fenster wird 956* — randlose Karte bleibt, 62 px gewonnen, nichts weiter zu
+  tun. *Fenster bleibt 894, rückt aber unter die Statusleiste* — alles ist
+  sichtbar und nichts abgeschnitten, dafür beginnt die Karte unter der
+  Statusleiste statt am Bildschirmrand, und `safe-area-inset-top` meldet null.
+  Am Bild zu unterscheiden: Trägt die oberste Bildpunktzeile Kartenfarbe oder
+  Systemfarbe?
+- **Womöglich einmal neu zum Home-Bildschirm hinzufügen.** iOS liest die
+  `apple-mobile-web-app-*`-Zeilen unter Umständen beim **Anlegen** des Symbols
+  und nicht bei jedem Start. Ändert sich nach zwei Aufrufen nichts, ist das
+  der erste Verdacht — Symbol löschen, Seite in Safari öffnen, neu hinzufügen.
+
+**Beantwortet am 19.08.2026:** *Zeichnet iOS unterhalb des Fensters?* **Nein.**
+Die Hintergrundfarbe malt es dort, Inhalt schneidet es am Fensterrand ab. Siehe
+Falle 8.

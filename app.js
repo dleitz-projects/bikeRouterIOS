@@ -419,56 +419,16 @@ function safeTop() {
   return safeProbe.offsetHeight;
 }
 
-/* Wie viel Bildschirm bekommt die Seite NICHT zu sehen, obwohl sie darauf
-   gezeichnet wird?
+/* Der Rahmen reicht bis zum Fensterrand — weiter nicht. Der Versuch, ihn ueber
+   das Fenster hinaus auf die Bildschirmhoehe zu ziehen, ist am 19.08.2026 am
+   Geraet gescheitert: Safari schneidet am Fensterrand ab. Der Streifen unter
+   dem Blatt blieb, und die Unterkante des Blattes lag dann darin. Was das
+   Fenster nicht hergibt, ist im Fenster nicht zu holen; die Messung und der
+   naechste Schritt stehen in DARSTELLUNG.md.
 
-   Am 19.08.2026 am Geraet gemessen (iPhone 16 Pro Max, installierte App):
-   Der Bildschirm ist 956 px hoch, die Seite beginnt am obersten Punkt — aber
-   das Fenster meldet nur 894 px. Die Differenz ist auf den Punkt
-   env(safe-area-inset-top): Safari zeichnet die App wegen
-   `black-translucent` ueber die volle Hoehe, rechnet das Layout aber ohne
-   den oberen Systemstreifen. Unter dem Blatt blieb dadurch ein 62 px hoher
-   Streifen der Leinwandfarbe stehen — der Balken unter dem Rechnen-Knopf.
-
-   Gemessen statt geraten, und dreifach eingezaeunt, damit die Korrektur dort
-   verschwindet, wo sie nicht hingehoert:
-
-   1. nur in der installierten App — im Browsertab fehlt Hoehe wegen der
-      Safari-Leisten, und die darf man nicht ueberdecken;
-   2. hoechstens der obere Systemstreifen — mehr kann dieser Fehler nicht
-      erklaeren;
-   3. nie negativ.
-
-   Wo Safari richtig rechnet, kommt 0 heraus und im Stylesheet steht wieder
-   schlicht 100 %. */
-function fensterMangel() {
-  const installiert = navigator.standalone === true ||
-    (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
-  if (!installiert) return 0;
-  const el = document.documentElement;
-  /* iOS meldet screen.width/height je nach Fassung mit oder ohne Drehung.
-     Deshalb nicht die Achse glauben, sondern die laengere Kante nehmen,
-     solange das Fenster hochkant steht. */
-  const stehend = el.clientHeight >= el.clientWidth;
-  const bildschirm = stehend
-    ? Math.max(screen.width, screen.height)
-    : Math.min(screen.width, screen.height);
-  const fehlt = Math.round(bildschirm - el.clientHeight);
-  return Math.max(0, Math.min(fehlt, safeTop()));
-}
-
-/* Muss laufen, BEVOR Leaflet die Karte anlegt: Die Karte misst ihren
-   Container beim Anlegen, und der ist danach 62 px hoeher. */
-function fensterKorrigieren() {
-  document.documentElement.style.setProperty(
-    '--fenstermangel', fensterMangel() + 'px');
-}
-fensterKorrigieren();
-
-/* Die Hoehe, gegen die alles gerechnet wird, ist ab hier die des Rahmens —
-   nicht die des Fensters. Auf dem iPhone unterscheiden die beiden sich um
-   den korrigierten Streifen; wer weiter das Fenster misst, setzt Leiste und
-   Rasten um genau diesen Betrag zu hoch an. */
+   Gemessen wird trotzdem der Rahmen und nicht das Fenster: Beide sind heute
+   gleich hoch, aber der Rahmen ist das, worin die Bedienung sitzt. Sollte
+   Safari das Fenster einmal anders schneiden, stimmt diese Zahl weiter. */
 function appH() { return $('.app').clientHeight; }
 
 const map = L.map('map', { zoomControl: false }).setView([51.85, 10.30], 10);
@@ -2054,22 +2014,48 @@ function positionRail(target) {
   const sheet = $('#sheet');
   const sh = (target !== undefined && target !== null)
     ? target : sheet.getBoundingClientRect().height;
-  const rail = $('#rail');
-  const height = rail.getBoundingClientRect().height || 250;
-  const bottom = sh + 14;
-  const frei = appH() - bottom;
-  rail.classList.toggle('hidden', frei - height < 70);
+  /* Derselbe Abstand über wie unter: Was über dem Blatt schwebt, braucht nach
+     oben so viel Luft, wie es nach unten hat. Daraus fällt der Vollbild-Fall
+     von selbst richtig heraus — der Streifen ist 44 px, das kleinste Element
+     ist 30 px hoch und bräuchte mit beidseitiger Luft 44 px plus die eigene
+     Höhe. Im Vollbild ist die Karte damit auf jedem Gerät frei, und ein Tap
+     darauf kann nur heißen „gib mir die Karte zurück". */
+  const luft = 14;
+  const bottom = sh + luft;
+
+  /* Der Platz über dem Blatt ist NICHT der ganze Streifen Karte. Oben nimmt
+     sich das System seinen Teil, und was dort hineinragt, verschwindet unter
+     der Dynamic Island. Gerechnet wird deshalb gegen den nutzbaren Streifen.
+
+     Am 19.08.2026 am Gerät aufgelaufen: In der vollen Raste blieb das „©"
+     stehen und schob sich halb hinter die Profilpille. Die alte Schwelle zählte
+     den Systemstreifen mit und kam damit auf genau 92 — abgeschnitten wurde
+     aber erst unter 92. Ein Gleichstand, der auf einem Gerät mit anderem
+     Systemstreifen nie aufgefallen wäre. */
+  const frei = appH() - bottom - safeTop();
+
+  /* Jedes Element an seiner eigenen Höhe messen statt an einer Konstanten:
+     Eine feste Schwelle trägt den Systemstreifen des Geräts in sich, an dem
+     sie ermittelt wurde, und ist auf dem nächsten falsch. */
+  const hoch = function (el, ersatz) {
+    return el.getBoundingClientRect().height || ersatz;
+  };
+  const rail = $('#rail'), at = $('#attribWrap'), zo = $('#zoom');
+
   rail.style.bottom = bottom + 'px';
+  rail.classList.toggle('hidden', frei < hoch(rail, 256) + luft);
 
   /* Linke Kante: erst der Zoom, darunter die Nennung der Datenquellen. Beide
      verschwinden, sobald der Streifen Karte zu schmal wird — sie mit nach oben
-     wandern zu lassen hiesse, sie im Vollbild auf die Profilpille zu schieben. */
-  const at = $('#attribWrap'), zo = $('#zoom');
-  const engZu = frei < 92;
+     wandern zu lassen hiesse, sie im Vollbild auf die Profilpille zu schieben.
+     Der Zoom sitzt 42 px höher, also braucht er auch 42 px mehr. */
   at.style.bottom = bottom + 'px';
   zo.style.bottom = (bottom + 42) + 'px';
+  /* Nicht der ganze Kasten, sondern nur das „©": Aufgeklappt ist der Kasten
+     breiter und höher, und dann verschwände die Nennung, sobald man sie liest. */
+  const engZu = frei < hoch($('#attribBtn'), 30) + luft;
   at.classList.toggle('hidden', engZu);
-  zo.classList.toggle('hidden', frei < 130);
+  zo.classList.toggle('hidden', frei < 42 + hoch(zo, 75) + luft);
   if (engZu) $('#attribBox').hidden = true;
 }
 
@@ -3567,9 +3553,6 @@ let resizeTimer = null;
 window.addEventListener('resize', function () {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(function () {
-    /* Zuerst das Fenstermass: Beim Drehen wechselt der Systemstreifen die
-       Seite, und alles Weitere misst gegen den Rahmen. */
-    fensterKorrigieren();
     map.invalidateSize({ pan: false });
     detentsInvalidieren();
     if (state.routes.length) setDetent(detent);

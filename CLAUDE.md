@@ -348,17 +348,27 @@ gegen `safe-area-inset-top` gerechnet, nicht gegen die Fensterhöhe.** Der Wert
 ist in JavaScript nicht direkt lesbar — die App misst ihn über einen
 unsichtbaren Klotz mit genau dieser Höhe.
 
-**Das Fenster ist nicht der Bildschirm.** Am 19.08.2026 am Gerät nachgemessen:
-Die installierte App wird über die volle Bildschirmhöhe gezeichnet, Safari
-rechnet das Layout aber um den oberen Systemstreifen kürzer. Daraus zwei
-Regeln, die für jedes Gerät gelten sollen und nicht nur für das eine, an dem
-es aufgefallen ist:
+**Was das Fenster nicht hergibt, ist im Fenster nicht zu holen.** Am
+19.08.2026 am Gerät nachgemessen: Die installierte App wurde über die volle
+Bildschirmhöhe gezeichnet, Safari rechnete das Layout aber um den oberen
+Systemstreifen kürzer — und schnitt am Fensterrand ab. Der Versuch, den Rahmen
+über das Fenster hinaus zu ziehen, verlor deshalb die Unterkante des Blattes
+und war schlimmer als der Fehler. Ein zu kleines Fenster ist an seiner
+**Ursache** zu beheben (hier: die Zeile `apple-mobile-web-app-status-bar-style`),
+nicht durch Übergröße im Inneren.
 
-- **Der Rahmen ist so hoch wie der Bildschirm, nicht wie das Fenster.** Was
-  fehlt, wird **gemessen** und begrenzt — nur in der installierten App,
-  höchstens der obere Systemstreifen, nie negativ. Wo der Browser richtig
-  rechnet, kommt null heraus und nichts ändert sich. Alle Höhenrechnungen
-  beziehen sich auf den **Rahmen** (`.app`), nicht auf das Fenster.
+Drei Regeln, die für jedes Gerät gelten sollen und nicht nur für das eine, an
+dem es aufgefallen ist:
+
+- **Alle Höhen werden gegen den Rahmen (`.app`) gerechnet, nicht gegen das
+  Fenster.** Heute sind beide gleich hoch. Die Zeile bleibt trotzdem stehen,
+  weil der Rahmen das ist, worin die Bedienung sitzt.
+- **Was über dem Blatt schwebt, wird am nutzbaren Streifen gemessen** — also
+  ohne den oberen Systembereich, und mit demselben Abstand nach oben, den es
+  nach unten hat. Sonst bleibt im Vollbild etwas stehen und schiebt sich unter
+  die Dynamic Island oder auf die Profilpille. Jedes Element wird dabei an
+  **seiner eigenen Höhe** gemessen: Eine feste Schwelle trägt den
+  Systemstreifen des Geräts in sich, an dem sie ermittelt wurde.
 - **Die Leinwand trägt die Farbe des Blattes, nicht die der Karte.** Was das
   System außerhalb des Fensters streicht, sitzt immer unter dem Blatt — und
   unten ist in jedem Zustand ein Blatt: Routenblatt, Menü oder Vollbild-Ebene,

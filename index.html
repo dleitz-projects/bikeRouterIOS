@@ -11,7 +11,13 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Kein apple-mobile-web-app-status-bar-style mehr. Mit `black-translucent`
+     zeichnete iOS die App ueber die volle Bildschirmhoehe, rechnete das Layout
+     aber ohne den oberen Systemstreifen: Bildschirm 956 px, Fenster 894 px.
+     Die fehlenden 62 px waren nicht zu fuellen — Safari schneidet am
+     Fensterrand ab, gemessen am 19.08.2026. Ohne die Zeile soll Fenster und
+     Bildschirm wieder zusammenpassen; `viewport-fit=cover` oben bleibt und
+     liefert weiter die Systemabstaende. Ganze Messung in DARSTELLUNG.md. -->
 <meta name="apple-mobile-web-app-title" content="bikeRouter">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"

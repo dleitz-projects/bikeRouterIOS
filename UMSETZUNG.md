@@ -402,19 +402,74 @@ gezeichnet, das Layout rechnet ohne den oberen Systemstreifen.
    ein Blatt; malt das System außerhalb des Fensters, malt es jetzt in der
    Farbe, die dort ohnehin hingehört.
 
-**Offen und am Bild zu erkennen:** Ob iOS unterhalb des Fensters überhaupt
-Inhalt zeichnet, ist ungeprüft — belegt ist nur, dass es dort die
-Hintergrundfarbe malt. Sitzt der Knopf nach dem Deployment tiefer als vorher
-und ist die Karte höher, wurden die 62 px zurückgewonnen; sieht alles aus wie
-vorher, nur ohne Balken, verdeckt Punkt 2 sie bloß. Dann wäre der nächste
-Schritt, `black-translucent` zu streichen — was womöglich die randlose Karte
-am oberen Rand kostet und deshalb nicht ungefragt passiert ist.
+**Am Gerät geprüft, und Punkt 1 ist widerlegt.** iOS zeichnet **nicht**
+unterhalb des Fensters: Es malt dort die Hintergrundfarbe, schneidet Inhalt
+aber am Fensterrand ab. Der Streifen blieb, und nun lag die Unterkante des
+Blattes darin — Analysekarten angeschnitten, das ganze Blatt 62 px zu tief.
+Punkt 1 ist deshalb zurückgenommen, `.app` steht wieder auf `inset:0`. Punkt 2
+bleibt: Der Streifen ist nicht mehr von der Unterkante des Blattes zu
+unterscheiden.
 
-**Neu dazu: `DARSTELLUNG.md`.** Acht Darstellungsfallen sind inzwischen am
+*Die Regel daraus: Ein zu kleines Fenster ist an seiner Ursache zu beheben,
+nicht durch Übergröße im Inneren. Und dass das System eine Fläche färbt, heißt
+nicht, dass die Seite darauf zeichnen darf.*
+
+**Neu dazu: `DARSTELLUNG.md`.** Neun Darstellungsfallen sind inzwischen am
 Gerät aufgelaufen und keine einzige davon im Browser aufgefallen. Sie standen
 verstreut in `CLAUDE.md`; jetzt stehen sie zusammen, mit Messverfahren,
 Gerätetabelle und einer Prüfliste für die Sichtkontrolle. `CLAUDE.md` behält
 nur, was gilt.
+
+---
+
+## U25 — `black-translucent` gestrichen
+
+Der Griff an die Ursache statt an die Wirkung, nachdem U24 Punkt 1 am Gerät
+gescheitert war. Die Zeile
+`<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
+ist raus; `viewport-fit=cover` bleibt und liefert weiter die Systemabstände.
+
+**Zwei mögliche Ausgänge, beide besser als der Zustand davor:**
+
+| Ausgang | Woran zu erkennen | Folge |
+|---|---|---|
+| Fenster wird 956 px | oberste Bildpunktzeile trägt Kartenfarbe | randlose Karte bleibt, 62 px gewonnen |
+| Fenster bleibt 894 px, rückt unter die Statusleiste | oberste Zeile trägt Systemfarbe | nichts mehr abgeschnitten, dafür beginnt die Karte unter der Statusleiste; `safe-area-inset-top` ist dann null |
+
+Der zweite Ausgang kostet die randlose Karte oben. Dass dieser Preis zu hoch
+sei, war die Fehleinschätzung vom Vormittag: Die 62 px waren ohnehin nicht
+nutzbar, und der Versuch, sie von innen zu füllen, hat mehr kaputt gemacht als
+der Fehler selbst.
+
+**Möglicher Stolperstein:** iOS liest die `apple-mobile-web-app-*`-Zeilen unter
+Umständen beim **Anlegen** des Symbols und nicht bei jedem Start. Ändert sich
+nach zwei Aufrufen nichts, muss das Symbol einmal gelöscht und neu hinzugefügt
+werden.
+
+---
+
+## U26 — Das „©" im Vollbild
+
+Alles, was über dem Blatt schwebt, verschwindet, sobald der Streifen Karte zu
+schmal wird — so steht es in der `CLAUDE.md`, und für Werkzeugleiste und Zoom
+stimmte es auch. Das „©" blieb stehen und schob sich halb hinter die
+Profilpille.
+
+**Ursache:** Die Schwelle rechnete gegen den **ganzen** Streifen statt gegen
+den nutzbaren und kam so auf genau 92 — abgeschnitten wurde aber erst *unter*
+92. Ein Gleichstand auf die Stelle, der auf einem Gerät mit anderem
+Systemstreifen nie aufgefallen wäre.
+
+**Neu:** gemessen wird gegen den Streifen ohne den oberen Systembereich, jedes
+Element an seiner eigenen Höhe, und es braucht nach oben dieselbe Luft, die es
+nach unten hat. Damit fällt der Vollbild-Fall von selbst heraus — der Streifen
+ist 44 px, das kleinste Element 30 px, und 30 + 14 + 14 passt nicht hinein. Im
+Browser über alle vier Rasten durchgespielt: leer, klein und halb zeigen alles,
+voll nichts.
+
+Keine einzige Gerätezahl steht dafür im Code. Genau das ist die Absicht — feste
+Schwellen tragen den Systemstreifen des Geräts in sich, an dem sie ermittelt
+wurden.
 
 ---
 

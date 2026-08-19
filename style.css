@@ -47,17 +47,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;
 .num{font-variant-numeric:tabular-nums;}
 a{color:var(--signal);}
 
-/* Nicht `inset:0`, sondern eine gemessene Hoehe. Grund: Die installierte App
-   laeuft mit `viewport-fit=cover` und `black-translucent`, zeichnet also ab
-   dem obersten Bildschirmpunkt — Safari rechnet das Layout aber ohne den
-   oberen Systemstreifen. Am 19.08.2026 auf dem iPhone gemessen: Bildschirm
-   956 px, Fenster 894 px, Differenz 62 px = env(safe-area-inset-top). Unter
-   dem Blatt blieb genau dieser Streifen leer stehen.
-
-   --fenstermangel setzt das Skript aus dem Vergleich Bildschirm gegen Fenster
-   und ist ohne diesen Fehler 0 — dann steht hier wieder schlicht 100 %. */
-.app{position:fixed;top:0;left:0;right:0;
-  height:calc(100% + var(--fenstermangel, 0px));overflow:hidden;}
+/* Der Rahmen ist das Fenster, nicht der Bildschirm. Der Versuch, ihn ueber das
+   Fenster hinaus zu ziehen, ist am 19.08.2026 am Geraet gescheitert: Safari
+   schneidet am Fensterrand ab, dort war danach die Unterkante des Blattes weg.
+   Reicht das Fenster nicht bis zum Bildschirmrand, ist das im Fenster nicht zu
+   heilen — siehe DARSTELLUNG.md. */
+.app{position:fixed;inset:0;overflow:hidden;}
 
 /* z-index:0 ist hier kein Schmuck, sondern zwingend: Leaflet gibt seinen
    Kartenebenen intern z-index 400 bis 700. Ohne eigenen z-index bildet #map
