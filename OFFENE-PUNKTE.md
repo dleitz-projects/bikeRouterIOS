@@ -566,28 +566,32 @@ Karte selbst hell bleibt und der Kontrast zum dunklen Blatt Geschmackssache ist.
 Das erste Icon (petrolblauer Grund, hellblaue Zickzacklinie, Pastellpunkte)
 stammte aus der ersten Runde und teilte mit der App **keine einzige Farbe**.
 
-**Form und Farben bleiben, nur die Linie wechselt.** Zwei Versuche waren nötig,
-um das zu erkennen:
+**Am Icon wird nichts gezeichnet — nur eine Farbe getauscht.** Drei Anläufe
+waren nötig, um dahin zu kommen:
 
-1. Erst wurde alles umgezeichnet — geschwungene Route, dunkler Grund, Palette
-   der App. Falsch: Der Zickzack ist auf 60 px Kantenlänge deutlich besser zu
-   erkennen, und darauf kommt es bei einem Icon an.
-2. Dann Form zurück, aber weiter mit der App-Palette. Auch das war zu viel: Ein
-   Icon muss nicht dieselben Farben tragen wie die Oberfläche — es muss
-   wiedererkennbar sein.
+1. Alles neu gezeichnet: geschwungene Route, App-Palette. Der Zickzack ist auf
+   60 px Kantenlänge besser zu erkennen — zurückgenommen.
+2. Form zurück, aber weiter mit der App-Palette. Auch zu viel: Ein Icon muss
+   nicht dieselben Farben tragen wie die Oberfläche.
+3. Zickzack nachgezeichnet, Originalfarben. Immer noch falsch — die
+   **Nachzeichnung traf den Verlauf nicht**, und der des Originals war besser.
 
-**Geblieben ist ein einziger Tausch:** Die Linie war hellblau (`#7DD3FC`) und
-ist jetzt orange (`#FF6B33`). Blau kommt in der App nirgends vor, Orange ist
-ihre Signalfarbe — und die Linie im Icon ist dieselbe Route wie die auf der
-Karte. Grund, Start- und Zielpunkt sind unverändert.
+**Die Lehre:** Wo eine Vorlage schon gut ist, wird sie nicht nachgebaut, sondern
+bearbeitet. `werkzeuge/icon.py` arbeitet deshalb pixelweise auf der
+Originaldatei (`werkzeuge/icon-original-*.png`, aus der Git-Historie geholt) und
+ersetzt genau eine Farbe: Die Linie war `#7DD3FC` und ist jetzt `#FF6B33`. Blau
+kommt in der App nirgends vor, Orange ist ihre Signalfarbe — und die Linie im
+Icon ist dieselbe Route wie die auf der Karte. Verlauf, Kantenglättung und der
+weiche Schein bleiben unangetastet.
 
-Die Farbwerte des ersten Entwurfs sind aus der Datei in der Git-Historie
-ausgelesen, nicht geschätzt.
+Der Kniff dabei: Ein Pixel am Rand der Linie ist eine Mischung aus Blau und dem,
+was daneben liegt. Für jedes Pixel wird geprüft, ob es sich als „Blau plus X"
+erklären lässt; wenn ja, wird der Blauanteil durch Orange ersetzt und der
+Mischungsgrad beibehalten. Sonst bliebe ein blauer Saum um die Punkte stehen.
 
-Drei Dateien, erzeugt von `werkzeuge/icon.py`: die beiden ausgelieferten Icons
-vollflächig quadratisch (iOS maskiert selbst — eigene runde Ecken gäben einen
-doppelten Rand), dazu `doku/bilder/icon-rund.png` mit runden Ecken und
-Transparenz für die Startseite.
+Drei Dateien: die beiden ausgelieferten Icons vollflächig quadratisch (iOS
+maskiert selbst — eigene runde Ecken gäben einen doppelten Rand), dazu
+`doku/bilder/icon-rund.png` mit runden Ecken und Transparenz für die Startseite.
 
 **Offen:** Ob GitHub das Icon als Social-Preview bekommen soll. Das lässt sich
 nur über die Weboberfläche einstellen (Settings → Social preview), nicht über
