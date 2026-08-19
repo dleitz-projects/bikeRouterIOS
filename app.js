@@ -60,7 +60,7 @@ function loadStore() {
   if (!Array.isArray(out.tours)) out.tours = [];
   if (!out.usage || typeof out.usage !== 'object') out.usage = {};
   if (!out.user || typeof out.user !== 'object') out.user = {};
-  out.tours = out.tours.filter(validTour).map(repairTour);
+  out.tours = out.tours.filter(validTour).map(repairTour).map(repairGeo);
   out.profiles = out.profiles
     .filter(function (p) {
       return p && typeof p.id === 'string' && typeof p.name === 'string';
@@ -267,20 +267,21 @@ function encodeValue(v) {
   return String(v);
 }
 
-function routeUrl(format, profile, pts, ngs, server) {
+/* Nur noch GeoJSON wird geholt. Das GPX entsteht aus derselben Antwort im
+   Gerät — siehe „Geometrie und GPX". */
+function routeUrl(profile, pts, ngs, server) {
   const q = new URLSearchParams();
   q.set('lonlats', pts);
   /* Ohne Bausteine ist das Serverprofil der Basisname, mit Bausteinen die
      Kennung des hochgeladenen Textes. */
   q.set('profile', server || profile.basis);
   q.set('alternativeidx', '0');
-  q.set('format', format);
+  q.set('format', 'geojson');
   if (ngs) q.set('nogos', ngs);
-  /* Für die Anzeige alle Tags anfordern. BRouter liefert sonst nur die Tags,
-     die das Profil auch benutzt — `maxspeed` gehört nicht dazu, und ohne ihn
-     bliebe die Tempo-Auswertung dauerhaft leer, ohne dass es auffiele.
-     Beim GPX-Export nicht nötig; dort zählt nur die Strecke. */
-  if (format === 'geojson') q.set('profile:processUnusedTags', '1');
+  /* Alle Tags anfordern. BRouter liefert sonst nur die, die das Profil auch
+     benutzt — `maxspeed` gehört nicht dazu, und ohne ihn bliebe die
+     Tempo-Auswertung dauerhaft leer, ohne dass es auffiele. */
+  q.set('profile:processUnusedTags', '1');
   paramPairs(profile).forEach(function (p) { q.set(p[0], p[1]); });
   return BROUTER + '?' + q.toString();
 }
@@ -928,7 +929,7 @@ async function calculate(override) {
   try {
     const server = await serverProfileFor(profile);
     setStatus('Route wird berechnet …', 'busy');
-    const res = await request(routeUrl('geojson', profile, pts, ngs, server));
+    const res = await request(routeUrl(profile, pts, ngs, server));
     let data;
     try {
       data = await res.json();
@@ -960,24 +961,16 @@ async function calculate(override) {
       return;
     }
 
-    const entry = {
-      key: KEYS[state.routes.length] || '?',
-      pts: pts, ngs: ngs, basis: profile.basis,
-      profileId: profile.id, profileName: profile.name,
+    const entry = makeEntry({
+      pts: pts, ngs: ngs,
+      basis: profile.basis, profileId: profile.id, profileName: profile.name,
       params: snapshotParams(profile),
       blocks: blocksOf(profile).slice(),
-      server: server,
       tourName: pendingTour,
-      distance: num(props['track-length']),
-      ascend: num(props['filtered ascend']),
-      time: num(props['total-time']),
-      cost: num(props.cost),
-      series: sample(coords, 140),
-      marks: waypointMarks(sample(coords, 140)),
-      span: elevationSpan(coords),
-      analysis: analyse(props),
-      layer: null, gpx: null
-    };
+      coords: coords,
+      meta: gpxMeta(props),
+      analysis: analyse(props)
+    });
     state.prev = aroute();
     state.routes.push(entry);
     detentsInvalidieren();
@@ -1022,7 +1015,8 @@ function paintRoutes() {
   const muted = css.getPropertyValue('--muted').trim() || '#6B7362';
 
   state.routes.forEach(function (r, i) {
-    const latlngs = r.series.pts.map(function (p) { return [p.lat, p.lng]; });
+    /* Aus der vollen Punktfolge, nicht aus der Stichprobe fuers Diagramm. */
+    const latlngs = r.coords.map(function (c) { return [c[1], c[0]]; });
     if (!r.layer) {
       r.layer = L.polyline(latlngs, { lineJoin: 'round', lineCap: 'round' }).addTo(map);
       r.layer.on('click', function (ev) {
@@ -1036,6 +1030,172 @@ function paintRoutes() {
       : { color: muted, weight: 3.5, opacity: 0.75, dashArray: '9 8' });
     if (on) r.layer.bringToFront();
   });
+}
+
+/* ================================================== Geometrie und GPX
+
+   Eine berechnete Route behält ihre vollständige Punktfolge, und eine
+   gespeicherte Tour nimmt sie mit. Vorher lagen nur die Wegpunkte im Archiv:
+   Öffnen hieß neu rechnen. Damit hing jede gespeicherte Tour daran, dass
+   BRouter gerade erreichbar ist UND dass seine Kartendaten sich nicht bewegt
+   haben — und beides ist keine Zusage. Der Server aktualisiert seine
+   .rd5-Segmente; dieselbe Anfrage kann später eine andere Route ergeben, ohne
+   dass es auffiele. Eine Tour, die man abgelegt hat, war dann nicht die Tour,
+   die man wiederbekommt.
+
+   Roh sind die Punkte 42 KB für 43 km. Kodiert 7,7 KB, ohne eine einzige
+   Stelle zu verlieren: lon/lat auf 1e-6 gerundet — genau die Auflösung, die
+   BRouter liefert — und die Höhe auf Viertelmeter, BRouters eigenes Raster.
+   Abgelegt wird die Differenz zum Vorgänger, und die ist bei 28 m
+   Punktabstand winzig. Verfahren wie bei den Google-Polylines: Zickzack plus
+   Fünf-Bit-Gruppen, reines ASCII — übersteht JSON und localStorage
+   unbeschadet. Damit kostet eine Tour rund 8 KB statt 44. */
+
+const GEO_LL = 1e6;   /* Nachkommastellen von lon/lat, wie in der Antwort */
+const GEO_EL = 4;     /* Höhe in Viertelmetern, wie in der Antwort */
+
+function encNum(v, out) {
+  let u = v < 0 ? ~(v << 1) : (v << 1);
+  while (u >= 0x20) { out.push(String.fromCharCode((0x20 | (u & 0x1f)) + 63)); u >>>= 5; }
+  out.push(String.fromCharCode(u + 63));
+}
+
+/* coords: [[lon, lat, ele], …] — die Form, in der das GeoJSON sie liefert. */
+function encodeGeo(coords) {
+  const out = [];
+  let plat = 0, plon = 0, pele = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const c = coords[i];
+    const e = Number(c[2]);
+    const lat = Math.round(Number(c[1]) * GEO_LL);
+    const lon = Math.round(Number(c[0]) * GEO_LL);
+    const ele = Math.round((Number.isFinite(e) ? e : 0) * GEO_EL);
+    encNum(lat - plat, out); encNum(lon - plon, out); encNum(ele - pele, out);
+    plat = lat; plon = lon; pele = ele;
+  }
+  return out.join('');
+}
+
+function decodeGeo(str) {
+  const coords = [];
+  let i = 0, lat = 0, lon = 0, ele = 0;
+  const next = function () {
+    let res = 0, shift = 0, b;
+    do {
+      if (i >= str.length) return null;
+      b = str.charCodeAt(i++) - 63;
+      res |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    return (res & 1) ? ~(res >>> 1) : (res >>> 1);
+  };
+  while (i < str.length) {
+    const a = next(), b = next(), c = next();
+    if (a === null || b === null || c === null) break;
+    lat += a; lon += b; ele += c;
+    coords.push([lon / GEO_LL, lat / GEO_LL, ele / GEO_EL]);
+  }
+  return coords;
+}
+
+/* Das GPX wird geschrieben, nicht geholt. Es enthält nichts, was nicht schon
+   in der GeoJSON-Antwort stand, mit der die Linie gezeichnet wurde: dieselben
+   Punkte, dieselben Höhen, dazu eine Kommentarzeile mit den Kennzahlen. Die
+   `messages`, aus denen die Analyse entsteht, kennt es nicht einmal — das GPX
+   ist die ärmere der beiden Antworten. Teilen kostete bisher trotzdem eine
+   zweite Anfrage für Daten, die längst da waren.
+
+   Nachgeprüft am 19.08.2026 gegen drei Referenzstrecken (2, 43 und 156 km),
+   jeweils in beiden Formaten geholt: die erzeugte Datei ist Byte für Byte die
+   des Servers. An der Web-Share-Mechanik ändert das nichts — nur die Herkunft
+   der Bytes. Sie wird sogar sicherer, weil zwischen Tap und `navigator.share`
+   kein `await` mehr liegt, an dem die Nutzergeste verfallen könnte. */
+
+/* BRouter schreibt Höhen mit mindestens einer Nachkommastelle: 480.0, aber
+   485.25 — die Viertelmeter kommen so durch. */
+function eleStr(v) {
+  return Number.isInteger(v) ? v.toFixed(1) : String(v);
+}
+
+function hms(sec) {
+  const s = Math.round(Number(sec) || 0);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return (h ? h + 'h ' : '') + (h || m ? m + 'm ' : '') + (s % 60) + 's';
+}
+
+/* „energy=.3kwh" — eine Nachkommastelle, führende Null weg. */
+function kwh(joule) {
+  return ((Number(joule) || 0) / 3600000).toFixed(1).replace(/^0/, '') + 'kwh';
+}
+
+function buildGpx(r) {
+  const m = r.meta, l = [];
+  l.push('<?xml version="1.0" encoding="UTF-8"?>');
+  l.push('<!-- track-length = ' + m.len + ' filtered ascend = ' + m.asc +
+         ' plain-ascend = ' + m.plain + ' cost=' + m.cost +
+         ' energy=' + kwh(m.energy) + ' time=' + hms(m.time) + ' -->');
+  l.push('<gpx ');
+  l.push(' xmlns="http://www.topografix.com/GPX/1/1" ');
+  l.push(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ');
+  l.push(' xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" ');
+  l.push(' creator="' + m.creator + '" version="1.1">');
+  l.push(' <trk>');
+  l.push('  <name>' + m.name + '</name>');
+  l.push('  <trkseg>');
+  const c = r.coords;
+  for (let i = 0; i < c.length; i++) {
+    l.push('   <trkpt lon="' + c[i][0].toFixed(6) + '" lat="' + c[i][1].toFixed(6) +
+           '"><ele>' + eleStr(c[i][2]) + '</ele></trkpt>');
+  }
+  l.push('  </trkseg>');
+  l.push(' </trk>');
+  l.push('</gpx>');
+  return l.join('\n') + '\n';
+}
+
+/* Die acht Angaben, die im Kopf des GPX stehen — als Zeichenketten übernommen,
+   genau wie sie kamen. Vier davon liegen als Zahl auch in der Route; hier
+   zählt aber die unveränderte Schreibweise, sonst wäre die erzeugte Datei
+   nicht mehr dieselbe. Zusammen rund 90 Byte. */
+function gpxMeta(props) {
+  const t = function (v) { return v === undefined || v === null ? '' : String(v); };
+  return {
+    len: t(props['track-length']), asc: t(props['filtered ascend']),
+    plain: t(props['plain-ascend']), cost: t(props.cost),
+    energy: t(props['total-energy']), time: t(props['total-time']),
+    creator: t(props.creator) || 'BRouter', name: t(props.name) || 'brouter'
+  };
+}
+
+/* Eine Route entsteht auf zwei Wegen: frisch vom Server und aus dem Archiv.
+   Beide müssen dasselbe Objekt ergeben — sonst zeigte eine geöffnete Tour
+   etwas anderes an als dieselbe Route direkt nach der Berechnung. Deshalb
+   liegt der Bau an genau einer Stelle. */
+function makeEntry(o) {
+  const coords = o.coords;
+  /* Fürs Diagramm bleibt es bei 140 Stützstellen — mehr als ein Punkt je
+     Bildschirmspalte bringt nichts. Für die LINIE galt das nie: Auf 43 km
+     stand damit alle 310 m ein Punkt, und jede Kehre war abgeschnitten. */
+  const series = sample(coords, 140);
+  return {
+    key: KEYS[state.routes.length] || '?',
+    pts: o.pts, ngs: o.ngs,
+    basis: o.basis, profileId: o.profileId, profileName: o.profileName,
+    params: o.params, blocks: o.blocks || [],
+    tourName: o.tourName || null,
+    distance: num(o.meta.len), ascend: num(o.meta.asc),
+    time: num(o.meta.time), cost: num(o.meta.cost),
+    coords: coords, meta: o.meta,
+    /* Beim Öffnen liegt die kodierte Fassung schon vor; frisch gerechnet
+       entsteht sie erst beim Speichern — die meisten Routen werden nie
+       gespeichert. */
+    geo: o.geo || null,
+    series: series,
+    marks: waypointMarks(series),
+    span: elevationSpan(coords),
+    analysis: o.analysis || null,
+    layer: null
+  };
 }
 
 /* Auswählen ändert die Raste NICHT: Wer vergleicht, will die Zahlen wechseln
@@ -1586,25 +1746,60 @@ function download(file) {
   setTimeout(function () { URL.revokeObjectURL(href); }, 10000);
 }
 
-async function share() {
+/* Alles, was kein Buchstabe und keine Ziffer ist, wird zum Bindestrich —
+   Doppelte fallen zusammen, Raender weg. Umlaute bleiben: Sie sind in
+   Dateinamen auf iOS unbedenklich, und „Hoehenrunde" statt „Höhenrunde" waere
+   eine Verschlimmbesserung. Gedeckelt wird bei 40 Zeichen; Tournamen duerfen
+   60 lang sein, und der Rest des Namens braucht auch noch Platz. */
+function sauber(s) {
+  const v = String(s || '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+  if (v.length <= 40) return v;
+  /* Beim Kuerzen am letzten Bindestrich abschneiden, nicht mitten im Wort —
+     „…bis-an-die" liest sich, „…bis-an-di" sieht nach Fehler aus. */
+  const kurz = v.slice(0, 40);
+  const bis = kurz.lastIndexOf('-');
+  return (bis > 10 ? kurz.slice(0, bis) : kurz).replace(/-+$/, '');
+}
+
+/* Traegt der Name ueberhaupt etwas bei? Der beim Speichern vorgeschlagene
+   Tourname ist „19.08.2026 · 43,5 km" — Datum und Distanz stehen aber ohnehin
+   im Dateinamen, und wer den Vorschlag stehen laesst, bekaeme sie doppelt.
+   Ein Name ohne ein einziges Wort sagt nichts, was der Rest nicht schon sagt. */
+function traegtEtwas(n) { return /\p{L}{3,}/u.test(n); }
+
+/* Der Dateiname trägt, woran man die Datei wiedererkennt. „2026-08-19_Route.gpx"
+   tat das nicht: Wer drei Strecken an einem Tag teilt, hat in der Dateien-App
+   „Route.gpx", „Route-2.gpx", „Route-3.gpx" liegen und muss jede oeffnen.
+
+   Datum zuerst, damit die Liste chronologisch faellt. In die Mitte das
+   Aussagekraeftigste, was ohne einen zweiten Dienst zu haben ist: der Tourname,
+   wenn die Route aus dem Archiv kommt oder gespeichert wurde — sonst der
+   Profilname, denn genau darin unterscheiden sich die Routen eines Stapels.
+   Hinten die Distanz, die zwei Varianten derselben Frage auseinanderhaelt.
+   Ortsnamen waeren besser, brauchen aber umgekehrte Geokodierung — dieselbe
+   Entscheidung wie bei den Tournamen, siehe CLAUDE.md. */
+function gpxName(r) {
+  const teile = [today()];
+  let mitte = sauber(r.tourName);
+  if (!traegtEtwas(mitte)) mitte = sauber(r.profileName);
+  if (traegtEtwas(mitte)) teile.push(mitte);
+  if (Number.isFinite(r.distance)) teile.push((r.distance / 1000).toFixed(1) + 'km');
+  return teile.join('_') + '.gpx';
+}
+
+/* Kein Netz mehr im Spiel: Die Datei entsteht aus den Punkten, die ohnehin
+   daliegen. Damit laesst sich auch eine gespeicherte Tour teilen, waehrend der
+   Server gedrosselt hat oder gar nicht antwortet — und zwischen Tap und
+   navigator.share liegt kein await mehr.
+
+   Nichts wird zwischengespeichert: Das Schreiben kostet 1,2 ms bei 4335 Punkten
+   (gemessen am 19.08.2026 im Desktop-Browser), ein gemerktes File aber truege
+   nach einem Umbenennen der Tour noch den alten Dateinamen. */
+function share() {
   const r = aroute();
   if (!r || state.busy) return;
-  if (r.gpx) { shareOrDownload(r.gpx, 'GPX'); return; }
-
-  state.busy = true; syncButtons();
-  setStatus('GPX wird geholt …', 'busy');
-  try {
-    const prof = { basis: r.basis, params: r.params, blocks: r.blocks || [] };
-    const res = await request(routeUrl('gpx', prof, r.pts, r.ngs, r.server));
-    const blob = await res.blob();
-    r.gpx = new File([blob], today() + '_Route.gpx', { type: 'application/gpx+xml' });
-    setStatus('GPX bereit.');
-    shareOrDownload(r.gpx, 'GPX');
-  } catch (err) {
-    setStatus(err.message, 'error');
-  } finally {
-    state.busy = false; syncButtons();
-  }
+  shareOrDownload(new File([buildGpx(r)], gpxName(r),
+                           { type: 'application/gpx+xml' }), 'GPX');
 }
 
 /* ========================================================== Bedienung */
@@ -1704,6 +1899,22 @@ function measureSheet(zustand) {
 let detentCache = null;
 function detentsInvalidieren() { detentCache = null; }
 
+/* Wie viel nimmt sich das System oben — Statusleiste, Notch, Dynamic Island?
+   Die Seite laeuft mit `viewport-fit=cover`, der Ursprung liegt also am oberen
+   Bildschirmrand und nicht unterhalb davon. In JS ist `env(safe-area-inset-top)`
+   nicht auszulesen; ein Messklotz mit genau dieser Hoehe schon. `visibility`
+   statt `display`, sonst gaebe es nichts zu messen. */
+let safeProbe = null;
+function safeTop() {
+  if (!safeProbe) {
+    safeProbe = document.createElement('div');
+    safeProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;' +
+      'height:env(safe-area-inset-top);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(safeProbe);
+  }
+  return safeProbe.offsetHeight;
+}
+
 function detentPx() {
   if (detentCache) return detentCache;
   const H = document.documentElement.clientHeight;
@@ -1721,8 +1932,16 @@ function detentPx() {
     sheet.setAttribute('data-detent', vorher);
   }
   /* Vollbild heisst voll: Ein Streifen Karte bleibt nur als Griff zum
-     Zurueckziehen — 92 px waren dafuer mehr als noetig. */
-  const voll = H - 44;
+     Zurueckziehen — 44 px reichen dafuer. Sie liegen aber AUSSERHALB dessen,
+     was das System fuer sich nimmt.
+
+     Am 19.08.2026 am Geraet aufgelaufen: Ohne den Zuschlag beginnt der Streifen
+     am obersten Bildschirmpunkt, und der Griff sitzt damit unter der Dynamic
+     Island. Die schluckt den Tap — aus der vollen Raste kam man weder durch
+     Ziehen noch durch Tippen heraus. Es war eine Sackgasse, kein Schoenheits-
+     fehler. Auf Geraeten ohne Insel ist der Zuschlag null, dort aendert sich
+     nichts. */
+  const voll = H - 44 - safeTop();
   detentCache = [leer, klein, Math.min(klein + zu, H * 0.62, voll), voll];
   return detentCache;
 }
@@ -2401,6 +2620,15 @@ function validTour(t) {
     });
 }
 
+/* Eine Tour ohne Geometrie bleibt gültig — sonst verschwände mit dieser
+   Fassung der gesamte Altbestand. Was fehlt, wird beim Öffnen nachgetragen. */
+function repairGeo(t) {
+  if (typeof t.geo !== 'string' || !t.geo || !t.meta || typeof t.meta !== 'object') {
+    delete t.geo; delete t.meta;
+  }
+  return t;
+}
+
 /* Höchstens zwei Abweichungen nennen, der Rest wird gezählt. Ohne Deckel
    wächst die Zeile mit jedem verstellten Regler und sprengt die Karte. */
 function tourProfLine(t) {
@@ -2536,7 +2764,16 @@ async function saveTour() {
     profileName: r.profileName,
     params: r.params,
     blocks: r.blocks || [],
-    distance: r.distance, ascend: r.ascend, time: r.time
+    distance: r.distance, ascend: r.ascend, time: r.time,
+    /* Die Route selbst, nicht bloss die Frage nach ihr. Ohne diese drei Felder
+       war eine Tour nur ein Auftrag an einen fremden Server — siehe den
+       Abschnitt „Geometrie und GPX". Zusammen rund 8 KB. */
+    geo: r.geo || encodeGeo(r.coords),
+    meta: r.meta,
+    /* Der Belag und die Strassenarten stecken in den `messages` der Antwort,
+       nicht in den Koordinaten — aus lon/lat holt sie kein Rechentrick zurueck.
+       Abgelegt wird deshalb das fertige Ergebnis: unter 1 KB statt 39. */
+    analysis: r.analysis || null
   });
   if (persist()) { renderTours(); toast('Tour gespeichert. Öffnen über Menü → Touren.'); }
 }
@@ -2549,13 +2786,49 @@ function openTour(t) {
 
   t.waypoints.forEach(function (p) { addWaypoint(L.latLng(p[0], p[1])); });
   (t.nogos || []).forEach(function (n) { addNogo(L.latLng(n[0], n[1]), n[2]); });
-
-  /* Mit den damals gespeicherten Werten rechnen, nicht mit dem heutigen
-     Profil — sonst käme eine andere Route heraus als bei der Aufnahme. */
   close('archive'); closeSheets();
-  const tmp = { id: 'tour', name: t.profileName, eigen: true, basis: t.basis,
-                params: t.params, blocks: t.blocks || [] };
-  calculateWith(tmp, t.name);
+
+  /* Touren aus der Zeit vor dieser Fassung tragen keine Geometrie — für sie
+     bleibt nur Nachrechnen, mit den damals gespeicherten Werten statt mit dem
+     heutigen Profil. Das Ergebnis wandert danach still in die Tour, sodass
+     jede Tour spätestens beim ersten Öffnen ihre Linie bekommt. */
+  const coords = typeof t.geo === 'string' && t.geo && t.meta ? decodeGeo(t.geo) : [];
+  if (coords.length < 2) {
+    const tmp = { id: 'tour', name: t.profileName, eigen: true, basis: t.basis,
+                  params: t.params, blocks: t.blocks || [] };
+    calculateWith(tmp, t.name).then(function () { nachtragen(t); });
+    return;
+  }
+
+  const entry = makeEntry({
+    pts: lonlats(), ngs: nogoParam(),
+    basis: t.basis, profileId: t.profileId, profileName: t.profileName,
+    params: t.params, blocks: t.blocks || [],
+    tourName: t.name,
+    coords: coords, geo: t.geo,
+    meta: t.meta,
+    analysis: t.analysis
+  });
+  state.routes.push(entry);
+  detentsInvalidieren();
+  state.ra = state.routes.length - 1;
+  paintRoutes();
+  showRoute();
+  setStatus('Tour „' + t.name + '“ geöffnet.');
+  setDetent(Math.max(1, detent));
+  toast('Tour geöffnet — die Linie von damals, ohne Neuberechnung.');
+}
+
+/* Eine alte Tour hat gerade zum ersten Mal eine Linie bekommen. Sie zu
+   verwerfen wäre absurd: Beim nächsten Öffnen liefe dieselbe Anfrage erneut,
+   und irgendwann ergäbe sie etwas anderes. Der Name bleibt unberührt. */
+function nachtragen(t) {
+  const r = aroute();
+  if (!r || !r.coords || !r.meta) return;
+  t.geo = r.geo || encodeGeo(r.coords);
+  t.meta = r.meta;
+  t.analysis = r.analysis || null;
+  if (persist()) toast('Tour trägt jetzt ihre Route selbst — künftig ohne Server.');
 }
 
 /* Rechnet mit den in der Tour gespeicherten Werten, ohne das aktive Profil
@@ -2694,7 +2967,10 @@ async function importAll(file) {
     tours.forEach(function (t) {
       if (!validTour(t)) { bad++; return; }
       if (known[t.id]) { dup++; return; }
-      store.tours.push(t); known[t.id] = true; added++;
+      /* Aus einer fremden Datei kann auch eine halbe Geometrie kommen. Was
+         nicht vollstaendig ist, faellt weg und wird beim Oeffnen nachgerechnet
+         — sonst zeichnete die Tour eine Linie aus Bruchstuecken. */
+      store.tours.push(repairGeo(repairTour(t))); known[t.id] = true; added++;
     });
 
     let profAdded = 0;

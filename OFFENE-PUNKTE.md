@@ -596,3 +596,189 @@ maskiert selbst — eigene runde Ecken gäben einen doppelten Rand), dazu
 **Offen:** Ob GitHub das Icon als Social-Preview bekommen soll. Das lässt sich
 nur über die Weboberfläche einstellen (Settings → Social preview), nicht über
 die API.
+
+---
+
+## P18 — Der Dateiname beim Teilen sagt zu wenig · entschieden 19.08.2026
+
+Geteilt wird als `2026-08-19_Route.gpx`. Wer drei Strecken hintereinander in die
+Dateien-App legt, hat dort `Route.gpx`, `Route-2.gpx`, `Route-3.gpx` liegen und
+muss jede öffnen, um zu wissen, welche welche ist. Das Datum allein trennt sie
+nicht einmal, wenn sie am selben Tag entstanden sind.
+
+**Was zur Verfügung steht,** ohne einen zweiten Dienst zu bemühen:
+
+| Angabe | Beispiel | woher |
+|---|---|---|
+| Tourname | `Okertal-Runde` | nur bei einer **gespeicherten** Tour |
+| Distanz | `43km` | immer |
+| Profil | `fastbike-lowtraffic` | immer |
+| Reiter | `A`, `B` | nur bei mehreren Routen im Stapel |
+| Höhenmeter | `965hm` | immer |
+
+**Der Haken:** Der aussagekräftigste Teil — der Name — existiert genau dann
+nicht, wenn man ihn am nötigsten braucht, nämlich bei einer frisch gerechneten
+Route, die noch nicht gespeichert ist. Ortsnamen (`Goslar-BadHarzburg`) wären
+das Naheliegende, brauchen aber umgekehrte Geokodierung; das ist dieselbe
+Entscheidung wie bei P2 und den Tourennamen, siehe `CLAUDE.md`.
+
+**Zu entscheiden:** Aus welchen Teilen der Name zusammengesetzt wird, in welcher
+Reihenfolge, und was passiert, wenn der Tourname Zeichen enthält, die in einem
+Dateinamen nichts zu suchen haben. Ein Vorschlag zum Draufschauen:
+`2026-08-19_Okertal-Runde_43km.gpx` — und ohne Tourname
+`2026-08-19_43km_fastbike-lowtraffic.gpx`.
+
+**Aufgefallen:** 19.08.2026, beim Umbau auf lokal erzeugte GPX-Dateien.
+
+### Entschieden: Datum, Kennung, Distanz
+
+```
+2026-08-19_Okertal-Runde_43.5km.gpx        eine gespeicherte Tour
+2026-08-19_fastbike-lowtraffic_43.5km.gpx  eine frisch gerechnete Route
+```
+
+**Datum zuerst**, damit die Liste in der Dateien-App chronologisch fällt.
+**In der Mitte das Aussagekräftigste**, was ohne einen zweiten Dienst zu haben
+ist: der Tourname, sonst der Profilname — denn genau darin unterscheiden sich
+die Routen eines Stapels. **Hinten die Distanz**, mit einer Nachkommastelle;
+sie hält zwei Varianten derselben Frage auseinander, die sonst gleich hießen.
+
+**Der Reiterbuchstabe kommt nicht vor.** „A" bedeutet in der Dateien-App eine
+Woche später nichts mehr — er ordnet innerhalb einer Sitzung, nicht außerhalb.
+
+**Zwei Fälle brauchten eine Extrawurst**, beide beim Ausprobieren aufgefallen:
+
+1. **Der vorgeschlagene Tourname ist selbst Datum plus Distanz**
+   („19.08.2026 · 43,5 km"). Wer ihn stehen lässt, bekäme beides doppelt:
+   `2026-08-19_19-08-2026-43-5-km_43.5km.gpx`. Ein Name ohne ein einziges Wort
+   sagt nichts, was der Rest nicht schon sagt — geprüft wird auf eine
+   Buchstabenfolge von mindestens drei Zeichen, sonst tritt der Profilname an
+   seine Stelle.
+2. **Lange Namen** werden bei 40 Zeichen am letzten Bindestrich gekappt, nicht
+   mitten im Wort.
+
+**Umlaute bleiben stehen.** Auf iOS sind sie in Dateinamen unbedenklich, und
+„Hoehenrunde" statt „Höhenrunde" wäre eine Verschlimmbesserung. Alles andere,
+was kein Buchstabe und keine Ziffer ist, wird zum Bindestrich.
+
+**Ortsnamen bleiben außen vor** („Goslar-BadHarzburg"). Sie bräuchten umgekehrte
+Geokodierung — dieselbe eine Entscheidung wie bei P2 und der Ortssuche, siehe
+`CLAUDE.md`. Fällt sie irgendwann, ist der Dateiname eine der Stellen, die
+davon profitieren.
+
+---
+
+## P19 — Die volle Raste liegt unter der Dynamic Island · behoben 19.08.2026
+
+**Am iPhone gemessen:** Aus der vollen Raste kommt man nicht mehr heraus. Der
+Griff sitzt dort ganz oben — und genau dort sitzt auch die Dynamic Island. Der
+Tap geht ans System, nicht an die App. Die volle Raste ist damit eine
+Sackgasse: Ziehen greift nicht, Tippen greift nicht.
+
+Das trifft nur die volle Raste. Klein und halb liegen tief genug.
+
+**Warum die Notlösung „einfach die Karte antippen" hier nicht rettet:** Sie
+existiert zwar — in der vollen Raste zieht ein Tap auf die verbleibenden 92 px
+Karte das Blatt eine Stufe zu (siehe `CLAUDE.md`). Aber 92 px sind wenig, und
+sie stehen ganz oben am Rand, also wiederum in der Nähe der Insel. Als
+**einziger** Ausweg ist das zu wenig; es war als Abkürzung gedacht, nicht als
+Notausgang.
+
+**Mögliche Wege, alle noch nicht abgewogen:**
+
+1. **Die volle Raste endet tiefer.** Ein Abstand nach oben, der die Insel frei
+   lässt. Kostet Inhalt genau dort, wo die Analyse ohnehin knapp ist — und die
+   Höhe wird gemessen, nicht gesetzt (`CLAUDE.md`), das Maß müsste also an der
+   Messung ansetzen, nicht an einem Prozentwert.
+2. **Der Griff wandert.** Nicht oben mittig, sondern tiefer oder an eine Seite.
+   Bricht mit dem Muster, das in den anderen Rasten funktioniert.
+3. **Ein zweiter Ausweg.** Ein Schließen-Knopf im Blatt selbst, unabhängig vom
+   Griff. Doppelte Bedienung für dieselbe Sache.
+4. **Die volle Raste fällt weg.** Wenn die Analyse in die halbe passt, wird das
+   Problem gegenstandslos. Größter Eingriff, aber vielleicht der ehrlichste.
+
+**Aufgefallen:** 19.08.2026, am Gerät.
+
+### Nachgesehen — es war keine Abwägung, sondern eine fehlende Zeile
+
+Die volle Raste rechnete sich als `H - 44`, mit `H` als voller Fensterhöhe.
+Die Seite läuft mit `viewport-fit=cover`; `H` beginnt also am **obersten
+Bildschirmpunkt**, nicht unterhalb der Statusleiste. Der 44-px-Streifen lag
+damit vollständig im Bereich des Systems, und die Trefferfläche des Griffs
+(`#grab::before` reicht 14 px höher) begann bei y = 30 — mitten in der Insel,
+die etwa von y = 11 bis y = 50 reicht.
+
+Der Wert stammt aus `c28a030`; davor waren es 92 px, und damit lag der Griff
+knapp unterhalb der Insel. Deshalb ist der Fehler erst mit dieser Verkleinerung
+entstanden und nicht früher aufgefallen.
+
+**Weg 1 war also nicht nur der billigste, sondern der einzig richtige** — die
+anderen drei hätten ein Rechenversehen zur Gestaltungsfrage gemacht:
+
+```js
+const voll = H - 44 - safeTop();
+```
+
+`env(safe-area-inset-top)` ist in JavaScript nicht auszulesen. Gemessen wird es
+über einen unsichtbaren Klotz genau dieser Höhe (`visibility:hidden`, nicht
+`display:none` — sonst gäbe es nichts zu messen).
+
+**Gegengerechnet** bei simulierten 59 px Inset: Streifen 103 px statt 44, die
+Trefferfläche beginnt bei y = 89 statt y = 30. Ohne Insel ist der Zuschlag null,
+dort ändert sich kein Pixel.
+
+**Am Gerät noch zu bestätigen.** Die Insel lässt sich am Schreibtisch nur
+nachstellen, nicht nachbauen.
+
+**Als Regel übernommen** in die `CLAUDE.md`: Was am oberen Rand angefasst werden
+muss, wird gegen `safe-area-inset-top` gerechnet, nicht gegen die Fensterhöhe.
+
+---
+
+## P20 — `persist()` schreibt jedes Mal alles · offen, noch nicht gemessen
+
+`persist()` (`app.js`) legt den **gesamten** Speicher in einem Zug ab:
+
+```js
+localStorage.setItem(STORE_KEY, JSON.stringify(store));
+```
+
+Ein Aufruf kostet also immer den vollen Umfang — Touren, Profile,
+Einstellungen —, auch wenn sich nur eine Kleinigkeit geändert hat. Und
+aufgerufen wird nicht selten: bei jeder Berechnung, bei jeder Profilwahl, bei
+jedem Wechsel der ausgewählten Route.
+
+**Warum das erst jetzt zählt.** Bis zum 19.08.2026 wog eine Tour rund 900 Byte;
+hundert davon waren 90 KB, und das fällt nirgends auf. Seit die Tour ihre
+Geometrie mitträgt, sind es rund 8 KB — hundert Touren also **etwa 800 KB, bei
+jedem Speichern neu serialisiert und synchron geschrieben**. `localStorage`
+blockiert dabei den Hauptthread.
+
+**Nicht gemessen ist, ab wann das spürbar wird.** Die Zahl oben ist gerechnet,
+nicht gestoppt — und ausgerechnet auf dem Zielgerät (Safari auf dem iPhone) ist
+sie am wenigsten zu erraten. Vor jeder Entscheidung gehört deshalb eine
+Messung dazwischen: Speicher künstlich mit 25, 50, 100 Touren füllen und die
+Dauer eines `persist()` am Gerät stoppen. Solange die im einstelligen
+Millisekundenbereich liegt, ist hier nichts zu tun.
+
+**Wege, falls doch:**
+
+1. **Je Tour ein Schlüssel.** `bikeRouteriOS.tour.<id>` statt eines Blocks.
+   Speichern kostet dann nur die geänderte Tour. Dafür wird das Laden zu einer
+   Schleife über alle Schlüssel, und die Sicherung muss sie einsammeln.
+2. **Nur schreiben, was sich geändert hat.** Setzt voraus, dass die App weiß,
+   was das ist — heute weiß sie es nicht, und es zu wissen heißt, an jeder
+   Änderungsstelle daran zu denken. Fehleranfällig.
+3. **Gebündelt schreiben.** Mehrere Änderungen kurz hintereinander ergeben
+   einen Schreibvorgang statt fünf. Billig zu bauen, hilft aber nur gegen die
+   Häufigkeit, nicht gegen die Größe des einzelnen Schreibvorgangs.
+4. **IndexedDB statt `localStorage`.** Asynchron, blockiert nichts, für große
+   Datenmengen gedacht. Der größte Eingriff — und iOS räumt auch IndexedDB weg,
+   die Sicherung als Datei bliebe also genauso nötig.
+
+**Zusammenhang:** Die Geometrie zu speichern war trotzdem richtig (`CLAUDE.md`,
+„Eine Tour speichert die Route selbst"). Hier geht es nicht darum, ob sie
+gespeichert wird, sondern **wie oft sie dabei durch die Serialisierung läuft**.
+
+**Aufgefallen:** 19.08.2026, beim Umbau — als Folge davon, nicht als Fehler
+darin.

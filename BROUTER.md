@@ -468,3 +468,34 @@ GeoJSON-Antwort. **Kein zweiter Dienst nötig.**
 
 Beispielauswertung einer 16,7-km-Strecke: 87,9 % Asphalt, 10,6 % wassergebundene
 Decke — und 38,5 % Hauptstraße, 26,9 % Wirtschaftsweg.
+
+### GPX und GeoJSON tragen dieselben Punkte — das GPX ist die ärmere Antwort
+
+Gemessen am 19.08.2026 an drei Referenzstrecken, jede in beiden Formaten geholt
+und Punkt für Punkt verglichen:
+
+| Strecke | Punkte | GeoJSON | GPX | Punktabstand |
+|---|---|---|---|---|
+| Goslar Altstadt quer | 133 | 17 KB | 9 KB | ~16 m |
+| Goslar–Torfhaus–Bad Harzburg | 1542 | 119 KB | 105 KB | ~28 m |
+| Hannover–Nordhausen | 4335 | 455 KB | 290 KB | ~36 m |
+
+**Identisch in beiden Formaten:** Anzahl und Reihenfolge der Punkte, `lon`/`lat`
+auf sechs Nachkommastellen, die Höhe. Die Höhe kommt in **Viertelmeter-Schritten**
+(`480.0`, `485.25`, `826.5`) — das ist BRouters internes Raster, kein Zufall der
+Formatierung.
+
+**Nur im GeoJSON:** `messages` (die OSM-Tags je Abschnitt, allein 39 KB bei der
+43-km-Strecke) und `times`. Das GPX kennt beides nicht.
+
+**Nur im GPX:** eine Kommentarzeile mit den Kennzahlen — die alle auch in
+`properties` stehen. Sie enthält zwei Werte in eigener Schreibweise:
+`energy=.3kwh` (aus `total-energy` in Joule, eine Nachkommastelle, führende Null
+weg) und `time=3h 36m 19s` (aus `total-time` in Sekunden; unter einer Stunde
+fällt der Stundenteil weg: `10m 9s`).
+
+**Folge:** Ein GPX lässt sich aus einer GeoJSON-Antwort vollständig
+rekonstruieren, byte-identisch bis in die Kopfzeile. Der umgekehrte Weg geht
+nicht — aus dem GPX fehlen die Tags für jede Analyse. Wer beides braucht, holt
+**GeoJSON** und schreibt das GPX selbst. Genau so macht es die App seit dem
+19.08.2026; die Prüfung liegt als Vergleich gegen diese drei Strecken vor.

@@ -249,6 +249,58 @@ Profil sich ändert — und Wiederherstellen ergäbe eine andere Route als damal
 Weicht das heutige Profil vom gespeicherten ab, sagt die Tour das und lässt die
 Wahl zwischen den damaligen und den heutigen Werten.
 
+**Eine Tour speichert die Route selbst, nicht die Frage nach ihr.** Entschieden
+am 19.08.2026. Bis dahin lagen im Archiv nur die Wegpunkte; Öffnen hieß neu
+rechnen. Damit hing jede gespeicherte Tour an zwei Dingen, die niemand zusagt:
+dass BRouter gerade erreichbar ist, **und** dass seine Kartendaten sich nicht
+bewegt haben. Der Server aktualisiert seine `.rd5`-Segmente — dieselbe Anfrage
+kann später eine andere Route ergeben, ohne dass es auffiele. Man bekäme still
+eine andere Tour zurück, als man abgelegt hat. Das ist kein Randfall, sondern
+der Normalfall über ein Jahr.
+
+Abgelegt wird deshalb die vollständige Punktfolge, verlustfrei kodiert: lon/lat
+auf `1e-6` — genau die Auflösung, die BRouter liefert — und die Höhe auf
+Viertelmeter, sein eigenes Raster. Kodiert werden die Differenzen zum Vorgänger
+(Zickzack plus Fünf-Bit-Gruppen, wie bei den Google-Polylines), was bei 28 m
+Punktabstand fast alles wegkürzt: **7,7 KB statt 42 KB für 43 km.** Eine ganze
+Tour kostet damit rund 8 KB — bei etwa 5 MB `localStorage` hört der Speicher
+auf, die Grenze zu sein.
+
+**Nicht in den Punkten steckt die Analyse.** Belag, Straßenarten und
+Tempolimits kommen aus `messages` in der GeoJSON-Antwort — allein 39 KB, und aus
+Koordinaten nicht rekonstruierbar. Gespeichert wird deshalb das **fertige
+Ergebnis** der Auswertung, unter 1 KB.
+
+**Das GPX wird geschrieben, nicht geholt.** Es enthält nichts, was nicht schon
+in der Antwort stand, mit der die Linie gezeichnet wurde: dieselben Punkte,
+dieselben Höhen, dazu eine Kommentarzeile mit den Kennzahlen. Es ist die
+**ärmere** der beiden Antworten — die `messages` kennt es gar nicht. Trotzdem
+kostete Teilen bis dahin eine zweite Anfrage für Daten, die längst da waren.
+Nachgeprüft am 19.08.2026 gegen drei Referenzstrecken (2, 43 und 156 km),
+jeweils in beiden Formaten geholt: die erzeugte Datei ist **Byte für Byte** die
+des Servers, Kopfzeile eingeschlossen. Deshalb trägt eine Route auch die acht
+Kopfangaben unverändert als Zeichenketten mit — auf die Schreibweise kommt es
+an, nicht auf den Wert.
+
+Damit fragt die App den Server **nur noch mit `format=geojson`** und nur noch
+beim Rechnen. Eine gespeicherte Tour öffnet und teilt sich ohne jede Anfrage —
+auch bei `403 Please, retry later!` oder ohne Netz.
+
+**Der Dateiname trägt, woran man die Datei wiedererkennt:**
+`2026-08-19_Okertal-Runde_43.5km.gpx`, ohne Tourname der Profilname an dessen
+Stelle. Datum zuerst, damit die Liste chronologisch fällt; die Distanz hinten,
+weil sie zwei Varianten derselben Frage auseinanderhält. `Route.gpx`,
+`Route-2.gpx`, `Route-3.gpx` in der Dateien-App zwingen dazu, jede zu öffnen.
+Der Reiterbuchstabe kommt nicht vor — „A" ordnet innerhalb einer Sitzung, nicht
+außerhalb. Ein Tourname ohne ein einziges Wort — der Vorschlag beim Speichern
+ist Datum plus Distanz — wird übergangen, sonst stünde beides doppelt da.
+Ortsnamen wären besser und hängen an derselben einen Entscheidung wie die
+Tourennamen und die Ortssuche.
+
+**Touren ohne Geometrie werden beim ersten Öffnen einmal nachgerechnet** und
+tragen danach ihre Linie selbst. Sie zu verwerfen wäre falsch, sie ewig
+nachzurechnen auch — beim zweiten Mal ergäbe es womöglich eine andere Route.
+
 **Das Blatt hat vier Zustände, jeder mit eigenem Inhalt.** Drei Höhen mit nur
 zwei Inhalten sind ein Fehler — genau daran krankte der Stand vom 18.08.2026,
 wo die mittlere Raste dasselbe zeigte wie die kleine, nur höher:
@@ -269,10 +321,24 @@ und rastet beim Loslassen an der nächstgelegenen Stufe ein; ein Tap schaltet
 eine Stufe weiter. Ein Blatt, das nur auf Antippen weiterschaltet, wirkt am
 Telefon kaputt.
 
-**Stumpf ist die Karte nur im Vollbild.** Dort sind 92 px Karte übrig — ein Tap
-darauf kann nur „gib mir die Karte zurück" heißen und zieht das Blatt eine Stufe
-zu, ohne etwas zu setzen. In der halben Raste gilt das ausdrücklich nicht: Sie
-ist dafür da, auf der Karte zu arbeiten und gleichzeitig das Profil zu sehen.
+**Stumpf ist die Karte nur im Vollbild.** Dort bleibt nur ein schmaler Streifen
+Karte übrig — ein Tap darauf kann nur „gib mir die Karte zurück" heißen und
+zieht das Blatt eine Stufe zu, ohne etwas zu setzen. In der halben Raste gilt
+das ausdrücklich nicht: Sie ist dafür da, auf der Karte zu arbeiten und
+gleichzeitig das Profil zu sehen.
+
+**Der Streifen liegt außerhalb des Systembereichs, nicht darin.** 44 px Karte
+plus `env(safe-area-inset-top)`. Der Zuschlag ist keine Kosmetik: Die Seite
+läuft mit `viewport-fit=cover`, der Ursprung liegt also am obersten
+Bildschirmpunkt. Ohne ihn beginnt der Streifen dort — und der Griff sitzt unter
+der **Dynamic Island**, die den Tap für sich nimmt. Am 19.08.2026 am Gerät
+aufgelaufen: Aus der vollen Raste kam man weder durch Ziehen noch durch Tippen
+heraus. Auf Geräten ohne Insel ist der Zuschlag null.
+
+Daraus die allgemeine Regel: **Was am oberen Rand angefasst werden muss, wird
+gegen `safe-area-inset-top` gerechnet, nicht gegen die Fensterhöhe.** Der Wert
+ist in JavaScript nicht direkt lesbar — die App misst ihn über einen
+unsichtbaren Klotz mit genau dieser Höhe.
 
 **Unsichtbare Trefferflächen dürfen nur über toten Raum wachsen.** Die auf 44 px
 vergrößerte Fläche des Griffs lag zunächst über der Reiterzeile — ein Tap auf
@@ -409,6 +475,15 @@ Umbaugebiet**, auch nicht für naheliegende Verbesserungen:
   überein. Ein Tap genügt; die befürchtete verfallende Nutzergeste tritt
   nicht ein.
 
+  **Nachtrag 19.08.2026:** Die Datei kommt seit dem Umbau nicht mehr vom
+  Server, sondern entsteht im Gerät. Am Mechanismus — Datei-Objekt,
+  Nutzergeste, `navigator.share` — ändert das nichts; er wird sogar sicherer,
+  weil zwischen Tap und Aufruf kein `await` mehr liegt. Byte-Gleichheit mit der
+  Serverantwort ist gegen drei Strecken belegt und im Browser bis in die
+  fertige `File` geprüft. **Am iPhone selbst ist der neue Weg noch nicht
+  gelaufen** — bis dahin gilt der Punkt nur für den Mechanismus, nicht für die
+  Herkunft der Bytes.
+
 ### Warnung: OsmAnd fehlt im Share-Sheet — das ist kein Fehler
 
 OsmAnd registriert sich auf iOS **nicht als Share-Ziel**, sondern nur als
@@ -450,7 +525,9 @@ https://brouter.de/brouter
 ```
 
 - Koordinatenreihenfolge ist **lon,lat** (nicht lat,lon — häufige Fehlerquelle)
-- `format=geojson` zum Anzeigen, `format=gpx` zum Exportieren
+- `format=geojson` zum Anzeigen. `format=gpx` **benutzt die App nicht mehr** —
+  das GPX entsteht aus derselben Antwort im Gerät (siehe oben, „Eine Tour
+  speichert die Route selbst")
 - Nogo-Bereiche über den Parameter `nogos=<lon>,<lat>,<radius_in_metern>`,
   mehrere durch `|` getrennt
 
@@ -557,8 +634,9 @@ die Route wird einfach ohne ihn berechnet.
 **Für die Anzeigeberechnung setzt die App `profile:processUnusedTags=1`.** Ohne
 das liefert BRouter nur die Tags, die das Profil auch auswertet — `maxspeed`
 gehört nicht dazu. Die Auswertung der Tempolimits bliebe dann dauerhaft leer,
-ohne dass es auffiele. Beim GPX-Export wird der Schalter nicht gesetzt; dort
-zählt nur die Strecke.
+ohne dass es auffiele. Der Schalter steht seit dem 19.08.2026 bei **jeder**
+Anfrage — seit das GPX im Gerät entsteht, gibt es keine zweite Art von Anfrage
+mehr, bei der man ihn weglassen könnte.
 
 Was dieser Weg **nicht** kann: neue Regeln einführen. Ein `.brf`-Profil ist ein
 Programm, keine Werteliste — Details in `BROUTER.md`. Wer etwa `maxspeed`
