@@ -24,6 +24,12 @@ Jeden Platzhalter durch einen echten iPhone-Screenshot ersetzen:
 Die Namen sind durchnummeriert, damit die Reihenfolge der Anleitung erhalten
 bleibt.
 
+`icon-rund.png` ist kein Screenshot, sondern das App-Icon mit runden Ecken und
+Transparenz — nur für die Startseite. Die ausgelieferten `icon-192.png` und
+`icon-512.png` im Wurzelverzeichnis sind bewusst vollflächig quadratisch: iOS
+legt seine eigene Maske darüber, und ein Icon mit eigenen runden Ecken bekäme
+dort einen doppelten Rand. Erzeugt werden alle drei von `werkzeuge/icon.py`.
+
 | Datei | Was drauf sein soll |
 |---|---|
 | `01-safari-oeffnen` | Die App in Safari, Adressleiste sichtbar — erkennbar **Safari**, nicht Chrome |

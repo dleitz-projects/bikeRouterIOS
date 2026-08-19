@@ -1,4 +1,4 @@
-<p align="center"><img src="icon-192.png" alt="" width="88"></p>
+<p align="center"><img src="doku/bilder/icon-rund.png" alt="" width="96"></p>
 
 <h1 align="center">bikeRouteriOS</h1>
 

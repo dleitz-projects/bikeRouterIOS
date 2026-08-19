@@ -566,10 +566,20 @@ Karte selbst hell bleibt und der Kontrast zum dunklen Blatt Geschmackssache ist.
 Das erste Icon (petrolblauer Grund, hellblaue Zickzacklinie, Pastellpunkte)
 stammte aus der ersten Runde und teilte mit der App **keine einzige Farbe**.
 
-Das neue folgt der Palette aus `style.css`: dunkler Grund `#181C15`, Route in
-`--signal`, Startpunkt in `--good` und Zielpunkt in `--signal`, beide mit hellem
-Ring — dieselbe Formsprache wie die Marker auf der Karte. Der Linienzug hat den
-Schwung einer echten Route statt eines Zickzacks.
+**Die Form bleibt, die Farben sind neu.** Ein erster Versuch hat auch den
+Linienzug umgezeichnet — vom Zickzack zu einer geschwungenen Route. Das war
+falsch: Der Zickzack ist auf 60 px Kantenlänge deutlich besser zu erkennen, und
+darauf kommt es bei einem Icon an. Zurückgenommen.
+
+Getauscht wurde nur die Farbwelt, gegen die Werte der dunklen Palette: Grund
+`--sheet` `#181C15`, Linie `--signal` `#FF6B33`, Startpunkt `--good` `#5FB07E`,
+Zielpunkt `--ink` `#E9EDE1`. Damit trägt das Icon die Signalfarbe der App, und
+der Startpunkt ist derselbe Grünton wie der Startmarker auf der Karte.
+
+Drei Dateien, erzeugt von `werkzeuge/icon.py`: die beiden ausgelieferten Icons
+vollflächig quadratisch (iOS maskiert selbst — eigene runde Ecken gäben einen
+doppelten Rand), dazu `doku/bilder/icon-rund.png` mit runden Ecken und
+Transparenz für die Startseite.
 
 Erzeugt wird es von `werkzeuge/icon.py`, ohne Bildbibliothek. Wer die Palette
 ändert, ändert die Konstanten dort und lässt das Skript neu laufen.

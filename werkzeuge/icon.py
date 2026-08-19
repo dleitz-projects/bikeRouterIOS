@@ -1,88 +1,105 @@
-"""Erzeugt die App-Icons in der Farbwelt der App, ohne fremde Bibliothek.
+"""Erzeugt die App-Icons, ohne fremde Bibliothek.
 
-Palette aus style.css:
-  --ground dunkel #0D100B, --sheet dunkel #181C15
-  --signal #DC4514 (die Route), --good #3F7F58 (Start)
-Gezeichnet wird 3-fach ueberabgetastet, damit die Kanten weich werden.
+Die FORM stammt aus dem ersten Entwurf und bleibt: ein kraeftiger Zickzack
+zwischen zwei Punkten. Sie ist auf 60 px Kantenlaenge noch erkennbar, und
+darauf kommt es bei einem Icon an.
+
+Getauscht wurden nur die FARBEN. Das alte Icon teilte mit der App keine
+einzige — Petrolblau, Hellblau und Pastelltoene kommen in `style.css` nirgends
+vor. Hier stehen jetzt die Werte der dunklen Palette:
+
+    Grund   --sheet   #181C15
+    Linie   --signal  #FF6B33   die Route, und die Farbe der ganzen App
+    Start   --good    #5FB07E   wie der Startmarker auf der Karte
+    Ziel    --ink     #E9EDE1   hell, damit er sich von der Linie abhebt
+
+Erzeugt werden drei Dateien:
+
+    icon-192.png, icon-512.png   vollflaechig quadratisch. iOS legt seine
+                                 eigene Maske darueber; ein Icon mit eigenen
+                                 runden Ecken bekaeme dort einen doppelten Rand.
+    doku/bilder/icon-rund.png    mit runden Ecken und Transparenz, nur fuer die
+                                 Startseite im Web — dort maskiert niemand.
 """
 import zlib, struct, math
 
-S = 3                      # Ueberabtastung
-GROUND = (0x18, 0x1C, 0x15)
-SIGNAL = (0xDC, 0x45, 0x14)
-GOOD   = (0x3F, 0x7F, 0x58)
-SHEET  = (0xF7, 0xF8, 0xF3)
+S = 3                        # Ueberabtastung gegen harte Kanten
+GRUND  = (0x18, 0x1C, 0x15)
+LINIE  = (0xFF, 0x6B, 0x33)
+START  = (0x5F, 0xB0, 0x7E)
+ZIEL   = (0xE9, 0xED, 0xE1)
 
-def misch(a, b, t):
-    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
+# Zickzack wie im ersten Entwurf: unten links los, zweimal die Richtung
+# wechseln, oben rechts ankommen.
+PFAD = [(0.22, 0.80), (0.40, 0.47), (0.52, 0.62), (0.78, 0.22)]
 
-def punkt_auf_strecke(px, py, ax, ay, bx, by):
+def abstand(px, py, ax, ay, bx, by):
     dx, dy = bx - ax, by - ay
     l2 = dx * dx + dy * dy
     if l2 == 0:
         return math.hypot(px - ax, py - ay)
-    t = max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / l2))
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / l2))
     return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
 
-def zeichne(groesse):
-    N = groesse * S
-    # Route: eine Linie mit dem Schwung einer echten Strecke, kein Zickzack.
-    # Koordinaten in Anteilen der Kantenlaenge.
-    pfad = [(0.20, 0.78), (0.30, 0.60), (0.45, 0.63), (0.55, 0.45),
-            (0.70, 0.40), (0.78, 0.24)]
-    pts = [(x * N, y * N) for x, y in pfad]
-    breite = 0.085 * N            # Strichstaerke wie die Route auf der Karte
-    r_punkt = 0.075 * N           # Start- und Zielpunkt
-    r_ring = 0.030 * N            # heller Ring darum, wie die Marker
-
-    bild = bytearray()
-    for y in range(N):
-        for x in range(N):
+def zeichne(n, rund):
+    pts = [(x * n, y * n) for x, y in PFAD]
+    halbe = 0.058 * n          # halbe Strichstaerke
+    r_end = 0.088 * n          # Radius der beiden Endpunkte
+    radius = 0.22 * n          # Eckenradius, nur wenn `rund`
+    roh = bytearray()
+    for y in range(n):
+        for x in range(n):
             px, py = x + 0.5, y + 0.5
-            farbe = GROUND
-
-            d = min(punkt_auf_strecke(px, py, pts[i][0], pts[i][1],
-                                      pts[i+1][0], pts[i+1][1])
+            if rund:
+                # Ausserhalb der abgerundeten Flaeche bleibt es durchsichtig.
+                cx = min(max(px, radius), n - radius)
+                cy = min(max(py, radius), n - radius)
+                if math.hypot(px - cx, py - cy) > radius:
+                    roh += bytes((0, 0, 0, 0))
+                    continue
+            farbe = GRUND
+            d = min(abstand(px, py, pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1])
                     for i in range(len(pts) - 1))
-            if d <= breite / 2:
-                farbe = SIGNAL
+            if d <= halbe:
+                farbe = LINIE
+            for mitte, ton in ((pts[0], START), (pts[-1], ZIEL)):
+                if math.hypot(px - mitte[0], py - mitte[1]) <= r_end:
+                    farbe = ton
+            roh += bytes(farbe + ((255,) if rund else ()))
+    return roh
 
-            for mitte, grund in ((pts[0], GOOD), (pts[-1], SIGNAL)):
-                dp = math.hypot(px - mitte[0], py - mitte[1])
-                if dp <= r_punkt + r_ring:
-                    farbe = SHEET
-                if dp <= r_punkt:
-                    farbe = grund
-
-            bild += bytes(farbe)
-    return bild, N
-
-def herunterrechnen(bild, N, ziel):
+def verkleinern(roh, n, ziel, kanaele):
     aus = bytearray()
     for y in range(ziel):
-        aus.append(0)                       # PNG-Filter: keiner
+        aus.append(0)                     # PNG-Filter: keiner
         for x in range(ziel):
-            r = g = b = 0
+            summe = [0] * kanaele
             for dy in range(S):
                 for dx in range(S):
-                    i = ((y * S + dy) * N + (x * S + dx)) * 3
-                    r += bild[i]; g += bild[i+1]; b += bild[i+2]
-            n = S * S
-            aus += bytes((round(r/n), round(g/n), round(b/n)))
+                    i = ((y * S + dy) * n + (x * S + dx)) * kanaele
+                    for k in range(kanaele):
+                        summe[k] += roh[i + k]
+            aus += bytes(round(v / (S * S)) for v in summe)
     return bytes(aus)
 
-def schreibe_png(pfad, daten, groesse):
-    def chunk(typ, inhalt):
-        c = struct.pack('>I', len(inhalt)) + typ + inhalt
-        return c + struct.pack('>I', zlib.crc32(typ + inhalt) & 0xffffffff)
-    kopf = struct.pack('>IIBBBBB', groesse, groesse, 8, 2, 0, 0, 0)
+def schreibe(pfad, daten, groesse, kanaele):
+    def teil(typ, inhalt):
+        return (struct.pack('>I', len(inhalt)) + typ + inhalt
+                + struct.pack('>I', zlib.crc32(typ + inhalt) & 0xffffffff))
+    farbtyp = 6 if kanaele == 4 else 2
     with open(pfad, 'wb') as f:
         f.write(b'\x89PNG\r\n\x1a\n')
-        f.write(chunk(b'IHDR', kopf))
-        f.write(chunk(b'IDAT', zlib.compress(daten, 9)))
-        f.write(chunk(b'IEND', b''))
+        f.write(teil(b'IHDR', struct.pack('>IIBBBBB', groesse, groesse, 8, farbtyp, 0, 0, 0)))
+        f.write(teil(b'IDAT', zlib.compress(daten, 9)))
+        f.write(teil(b'IEND', b''))
 
-for groesse in (192, 512):
-    bild, N = zeichne(groesse)
-    schreibe_png('icon-%d.png' % groesse, herunterrechnen(bild, N, groesse), groesse)
-    print('icon-%d.png geschrieben' % groesse)
+def bauen(pfad, groesse, rund):
+    kanaele = 4 if rund else 3
+    roh = zeichne(groesse * S, rund)
+    schreibe(pfad, verkleinern(roh, groesse * S, groesse, kanaele), groesse, kanaele)
+    print(pfad + ' geschrieben')
+
+if __name__ == '__main__':
+    bauen('icon-192.png', 192, False)
+    bauen('icon-512.png', 512, False)
+    bauen('doku/bilder/icon-rund.png', 256, True)
