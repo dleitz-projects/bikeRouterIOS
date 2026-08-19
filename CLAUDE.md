@@ -343,6 +343,13 @@ der **Dynamic Island**, die den Tap für sich nimmt. Am 19.08.2026 am Gerät
 aufgelaufen: Aus der vollen Raste kam man weder durch Ziehen noch durch Tippen
 heraus. Auf Geräten ohne Insel ist der Zuschlag null.
 
+Seit `black-translucent` gestrichen ist (siehe unten), meldet
+`safe-area-inset-top` auf dem geprüften iPhone ebenfalls null — die Seite
+beginnt ja unter der Statusleiste. **Der Zuschlag bleibt trotzdem stehen.** Er
+kostet dort nichts und ist der einzige Schutz, falls ein Gerät oder ein Modus
+die Seite doch wieder bis an den obersten Bildschirmpunkt zeichnet. Eine Regel,
+die heute null ergibt, ist nicht überflüssig, sondern erfüllt.
+
 Daraus die allgemeine Regel: **Was am oberen Rand angefasst werden muss, wird
 gegen `safe-area-inset-top` gerechnet, nicht gegen die Fensterhöhe.** Der Wert
 ist in JavaScript nicht direkt lesbar — die App misst ihn über einen
@@ -354,11 +361,23 @@ Bildschirmhöhe gezeichnet, Safari rechnete das Layout aber um den oberen
 Systemstreifen kürzer — und schnitt am Fensterrand ab. Der Versuch, den Rahmen
 über das Fenster hinaus zu ziehen, verlor deshalb die Unterkante des Blattes
 und war schlimmer als der Fehler. Ein zu kleines Fenster ist an seiner
-**Ursache** zu beheben (hier: die Zeile `apple-mobile-web-app-status-bar-style`),
-nicht durch Übergröße im Inneren.
+**Ursache** zu beheben, nicht durch Übergröße im Inneren.
 
-Drei Regeln, die für jedes Gerät gelten sollen und nicht nur für das eine, an
-dem es aufgefallen ist:
+**Die Ursache war `apple-mobile-web-app-status-bar-style: black-translucent`,
+und die Zeile ist gestrichen.** Damit beginnt die Seite unter der Statusleiste
+statt am obersten Bildschirmpunkt. Der Tausch ist bewusst: Mit der Zeile waren
+dieselben 62 px **zweimal** weg — oben als reservierter Systemstreifen, unten
+als unerreichbarer Rand. Ohne sie ist die Karte am oberen Rand nicht mehr
+randlos, dafür hat der Inhalt 62 px mehr, unten fehlt nichts, und die Dynamic
+Island überlappt die Seite überhaupt nicht mehr.
+
+**Eine geänderte `apple-mobile-web-app-*`-Zeile wirkt erst nach dem Neuanlegen
+des Symbols.** Sie steckt im Home-Bildschirm-Symbol, nicht in der Seite — kein
+Deployment und kein Kaltstart erreicht sie. Wer eine dieser Zeilen anfasst,
+schreibt dazu, dass das Symbol gelöscht und neu hinzugefügt werden muss.
+
+Vier Regeln, die für jedes Gerät gelten sollen und nicht nur für das eine, an
+dem sie aufgefallen sind:
 
 - **Alle Höhen werden gegen den Rahmen (`.app`) gerechnet, nicht gegen das
   Fenster.** Heute sind beide gleich hoch. Die Zeile bleibt trotzdem stehen,
@@ -374,6 +393,11 @@ dem es aufgefallen ist:
   unten ist in jedem Zustand ein Blatt: Routenblatt, Menü oder Vollbild-Ebene,
   alle drei in `--sheet`. Mit `--ground` stand dort ein grauer Balken, der wie
   ein Fehler aussah. Die Karte färbt sich selbst.
+- **`theme-color` ist keine Dekoration, sondern der Grund der Statusleiste.**
+  Das System malt diese Fläche für uns, also muss dort eine **Flächenfarbe der
+  App** stehen und keine Kartenfarbe — sonst liegt ein Streifen Kartenfarbe
+  über der Karte, ohne Karte darin. Genau so sah es am 19.08.2026 aus. Die
+  Farbe wechselt mit dem Farbschema, sonst leuchtet nachts ein heller Balken.
 
 Die gemessenen Zahlen, das Messverfahren und die Geräte, an denen sie geprüft
 sind, stehen in `DARSTELLUNG.md` — hier nicht, weil sie sich mit jedem neuen

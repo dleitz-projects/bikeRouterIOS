@@ -51,44 +51,53 @@ Stelle, an der ein Blatt sein müsste, benennt den Fehler bereits.
 
 ## Geräte
 
-| Gerät | Bildschirm | dpr | Systemstreifen oben | unten | geprüft |
-|---|---|---|---|---|---|
-| iPhone 16 Pro Max, installiert | 440 × 956 | 3 | 62 px | 34 px | 19.08.2026 |
-| iPhone 16 Pro Max, Safari-Tab | 440 × 956 | 3 | — | — | offen |
-| kleinere iPhones (ohne Insel) | — | — | — | — | offen |
-| iPad | — | — | — | — | offen |
-| Schreibtisch-Browser | beliebig | 1–2 | 0 | 0 | laufend |
+| Gerät | Bildschirm | dpr | Fenster | `inset-top` | `inset-bottom` | geprüft |
+|---|---|---|---|---|---|---|
+| iPhone 16 Pro Max, installiert | 440 × 956 | 3 | 894 ab y=62 | 0 | 34 px | 19.08.2026 |
+| iPhone 16 Pro Max, Safari-Tab | 440 × 956 | 3 | — | — | — | offen |
+| kleinere iPhones (ohne Insel) | — | — | — | — | — | offen |
+| iPad | — | — | — | — | — | offen |
+| Schreibtisch-Browser | beliebig | 1–2 | = Fenster | 0 | 0 | laufend |
 
 Kommt ein Gerät dazu: einen Screenshot in jedem der vier Blattzustände machen,
 mit `bildmass.py` die Ränder nachmessen und die Zeile hier ergänzen — auch wenn
 alles passt. Ein leerer Eintrag heißt „nie angesehen", nicht „in Ordnung".
 
-## Gemessen am 19.08.2026 (iPhone 16 Pro Max, installierte App)
+## Die 62 px: gemessen, verstanden, entschieden (19.08.2026)
+
+Die Zahl, um die sich der ganze Nachmittag drehte, ist der obere
+Systemstreifen des Geräts: **62 px.** Das iPhone hat 956 px, die Seite bekam
+894. Der Unterschied zwischen den beiden Zuständen ist nicht, *wieviel* die
+Seite bekommt — es sind beide Male 894 —, sondern **wo die 62 px liegen**.
+
+| | mit `black-translucent` | ohne (jetzt) |
+|---|---|---|
+| Fenster | 894 px, **ab y = 0** | 894 px, **ab y = 62** |
+| oberste Bildpunktzeile | Karte, randlos | Statusleiste in `theme-color` |
+| `env(safe-area-inset-top)` | 62 px | **0** |
+| unterer Rand | 62 px unerreichbar | Seite reicht bis 955,7 |
+| davon für Inhalt nutzbar | 832 px | **894 px** |
+
+Die letzte Zeile ist der Grund, warum es beim jetzigen Zustand bleibt: Mit
+`black-translucent` waren die 62 px **zweimal** weg — oben als reservierter
+Systemstreifen, unten als unerreichbarer Rand. Jetzt sind sie einmal weg, und
+die Dynamic Island überlappt die Seite überhaupt nicht mehr. Eine ganze Klasse
+von Fehlern (Falle 6) kann damit nicht mehr auftreten.
+
+Die weiteren gemessenen Werte:
 
 | Größe | Wert | woher |
 |---|---|---|
 | Bildschirm | 440 × 956 CSS-Pixel | Screenshot 1320 × 2868 bei dpr 3 |
-| `env(safe-area-inset-top)` | 62 px | Oberkante der Profilpille bei 74 px, abzüglich der 12 px Innenabstand aus `.chrome` |
 | `env(safe-area-inset-bottom)` | 34 px | Innenabstand unter dem Rechnen-Knopf |
-| Fensterhöhe | 894 px | Unterkante des Blattes, das mit `bottom:0` sitzt |
-| Ursprung der Seite | 0 | oberste Bildpunktzeile trägt Kartenfarbe, nicht Systemfarbe |
 | Blatt, leerer Zustand | 117 px | gemessen, nicht gesetzt |
+| Statusleiste | 62 px, `theme-color` | Uhrzeit steht auf der Fläche, Screenshot 17:56 |
 
-Daraus die eine Zahl, um die es geht: **956 − 894 = 62 = der obere
-Systemstreifen.** Die App wird über die volle Bildschirmhöhe gezeichnet und
-beginnt am obersten Punkt, das Layout rechnet aber ohne den oberen Streifen.
-Unten fehlt deshalb genau so viel, wie oben zusätzlich da ist.
-
-**Gemessen ist das. Die Erklärung ist eine Vermutung:** `viewport-fit=cover`
-zusammen mit `apple-mobile-web-app-status-bar-style: black-translucent`. Dass
-`env(safe-area-inset-top)` überhaupt 62 meldet, belegt, dass `cover` wirkt —
-ohne `cover` wäre der Wert null. Mehr ist nicht belegt.
-
-Die Vermutung wird seit dem 19.08.2026, 17:20 Uhr, geprüft: `black-translucent`
-ist gestrichen. Der Preis wäre womöglich die randlose Karte am oberen Rand
-gewesen — dass er zu hoch sei, war eine Fehleinschätzung. Die 62 px waren
-ohnehin nicht nutzbar, und der Versuch, sie von innen zu füllen, hat mehr
-kaputt gemacht als der Fehler selbst (Falle 8).
+**Der Preis, den es tatsächlich kostet:** Die Karte reicht nicht mehr bis zur
+obersten Bildpunktzeile. Der Zuschlag `+ env(safe-area-inset-top)` an den
+Stellen, die am oberen Rand angefasst werden, meldet auf diesem Gerät jetzt
+null — die Regel bleibt trotzdem stehen, denn auf einem Gerät oder in einem
+Modus, wo der Wert nicht null ist, ist sie weiterhin nötig.
 
 ## Die Fallen
 
@@ -161,13 +170,20 @@ heißt nicht, dass die Seite darauf **zeichnen** darf.)*
 
 **Was geblieben ist:** die Leinwand in `--sheet` statt `--ground`. Was das
 System außerhalb des Fensters streicht, sitzt immer unter einem Blatt —
-Routenblatt, Menü oder Vollbild-Ebene, alle drei in derselben Farbe. Der
-Streifen ist damit nicht mehr von der Unterkante des Blattes zu unterscheiden,
-auch wenn er weiterhin da ist.
+Routenblatt, Menü oder Vollbild-Ebene, alle drei in derselben Farbe.
 
-**Was danach kam:** `apple-mobile-web-app-status-bar-style: black-translucent`
-ist gestrichen. Das ist der Griff an die Ursache statt an die Wirkung.
-`viewport-fit=cover` bleibt. Am Gerät noch nicht bestätigt — siehe „Offen".
+**Behoben durch das Streichen von `black-translucent`**, also an der Ursache
+statt an der Wirkung. `viewport-fit=cover` bleibt. Am Gerät bestätigt am
+19.08.2026, 17:56: Die Seite reicht bis 955,7 css, unten fehlt nichts mehr.
+
+**Wichtig dabei:** Die Zeile wirkte erst, nachdem das Symbol vom
+Home-Bildschirm **gelöscht und neu angelegt** war. Zwei Deployments und
+mehrere Kaltstarts änderten gar nichts — iOS liest die
+`apple-mobile-web-app-*`-Zeilen beim **Anlegen** des Symbols und nicht bei
+jedem Start. Sie stecken im Symbol, nicht in der Seite; kein
+Service-Worker-Update der Welt erreicht sie. *(Erkennungszeichen: Die Seite
+verhält sich weiter nach einer Einstellung, die im ausgelieferten HTML gar
+nicht mehr steht.)*
 
 **9. Das „©" schob sich im Vollbild auf die Profilpille** (19.08.). Alles, was
 über dem Blatt schwebt — Werkzeugleiste, Zoom, Nennung der Datenquellen —,
@@ -184,8 +200,19 @@ passt nicht hinein. Auf jedem Gerät, ohne eine einzige Gerätezahl im Code.
 *(Feste Schwellen tragen den Systemstreifen des Geräts in sich, an dem sie
 ermittelt wurden.)*
 
-**Was die neun gemeinsam haben:** Keine war ein Schönheitsfehler. Acht von
-neun machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+**10. Ein grauer Balken über der Karte** (19.08.). Die Folge von Falle 8: Ohne
+`black-translucent` beginnt die Seite unter der Statusleiste, und iOS streicht
+deren Grund mit der **`theme-color`**. Die stand auf `--ground`, der Farbe der
+Karte — also lag ein 62 px hoher Streifen Kartenfarbe **über** der Karte, ohne
+Karte darin. Jetzt `--sheet`, wie jede andere randlose Fläche der App auch.
+
+*(Die Regel: `theme-color` ist keine Dekoration und keine Markenfarbe, sondern
+der Grund einer Fläche, die das System für uns malt. Sie muss deshalb eine
+Flächenfarbe der App sein — und mit dem Farbschema wechseln, sonst leuchtet
+nachts ein heller Balken über der dunklen Karte.)*
+
+**Was die zehn gemeinsam haben:** Keine war ein Schönheitsfehler. Neun von
+zehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle
@@ -195,12 +222,15 @@ steht, hat schon einmal alles darunter verdeckt.
 
 1. **Zweimal aufrufen**, wenn sich der Service Worker geändert hat. Der erste
    Aufruf holt, der zweite zeigt — siehe `CLAUDE.md`, Abschnitt Deployment.
+   **Wurde eine `apple-mobile-web-app-*`-Zeile geändert, reicht das nicht:**
+   Die steckt im Home-Bildschirm-Symbol, nicht in der Seite. Symbol löschen,
+   in Safari öffnen, neu hinzufügen.
 2. **Ist die Bedienung überhaupt da?** Pille oben links, Menü oben rechts,
    fünf Werkzeuge rechts, Zoom und „©" links unten.
-3. **Oberer Rand:** Pille und Menü stehen unter der Insel, nicht darin. Trägt
-   die oberste Bildpunktzeile Kartenfarbe oder Systemfarbe? Das ist seit dem
-   Streichen von `black-translucent` die entscheidende Beobachtung — sie sagt,
-   welcher der beiden Ausgänge eingetreten ist (siehe „Offen").
+3. **Oberer Rand:** Die oberste Bildpunktzeile trägt die Statusleiste in
+   `theme-color`, darunter beginnt die Karte. Ändert sich das — Kartenfarbe
+   ganz oben —, ist das Gerät oder der Modus ein anderer als der gemessene,
+   und `env(safe-area-inset-top)` ist wieder ungleich null.
 4. **Unterer Rand:** kein andersfarbiger Streifen unter dem Blatt, in keinem
    der vier Zustände. Im Zweifel `bildmass.py spalte` darauf ansetzen — 62 px
    sieht man, 6 px nicht.
@@ -229,19 +259,20 @@ Streifen, unterer Rand, Analyse und Farbschema in einem Bild.
 - **iPad und Schreibtisch.** Die Oberfläche ist für schmale Displays entworfen.
   Was auf 1000 px Breite daraus wird, ist eine offene Gestaltungsfrage, kein
   Fehler.
-- **Trägt das Streichen von `black-translucent`?** Der offene Punkt seit
-  17:20 Uhr. Zwei Ausgänge, beide besser als der Zustand davor:
-  *Fenster wird 956* — randlose Karte bleibt, 62 px gewonnen, nichts weiter zu
-  tun. *Fenster bleibt 894, rückt aber unter die Statusleiste* — alles ist
-  sichtbar und nichts abgeschnitten, dafür beginnt die Karte unter der
-  Statusleiste statt am Bildschirmrand, und `safe-area-inset-top` meldet null.
-  Am Bild zu unterscheiden: Trägt die oberste Bildpunktzeile Kartenfarbe oder
-  Systemfarbe?
-- **Womöglich einmal neu zum Home-Bildschirm hinzufügen.** iOS liest die
-  `apple-mobile-web-app-*`-Zeilen unter Umständen beim **Anlegen** des Symbols
-  und nicht bei jedem Start. Ändert sich nach zwei Aufrufen nichts, ist das
-  der erste Verdacht — Symbol löschen, Seite in Safari öffnen, neu hinzufügen.
+- **Die randlose Karte am oberen Rand ist weg** — bezahlt dafür, dass unten
+  nichts mehr abgeschnitten wird und 62 px mehr Inhalt Platz haben. Ob das der
+  richtige Tausch bleibt, ist eine Gestaltungsfrage und keine technische. Der
+  Rückweg ist eine Zeile (`black-translucent` zurück) plus einmal Symbol neu
+  anlegen; er kostet dann wieder den unerreichbaren Rand unten.
+- **Die Farbe der Statusleiste** ist jetzt `--sheet`. Ob sie über der Karte
+  besser als heller Streifen oder als etwas Dunkleres wirkt, ist nach dem
+  ersten Blick zu entscheiden, nicht vorher.
 
-**Beantwortet am 19.08.2026:** *Zeichnet iOS unterhalb des Fensters?* **Nein.**
-Die Hintergrundfarbe malt es dort, Inhalt schneidet es am Fensterrand ab. Siehe
-Falle 8.
+**Beantwortet am 19.08.2026:**
+
+- *Zeichnet iOS unterhalb des Fensters?* **Nein.** Die Hintergrundfarbe malt es
+  dort, Inhalt schneidet es am Fensterrand ab (Falle 8).
+- *Trägt das Streichen von `black-translucent`?* **Ja** — aber erst, nachdem das
+  Symbol vom Home-Bildschirm neu angelegt wurde. Eingetreten ist der zweite der
+  beiden erwarteten Ausgänge: Fenster bleibt 894 px, rückt unter die
+  Statusleiste, `safe-area-inset-top` meldet null.

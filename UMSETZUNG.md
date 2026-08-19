@@ -436,15 +436,22 @@ ist raus; `viewport-fit=cover` bleibt und liefert weiter die Systemabstände.
 | Fenster wird 956 px | oberste Bildpunktzeile trägt Kartenfarbe | randlose Karte bleibt, 62 px gewonnen |
 | Fenster bleibt 894 px, rückt unter die Statusleiste | oberste Zeile trägt Systemfarbe | nichts mehr abgeschnitten, dafür beginnt die Karte unter der Statusleiste; `safe-area-inset-top` ist dann null |
 
-Der zweite Ausgang kostet die randlose Karte oben. Dass dieser Preis zu hoch
-sei, war die Fehleinschätzung vom Vormittag: Die 62 px waren ohnehin nicht
-nutzbar, und der Versuch, sie von innen zu füllen, hat mehr kaputt gemacht als
-der Fehler selbst.
+**Eingetreten ist der zweite Ausgang** (am Gerät, 19.08.2026, 17:56): Das
+Fenster bleibt 894 px und rückt unter die Statusleiste. Die Seite reicht jetzt
+bis 955,7 css — unten fehlt nichts mehr.
 
-**Möglicher Stolperstein:** iOS liest die `apple-mobile-web-app-*`-Zeilen unter
-Umständen beim **Anlegen** des Symbols und nicht bei jedem Start. Ändert sich
-nach zwei Aufrufen nichts, muss das Symbol einmal gelöscht und neu hinzugefügt
-werden.
+Der Tausch ist trotzdem gut, und zwar aus einem Grund, den ich vorher nicht
+gesehen hatte: Mit `black-translucent` waren dieselben 62 px **zweimal** weg —
+oben als reservierter Systemstreifen, unten als unerreichbarer Rand. Für Inhalt
+blieben 832 px. Jetzt sind es 894. Und die Dynamic Island überlappt die Seite
+überhaupt nicht mehr, womit Falle 6 aus `DARSTELLUNG.md` gar nicht mehr
+auftreten kann.
+
+**Der Stolperstein war real und hat zwei Deployments gekostet:** iOS liest die
+`apple-mobile-web-app-*`-Zeilen beim **Anlegen** des Symbols, nicht bei jedem
+Start. Sie stecken im Symbol, nicht in der Seite. Erst nach Löschen und
+Neu-Hinzufügen war die Änderung da. Erkennungszeichen: Die App verhält sich
+nach einer Einstellung, die im ausgelieferten HTML gar nicht mehr steht.
 
 ---
 
@@ -470,6 +477,23 @@ voll nichts.
 Keine einzige Gerätezahl steht dafür im Code. Genau das ist die Absicht — feste
 Schwellen tragen den Systemstreifen des Geräts in sich, an dem sie ermittelt
 wurden.
+
+---
+
+## U27 — Die Farbe der Statusleiste
+
+Folge von U25: Wo die Seite unter der Statusleiste beginnt, streicht iOS deren
+Grund mit der **`theme-color`**. Die stand auf `--ground` — der Farbe der Karte.
+Damit lag ein 62 px hoher Streifen Kartenfarbe **über** der Karte, ohne Karte
+darin: der graue Balken oben.
+
+**Jetzt `--sheet`**, in beiden Farbschemata, dazu passend `theme_color` im
+Manifest. Die Begründung ist dieselbe wie bei der Leinwand unten: Was das System
+für uns malt, ist eine Fläche der App — und jede randlose Fläche dieser App ist
+`--sheet`. Oben und unten tragen damit denselben Ton, die Karte liegt dazwischen.
+
+`background_color` im Manifest bleibt `--ground`: Das ist der Startbildschirm
+beim Laden, keine Fläche neben der Karte.
 
 ---
 

@@ -6,8 +6,14 @@
 <title>bikeRouteriOS</title>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d100b" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#e9ebe3" media="(prefers-color-scheme: light)">
+<!-- Die theme-color ist nicht Dekoration: Seit `black-translucent` weg ist,
+     beginnt die Seite unter der Statusleiste, und iOS streicht deren Grund
+     genau damit. Sie muss deshalb eine Flaeche der App sein, keine Farbe der
+     Karte — --sheet, wie jede andere randlose Flaeche auch. Mit --ground
+     (der Kartenfarbe) stand dort am 19.08.2026 ein grauer Balken ueber der
+     Karte, der wie ein Fehler aussah. -->
+<meta name="theme-color" content="#181c15" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f7f8f3" media="(prefers-color-scheme: light)">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
