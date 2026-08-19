@@ -303,8 +303,32 @@ Zeitfenster, in dem sie noch nicht gilt.
 *(Die Regel, zum dritten Mal in derselben Datei: Ein Systemstreifen ist ein
 Rand, kein Zuschlag zu einem Rand. `max()`, nie Addition — oben wie unten.)*
 
-**Was die zwölf gemeinsam haben:** Keine war ein Schönheitsfehler. Elf von
-zwölf machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+**13. Drei Zustände, drei verschiedene Abstände — und keiner war der Rand**
+(19.08.). Am Gerät gemessen, in Bildpunkten vom unteren Bildschirmrand:
+
+| Zustand | Unterkante des Inhalts | erwartet |
+|---|---|---|
+| leer, kein Route | 214 | 187 |
+| eine Route, kleine Raste | 294 | 187 |
+| halbe Raste, Höhenprofil | 187 | 187 |
+
+Die dritte Zeile stimmt, weil das Blatt dort eine feste Höhe hat und der Inhalt
+darin scrollt. Die beiden anderen messen ihre Höhe am Inhalt — über
+`scrollHeight`. Und ob **der untere Innenabstand in `scrollHeight` mitzählt,
+ist von Browser zu Browser verschieden.** Auf dem iPhone fehlte er im leeren
+Zustand: Das Blatt war um genau diesen Betrag zu kurz und schnitt sich selbst
+ab. Sichtbar war das als *zu kleiner* Abstand unter dem Knopf — also als
+Randproblem, was es nicht war.
+
+Gemessen wird jetzt die Unterkante des letzten sichtbaren Kindes plus der
+Innenabstand aus dem Stylesheet. Ein Wert, den niemand interpretiert.
+
+*(`scrollHeight` hatte schon eine Falle: Er meldet mindestens die Fensterhöhe,
+weshalb das Blatt zum Messen auf null gefaltet wird. Zwei Tücken in einer
+Eigenschaft sind eine zu viel — deshalb ist sie hier ganz raus.)*
+
+**Was die dreizehn gemeinsam haben:** Keine war ein Schönheitsfehler. Zwölf von
+dreizehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle

@@ -632,6 +632,35 @@ klein, einfarbig, in derselben Schreibmaschinenschrift wie die übrigen Messwert
 
 ---
 
+## U32 — Das Blatt schnitt sich selbst ab
+
+Drei Zustände, drei verschiedene Abstände zum unteren Bildschirmrand (am Gerät
+gemessen, in Bildpunkten): leer **214**, eine Route **294**, halbe Raste
+**187**. Erwartet waren dreimal 187.
+
+**Die halbe Raste stimmt**, weil das Blatt dort eine feste Höhe hat und der
+Inhalt darin scrollt. Die beiden anderen messen ihre Höhe am Inhalt — über
+`scrollHeight`. Und ob der **untere Innenabstand** darin mitzählt, ist von
+Browser zu Browser verschieden. Auf dem iPhone fehlte er im leeren Zustand: Das
+Blatt war um genau diesen Betrag zu kurz und schnitt sich selbst ab. Sichtbar
+war das als *zu kleiner* Abstand unter dem Knopf — also als Randproblem, was es
+nicht war.
+
+**Jetzt** wird die Unterkante des letzten sichtbaren Kindes gemessen, dazu der
+Innenabstand aus dem Stylesheet. Im Browser gegengeprüft, auch mit künstlich
+verdoppeltem Innenabstand: Der Abstand unter dem Knopf entspricht jetzt in
+jedem Zustand genau dem Innenabstand.
+
+`scrollHeight` hatte schon eine Falle — er meldet mindestens die Fensterhöhe,
+weshalb das Blatt zum Messen auf null gefaltet wird. Zwei Tücken in einer
+Eigenschaft sind eine zu viel; sie ist jetzt ganz raus.
+
+**Dazu:** Die Rasten werden neu gemessen, sobald die Schrift geladen ist
+(`document.fonts.ready`). Vorher konnte die erste Messung mit der Ersatzschrift
+laufen und das Blatt behielt eine Höhe, die nicht mehr passte.
+
+---
+
 ## U17 — Was noch nicht umgesetzt ist
 
 - **Route auf der Karte antippen** funktioniert, ist aber mit einer dünnen

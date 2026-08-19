@@ -1956,7 +1956,27 @@ function measureSheet(zustand) {
   sheet.style.transition = 'none';
   sheet.setAttribute('data-detent', zustand);
   sheet.style.height = '0px';
-  const h = $('.sheetscroll').scrollHeight + $('#grab').offsetHeight + 2;
+  /* Nicht scrollHeight. Der Wert hat zwei Tuecken, und die zweite hat am
+     19.08.2026 am Geraet zugeschlagen: Ob er den unteren Innenabstand
+     mitzaehlt, ist von Browser zu Browser verschieden. Im leeren Zustand fehlte
+     er auf dem iPhone — das Blatt war genau um diesen Betrag zu kurz und
+     schnitt sich selbst ab. Sichtbar war das als zu kleiner Abstand unter dem
+     Rechnen-Knopf, also als Randproblem, was es nicht war.
+
+     Gemessen wird deshalb die Unterkante des letzten sichtbaren Kindes, dazu
+     der Innenabstand, den das Stylesheet nennt. Ein Wert, den niemand
+     interpretiert. `getClientRects().length` unterscheidet dabei sichtbar von
+     `display:none` — genau das, was die Zustandsregeln oben schalten. */
+  const scroll = $('.sheetscroll');
+  const oben = scroll.getBoundingClientRect().top;
+  let unten = oben;
+  Array.prototype.forEach.call(scroll.children, function (kind) {
+    if (kind.getClientRects().length) {
+      unten = Math.max(unten, kind.getBoundingClientRect().bottom);
+    }
+  });
+  const polster = parseFloat(getComputedStyle(scroll).paddingBottom) || 0;
+  const h = Math.ceil(unten - oben + polster) + $('#grab').offsetHeight + 1;
   sheet.setAttribute('data-detent', vorher);
   sheet.style.height = hoehe;
   void sheet.offsetHeight;
@@ -3597,6 +3617,23 @@ if (!lastFault) setStatus(defaultHint());
    Versprechen — die Sicherung als Datei bleibt der eigentliche Schutz. */
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().catch(function () { /* dann eben nicht */ });
+}
+
+/* Die Rasten sind gemessen — und beim ersten Messen ist die Schrift oft noch
+   nicht da. IBM Plex kommt von Google Fonts mit `display=swap`: Bis sie da ist,
+   setzt der Browser eine Ersatzschrift, und die faellt anders hoch aus. Das
+   Blatt behielte sonst die Hoehe von vorhin und schnitte unten ab.
+
+   Am 19.08.2026 am Geraet aufgelaufen und lange fuer ein Abstandsproblem
+   gehalten: Im leeren Zustand blieben unter dem Rechnen-Knopf 18 px statt 34,
+   nach einer Berechnung dagegen genau 34 — weil eine neue Route die Rasten
+   ohnehin neu messen laesst, dann aber mit der richtigen Schrift. Drei
+   Zustaende, drei verschiedene Abstaende, und keiner davon war der Rand. */
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(function () {
+    detentsInvalidieren();
+    setDetent(detent);
+  }).catch(function () { /* dann eben mit der Ersatzschrift */ });
 }
 
 /* Fenster gedreht oder Grösse geändert: Die Rasten sind gemessen, das
