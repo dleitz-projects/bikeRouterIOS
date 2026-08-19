@@ -1,17 +1,17 @@
 """Erzeugt die App-Icons, ohne fremde Bibliothek.
 
-Die FORM stammt aus dem ersten Entwurf und bleibt: ein kraeftiger Zickzack
-zwischen zwei Punkten. Sie ist auf 60 px Kantenlaenge noch erkennbar, und
-darauf kommt es bei einem Icon an.
+Form und Farben stammen aus dem ersten Entwurf und bleiben — mit einer
+Ausnahme: Die Linie war hellblau und ist jetzt orange. Blau kommt in der App
+nirgends vor; Orange ist ihre Signalfarbe, und die Linie im Icon ist dieselbe
+Route wie die auf der Karte.
 
-Getauscht wurden nur die FARBEN. Das alte Icon teilte mit der App keine
-einzige — Petrolblau, Hellblau und Pastelltoene kommen in `style.css` nirgends
-vor. Hier stehen jetzt die Werte der dunklen Palette:
+    Grund   #1B3A4B   unveraendert aus dem ersten Entwurf
+    Linie   #FF6B33   war #7DD3FC — --signal aus der dunklen Palette
+    Start   #86EFAC   unveraendert
+    Ziel    #FCA5A5   unveraendert
 
-    Grund   --sheet   #181C15
-    Linie   --signal  #FF6B33   die Route, und die Farbe der ganzen App
-    Start   --good    #5FB07E   wie der Startmarker auf der Karte
-    Ziel    --ink     #E9EDE1   hell, damit er sich von der Linie abhebt
+Die Werte des ersten Entwurfs sind aus der Datei in der Git-Historie
+ausgelesen, nicht geschaetzt.
 
 Erzeugt werden drei Dateien:
 
@@ -24,10 +24,10 @@ Erzeugt werden drei Dateien:
 import zlib, struct, math
 
 S = 3                        # Ueberabtastung gegen harte Kanten
-GRUND  = (0x18, 0x1C, 0x15)
+GRUND  = (0x1B, 0x3A, 0x4B)
 LINIE  = (0xFF, 0x6B, 0x33)
-START  = (0x5F, 0xB0, 0x7E)
-ZIEL   = (0xE9, 0xED, 0xE1)
+START  = (0x86, 0xEF, 0xAC)
+ZIEL   = (0xFC, 0xA5, 0xA5)
 
 # Zickzack wie im ersten Entwurf: unten links los, zweimal die Richtung
 # wechseln, oben rechts ankommen.

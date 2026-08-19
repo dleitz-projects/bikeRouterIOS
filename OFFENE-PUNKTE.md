@@ -566,23 +566,28 @@ Karte selbst hell bleibt und der Kontrast zum dunklen Blatt Geschmackssache ist.
 Das erste Icon (petrolblauer Grund, hellblaue Zickzacklinie, Pastellpunkte)
 stammte aus der ersten Runde und teilte mit der App **keine einzige Farbe**.
 
-**Die Form bleibt, die Farben sind neu.** Ein erster Versuch hat auch den
-Linienzug umgezeichnet — vom Zickzack zu einer geschwungenen Route. Das war
-falsch: Der Zickzack ist auf 60 px Kantenlänge deutlich besser zu erkennen, und
-darauf kommt es bei einem Icon an. Zurückgenommen.
+**Form und Farben bleiben, nur die Linie wechselt.** Zwei Versuche waren nötig,
+um das zu erkennen:
 
-Getauscht wurde nur die Farbwelt, gegen die Werte der dunklen Palette: Grund
-`--sheet` `#181C15`, Linie `--signal` `#FF6B33`, Startpunkt `--good` `#5FB07E`,
-Zielpunkt `--ink` `#E9EDE1`. Damit trägt das Icon die Signalfarbe der App, und
-der Startpunkt ist derselbe Grünton wie der Startmarker auf der Karte.
+1. Erst wurde alles umgezeichnet — geschwungene Route, dunkler Grund, Palette
+   der App. Falsch: Der Zickzack ist auf 60 px Kantenlänge deutlich besser zu
+   erkennen, und darauf kommt es bei einem Icon an.
+2. Dann Form zurück, aber weiter mit der App-Palette. Auch das war zu viel: Ein
+   Icon muss nicht dieselben Farben tragen wie die Oberfläche — es muss
+   wiedererkennbar sein.
+
+**Geblieben ist ein einziger Tausch:** Die Linie war hellblau (`#7DD3FC`) und
+ist jetzt orange (`#FF6B33`). Blau kommt in der App nirgends vor, Orange ist
+ihre Signalfarbe — und die Linie im Icon ist dieselbe Route wie die auf der
+Karte. Grund, Start- und Zielpunkt sind unverändert.
+
+Die Farbwerte des ersten Entwurfs sind aus der Datei in der Git-Historie
+ausgelesen, nicht geschätzt.
 
 Drei Dateien, erzeugt von `werkzeuge/icon.py`: die beiden ausgelieferten Icons
 vollflächig quadratisch (iOS maskiert selbst — eigene runde Ecken gäben einen
 doppelten Rand), dazu `doku/bilder/icon-rund.png` mit runden Ecken und
 Transparenz für die Startseite.
-
-Erzeugt wird es von `werkzeuge/icon.py`, ohne Bildbibliothek. Wer die Palette
-ändert, ändert die Konstanten dort und lässt das Skript neu laufen.
 
 **Offen:** Ob GitHub das Icon als Social-Preview bekommen soll. Das lässt sich
 nur über die Weboberfläche einstellen (Settings → Social preview), nicht über
