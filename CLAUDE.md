@@ -29,6 +29,9 @@ Was hier steht, gilt. Die Dateien daneben halten bewusst Unverbindliches:
 - **`PROFILE.md`** — welche Profile es **gibt**, was ihre Namen verschweigen und
   welche wir übernehmen, umbenennen oder selbst schreiben. Eine Frage, die auf
   einen Schlag nicht zu entscheiden ist.
+- **`messungen/`** — Referenzstrecken, Messwerkzeug und Rohdaten. Wer eine Zahl
+  in Frage stellt, misst dort nach statt zu diskutieren. Zusammenfassung in
+  `messungen/ERKENNTNISSE.md`.
 - **`IDEEN.md`** — Ideensammlung mit Status. Auch Verworfenes bleibt dort mit
   Begründung stehen.
 - **`OFFENE-PUNKTE.md`** — Entscheidungen, die an bereits Gebautem hängen und
@@ -88,8 +91,9 @@ ist aufgefallen, dass „Fahrer & Rad" nicht ins Routing-Profil gehört: Es hän
 Nutzer, nicht an der Art der Route — auch wenn es technisch ein Parameter
 derselben Profildatei ist.
 
-Dazu kommt rechts eine senkrechte Leiste mit vier Kartenwerkzeugen und unten ein
-Blatt mit drei Rasten: nur Kennzahlen · plus Bedienung · plus Analyse.
+Dazu kommt rechts eine senkrechte Leiste mit fünf Kartenwerkzeugen, links unten
+Zoomknöpfe mit der Nennung der Datenquellen darunter, und unten ein Blatt mit
+vier Zuständen (siehe unten).
 
 **Die Pille öffnet die Auswahl, nicht den Editor.** Ein Tap zeigt das aktive
 Profil mit prominentem *Bearbeiten*, darunter vier weitere und einen Verweis
@@ -104,8 +108,8 @@ zusätzliche Übertragung.
 bleibt unberührt und wählbar. Sonst wäre der verifizierte Ausgangszustand nach
 einer Änderung unwiederbringlich weg.
 
-**Die vier Kartenwerkzeuge.** Die ersten beiden sind ein Modus-Paar und
-schließen sich gegenseitig aus, die letzten beiden lösen sofort aus:
+**Die fünf Kartenwerkzeuge.** Die ersten beiden sind ein Modus-Paar und
+schließen sich gegenseitig aus, die übrigen lösen sofort aus:
 
 | Werkzeug | Wirkung |
 |---|---|
@@ -113,6 +117,18 @@ schließen sich gegenseitig aus, die letzten beiden lösen sofort aus:
 | Sperrbereich-Modus | Tippen auf die Karte legt einen Nogo-Kreis an |
 | Rückgängig | nimmt den zuletzt gesetzten Punkt zurück, mindestens zwei bleiben |
 | Standort | zentriert die Karte, ohne einen Punkt zu setzen |
+| Kartenbild | öffnet die Auswahl der Kachelquelle |
+
+**Zoom gehört nach links, nicht in die Leiste.** Die rechte Kante ist voll, und
+Plus/Minus sind kein Kartenwerkzeug im Sinne der Leiste, sondern Bedienung der
+Ansicht. Leaflets eigenes `zoomControl` bleibt abgeschaltet — es galt auf
+älteren iOS-Fassungen als Ursache dafür, dass Antippen nicht ankommt.
+
+**Das Kartenbild ändert die Route nicht.** Aufgenommen sind nur Quellen ohne
+Anmeldung und ohne Vertrag: OpenStreetMap, CyclOSM (hebt Radwege hervor),
+OpenTopoMap. Satellit steht grau daneben statt zu fehlen — sonst fragt man sich
+in einem halben Jahr, ob es vergessen wurde. **Die Nennung folgt der Quelle:**
+Wer CyclOSM anzeigt, muss CyclOSM nennen.
 
 Jeder Tap auf ein Werkzeug blendet kurz ein, was er bewirkt hat. Ohne diese
 Rückmeldung ist ein Modusumschalter auf einer Karte nicht zu erraten.
@@ -135,6 +151,24 @@ keinen Regler, sondern eine Notiz, warum es ihn nicht gibt — das Feld
 `smoothness` fehlt in den Kartendaten auf rund 70 % der Strecke. Ein Regler ohne
 Datengrundlage wäre eine Lüge an der Oberfläche.
 
+**Am 19.08.2026 gemessen belegt, und schlimmer als gedacht:** Eine Datenlücke
+ist keine neutrale Leerstelle. `smoothness` fehlt vor allem auf **Hauptstraßen** —
+ein Eingriff, der nur bewertet, was erfasst ist, bestraft deshalb die kleinen
+getaggten Nebenwege und belohnt die ungetaggten großen. Ein Testbaustein trieb so
+den Hauptstraßenanteil von 25 % auf 34 %. Siehe `BROUTER.md`, Test 8.
+
+**Zahlen in der Oberfläche tragen ihr Datum und ihre Herkunft.** „Gemessen:
+Hauptstraßenanteil 42,5 % bei 1,0" steht neben dem Regler, nicht nur in einer
+Markdown-Datei — ein Wert ohne Größenordnung ist eine Zumutung. Dass diese Zahlen
+aus wenigen Strecken stammen, ist bekannt und als `P14` offen: Sie sind eine
+ehrliche Einschätzung, keine Zusage.
+
+**Jede Aussage über Routenwahl braucht mindestens 100 km.** Auf kurzen Strecken
+gibt es keine echten Alternativen; ein Eingriff sieht dort harmlos aus, obwohl er
+es nicht ist. Genau so ist der `smoothness`-Baustein durchgerutscht — auf 43 km
+sah er richtig aus, auf 156 km war er schädlich. Werkzeug und Referenzstrecken
+liegen in `messungen/`.
+
 **Was nicht die Route ändert, sagt das.** Die Werte unter „Fahrer & Rad" wirken
 nur auf die geschätzte Fahrzeit. Der Reiter schreibt das hin, sonst schraubt man
 dort und wundert sich, dass sich nichts bewegt.
@@ -147,8 +181,30 @@ geht.
 
 **Kein freier Profiltext.** Der Baukasten setzt Regeln aus vorgefertigten
 Bausteinen zusammen und erzeugt den Profiltext selbst. Grund: Einen Syntaxfehler
-quittiert der Server mit `HTTP 500` und leerem Body — es gäbe keine
-Fehlermeldung, die dem Nutzer sagen könnte, was falsch ist.
+quittiert der Server beim **Rechnen** mit `HTTP 500` und leerem Body — es gäbe
+keine Fehlermeldung, die dem Nutzer sagen könnte, was falsch ist. (Beim
+**Übertragen** meldet er ihn zwar im Klartext, siehe `BROUTER.md` — aber erst,
+nachdem man ihn gemacht hat.)
+
+**Die Basisprofile liegen im Repo, in `basis/`.** Entschieden am 19.08.2026:
+Neue Regeln brauchen den vollständigen Profiltext, und die API gibt ihn nicht
+heraus. Von den zwei möglichen Wegen — mitliefern oder zur Laufzeit von GitHub
+holen — ist **mitliefern** gewählt: Eine zweite fremde Abhängigkeit im Betrieb
+wäre schlechter als 34 KB im Repo. Der Preis: Die Kopien altern still. Gemildert
+dadurch, dass sie **nur für Profile mit Bausteinen** benutzt werden; ohne
+Bausteine rechnet der Server mit seiner eigenen, aktuellen Fassung. Begründung
+und Abgleich-Weg stehen in `basis/README.md`.
+
+**Ein Baustein greift an drei Stellen ein, nie in den Kostenausdruck selbst:**
+Parameter in den globalen Abschnitt, Regel vor `assign costfactor`, ein
+`add <name>` in die Kette der Strafaufschläge. Der Kostenausdruck ist mehrzeilig
+und in jedem Profil anders — ein zusätzlicher Summand ist der kleinste Eingriff,
+den man noch prüfen kann.
+
+**Jeder Baustein braucht eine Kontrolle, die ihn neutral stellt.** Beim
+Tempolimit-Baustein ist das `consider_speed = 0`: Damit müssen exakt die
+Referenzwerte herauskommen. Ohne diese Probe ist nicht zu unterscheiden, ob ein
+Baustein wirkt oder ob er nebenbei etwas anderes kaputt macht.
 
 **Speichern, Touren und Sicherung heißen verschieden.** Drei Dinge, die im
 ersten Entwurf noch fast gleich hießen und deshalb doppelt wirkten:
@@ -192,6 +248,65 @@ Profil.** Sonst wäre eine alte Tour rückwirkend falsch beschriftet, sobald das
 Profil sich ändert — und Wiederherstellen ergäbe eine andere Route als damals.
 Weicht das heutige Profil vom gespeicherten ab, sagt die Tour das und lässt die
 Wahl zwischen den damaligen und den heutigen Werten.
+
+**Das Blatt hat vier Zustände, jeder mit eigenem Inhalt.** Drei Höhen mit nur
+zwei Inhalten sind ein Fehler — genau daran krankte der Stand vom 18.08.2026,
+wo die mittlere Raste dasselbe zeigte wie die kleine, nur höher:
+
+| Zustand | Inhalt | wie man hinkommt |
+|---|---|---|
+| **leer** | nur der Knopf | Ausgangslage, bevor gerechnet wurde |
+| **klein** | Kennzahlen und Bedienung; Reiter erst ab zwei Routen | Griff |
+| **halb** | dazu das Höhenprofil, **Karte bleibt sichtbar** | automatisch nach jeder Berechnung |
+| **voll** | die ganze Analyse | Griff |
+
+**Die Höhen werden gemessen, nicht gesetzt.** Klein ist mit einer Route
+niedriger als mit dreien; halb endet unter der Höhenprofil-Karte. Feste
+Prozentwerte träfen beides nie.
+
+**Ziehen ist der Weg, Tippen die Abkürzung.** Am Griff ziehen bewegt das Blatt
+und rastet beim Loslassen an der nächstgelegenen Stufe ein; ein Tap schaltet
+eine Stufe weiter. Ein Blatt, das nur auf Antippen weiterschaltet, wirkt am
+Telefon kaputt.
+
+**Stumpf ist die Karte nur im Vollbild.** Dort sind 92 px Karte übrig — ein Tap
+darauf kann nur „gib mir die Karte zurück" heißen und zieht das Blatt eine Stufe
+zu, ohne etwas zu setzen. In der halben Raste gilt das ausdrücklich nicht: Sie
+ist dafür da, auf der Karte zu arbeiten und gleichzeitig das Profil zu sehen.
+
+**Unsichtbare Trefferflächen dürfen nur über toten Raum wachsen.** Die auf 44 px
+vergrößerte Fläche des Griffs lag zunächst über der Reiterzeile — ein Tap auf
+„A" traf den Griff und schaltete die Raste weiter, statt die Route zu wechseln.
+Sie wächst deshalb nach oben über den Blattrand hinaus.
+
+**Berechnete Routen bleiben liegen.** Eine neue Route ersetzt die vorige nicht,
+sondern legt sich dazu: die abgelegten gestrichelt und grau, die ausgewählte
+kräftig. Kennzahlen, Analyse, Teilen und Speichern beziehen sich immer auf die
+**ausgewählte**. Das ist der Kern des Vergleichs — ein Profil zeigt seine
+Wirkung erst im Vergleich.
+
+| Regel | Grund |
+|---|---|
+| Reiter tragen nur `A`, `B`, `C` | Mit Profilname und Kilometern wird die Zeile bei drei Varianten breiter als der Bildschirm |
+| Reiter erscheinen erst ab zwei Routen | Bei einer gäbe es nichts auszuwählen |
+| Der Vergleich steht als **Differenz** unter den Kennzahlen | Zwei vollständige Zahlensätze nebeneinander muss man im Kopf verrechnen |
+| Bezug ist die **zuletzt ausgewählte** Route | Wer von B nach C springt, will den Unterschied zu B sehen |
+| Ein Profilwechsel wirft den Stapel **nicht** weg | Dasselbe mit einem anderen Profil zu rechnen ist der Zweck |
+| Ein geänderter Wegpunkt wirft den **ganzen** Stapel weg | Keine der Routen passt dann noch zur Frage |
+| Höchstens sechs Routen | Mehr kann man nicht nebeneinander beurteilen, und die Karte wächst zu |
+| Aufräumen sitzt **unten bei der Route**, nicht in der Werkzeugleiste | Die Leiste trägt Kartenwerkzeuge, hier geht es um Rechenergebnisse |
+
+**Das Höhenprofil lässt sich anfahren.** Ein Finger auf dem Profil setzt einen
+Punkt auf die Karte, mit Kilometerstand und Höhe. Genau dafür gibt es die halbe
+Raste. Die Zuordnung läuft über die **aufsummierte Distanz**, nicht über den
+Index der Stützstellen: BRouter liefert dichte Punkte in Kurven und dünne auf
+der Geraden.
+
+**Die Statuszeile zeigt nur, was man nicht ohnehin sieht.** Sie steht, solange
+keine Route da ist, und immer bei Fehlern oder während gerechnet wird. „Route B
+berechnet." neben den Kennzahlen von Route B wäre gedoppelt. Sie bleibt aber der
+einzige Ort, an dem der Zustand **stehen** bleibt — eine Einblendung ist nach
+drei Sekunden weg.
 
 **Jede ausgelöste Aktion wird kurz eingeblendet.** Modus gewechselt, Punkt
 gesetzt, Profil gewählt, Tour gespeichert — eine kurze Einblendung am unteren
@@ -243,6 +358,12 @@ Klicken nicht bemerkt, sondern nur im Bild.
 Browser-Stylesheet gibt `[hidden]` nur eine schwache Regel mit; jede
 Klassenregel schlägt sie. Deshalb steht im Stylesheet einmalig
 `[hidden]{display:none !important;}`.
+
+**Der Startausschnitt kommt nicht aus dem Nichts, aber auch nicht von einem
+fremden Dienst.** Drei Stufen: der zuletzt betrachtete Ausschnitt, sonst die
+Zeitzone des Geräts (`Intl` kennt sie ohne Netzwerkzugriff), sonst Mitteleuropa.
+IP-Geolokalisierung ist ausgeschlossen — sie bräuchte einen fremden Dienst, dem
+bei jedem Start die eigene Adresse mitgeteilt würde, und wäre nicht genauer.
 
 **Der Kartenausschnitt muss die Überlagerungen kennen.** Ein gleichmäßiger Rand
 bei `fitBounds` schiebt Start und Ziel unter das Blatt — man sähe seine eigene
@@ -307,7 +428,9 @@ funktioniert.
 - **Leaflet** für die Karte, per CDN eingebunden.
 - **So wenige Dateien wie möglich.** Richtwert: `index.html`, `app.js`,
   `style.css`, `manifest.json`, `sw.js`. Nur aufteilen, wenn eine Datei
-  unübersichtlich wird.
+  unübersichtlich wird. Dazugekommen sind `params.js` (reine Datenhaltung: der
+  Parameterkatalog) und `basis/` mit den unveränderten Profiltexten von
+  BRouter — siehe unten beim Baukasten.
 - Kartenkacheln von OpenStreetMap. Attribution korrekt einbinden.
 - Zielbrowser ist **Safari auf iOS**. Layout für schmale Displays, Bedienelemente
   fingertauglich (Mindestgröße 44 px), Safe Areas beachten.

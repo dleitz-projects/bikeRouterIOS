@@ -53,6 +53,21 @@ nicht greift.
 Streckenlänge, ist das ein sehr guter Tausch. Der Hebel existiert in keinem der
 mitgelieferten Profile.
 
+*Gegenprobe auf 156 km (19.08.2026, `messungen/ergebnisse/`):* Auf einer
+ohnehin ruhigen Strecke bleibt wenig zu holen — Tempo ≥ 70 sinkt nur von 7,27 %
+auf 6,99 %, Hauptstraßen von 24,98 % auf 23,48 %, bei 20 m Mehrweg. **Die
+Richtung stimmt, die Größe hängt an der Strecke.** Wo kaum schnelle Straßen im
+Weg liegen, ändert der Baustein fast nichts — er schadet dort aber auch nicht,
+anders als der verworfene `smoothness`-Baustein aus Test 8.
+
+*Bestätigt am 19.08.2026 in der App.* Der Baustein ist jetzt gebaut
+(`basis/` + Upload), und die Kontrolle hält: Mit `consider_speed=0` liefert das
+zusammengesetzte Profil exakt die Referenzwerte (43,40 km, Kosten 115098,
+25,5 % Tempo ≥ 70). Auf dieser einen Harz-Strecke kostet der Baustein bei 1,0
+allerdings 31 % Mehrweg und drückt Tempo ≥ 70 auf 4,5 % — deutlich mehr Umweg
+als der über 187 km gemessene Durchschnitt. Wie teuer er wird, hängt davon ab,
+ob es überhaupt eine ruhige Alternative gibt.
+
 ### Test 3 — Lässt sich fehlende `smoothness` sinnvoll ersetzen? offen
 
 `smoothness` beschreibt die Asphaltqualität und fehlt auf rund 70 % der Strecke,
@@ -96,6 +111,102 @@ Solange das offen ist, gilt vorsorglich die sparsame Variante.
 liefert **HTTP 500 mit leerem Body** — nicht unterscheidbar von anderen Fehlern.
 Die App muss beim Fehlschlag mit einer Custom-ID deshalb einmal blind neu
 hochladen und erneut versuchen, bevor sie einen Fehler meldet.
+
+### Test 7 — Bringt ein Baustein gegen Kopfsteinpflaster etwas? ✔ erledigt 19.08.2026
+
+*Ausgangsvermutung:* Kopfsteinpflaster ist für ein Rennrad unangenehm, `surface`
+liegt zu 99,4 % vor — also müsste sich ein Baustein lohnen, der `sett` und
+`cobblestone` zusätzlich bestraft.
+
+*Aufbau:* `fastbike.brf` um einen `roughpenalty` erweitert
+(`sett|cobblestone` × 1,5, `paving_stones` × 0,6), gesteuert über
+`consider_rough`. Zwei Strecken: die Harz-Runde über drei Wegpunkte und eine
+2,1-km-Strecke quer durch die Altstadt von Goslar.
+
+| Strecke | `consider_rough` | Länge | Kopfstein | Kosten |
+|---|---|---|---|---|
+| Harz-Runde | 0 (Kontrolle) | 43,40 km | 0,20 % | 115098 |
+| Harz-Runde | 1,0 | 43,40 km | 0,20 % | 115225 |
+| Harz-Runde | 3,0 | 43,40 km | 0,20 % | 115480 |
+| Goslar-Altstadt | 0 | 2,130 km | 0,00 % | 3945 |
+| Goslar-Altstadt | 3,0 | 2,130 km | 0,00 % | 3972 |
+
+*Ergebnis:* **Kein Effekt.** Die Route ändert sich auf keiner der beiden
+Strecken, nur die ausgewiesenen Kosten steigen. Der Grund steht in
+`fastbike.brf` selbst: `cobblestone` zählt dort bereits zu `isunpaved` und wird
+dadurch schon gemieden. Der Baustein bestraft also etwas, das ohnehin nur dann
+gewählt wird, wenn es keine Alternative gibt — und dann hilft auch mehr Strafe
+nicht.
+
+*Folge:* **Nicht gebaut.** Die Kontrolle (`consider_rough = 0` liefert exakt die
+Referenzwerte) hat gehalten; der Eingriff war technisch richtig, nur nutzlos.
+Das ist derselbe Maßstab wie beim Regler ohne Datengrundlage: Was nichts
+bewirkt, wird nicht angeboten.
+
+*Was die Frage offen lässt:* Ein Profil, das Kopfsteinpflaster **nicht** schon
+über `isunpaved` meidet — etwa `trekking` —, könnte anders reagieren. Ungeprüft.
+
+*Methodenfehler, nachträglich bemerkt:* Eine der beiden Strecken war 2,1 km lang.
+Für Belagsfragen taugt das, für Routenwahl nicht — siehe die Messregel unten.
+Das Ergebnis bleibt trotzdem gültig, weil die 43-km-Strecke dasselbe zeigte.
+
+### Test 8 — Lässt sich `smoothness` als Baustein nutzen? ✔ erledigt 19.08.2026 — **verworfen**
+
+*Ausgangsfrage:* Asphaltqualität ist die wichtigste Priorität des Nutzers, und
+`smoothness` beschreibt genau das. Reicht die halbe Datenlage für einen Baustein?
+
+*Aufbau:* `fastbike.brf` um einen `smoothpenalty` erweitert (intermediate × 0,3,
+bad × 1,2, very_bad und schlechter × 3,0), gesteuert über `consider_smoothness`.
+
+**Erst auf kurzen Strecken gemessen — und das Ergebnis war falsch.** Auf 43 km
+sah es nach schwacher, aber richtiger Wirkung aus: mittelmäßige Fahrbahn von
+10,2 % auf 8,4 %, 150 m Mehrweg. Auf dieser Grundlage war der Baustein schon
+eingebaut.
+
+*Die lange Strecke drehte das Ergebnis um* (156 km, Hannover–Nordhausen):
+
+| `consider_smoothness` | Länge | Tempo ≥ 70 | Hauptstraßen | rau | ohne Angabe |
+|---|---|---|---|---|---|
+| 0 (Kontrolle) | 156,28 km | **7,27 %** | **24,98 %** | 0,08 % | 64,8 % |
+| 2,5 | 158,57 km | **10,62 %** | **33,88 %** | 0,00 % | 74,6 % |
+| 5,0 | 158,81 km | 10,60 % | 33,82 % | 0,00 % | 76,3 % |
+
+*Ergebnis:* **Der Baustein macht die Route schlechter.** Er entfernt 0,08 %
+rauen Belag und erkauft das mit **neun Prozentpunkten mehr Hauptstraße** und
+gut drei Punkten mehr Tempo ≥ 70.
+
+**Die Ursache ist systematisch und lehrreich:** Wo `smoothness` fehlt, kann
+nicht bestraft werden — und das Feld fehlt vor allem auf **Hauptstraßen**. Ein
+Baustein, der nur bewertet, was erfasst ist, bestraft damit faktisch die kleinen,
+getaggten Nebenwege und belohnt die ungetaggten großen. Der Anteil ohne Angabe
+steigt von 64,8 % auf 74,6 % — die Route flieht regelrecht in die Datenlücke.
+
+*Folge:* **Nicht aufgenommen.** Und die Regel aus der `CLAUDE.md` — „Wo Daten
+fehlen, wird kein Regler angeboten" — ist damit nicht nur eine Vorsichtsmaßnahme,
+sondern gemessen: Eine Lücke in den Daten ist keine neutrale Leerstelle, sie
+verzerrt aktiv in eine Richtung.
+
+---
+
+## Messregel: mindestens 100 km, sonst misst man Zufall
+
+Aus Test 7 und 8 gelernt, am 19.08.2026:
+
+- **Test 7** (Kopfstein) lief unter anderem über 2,1 km Altstadt — viel zu kurz,
+  um über Routenwahl etwas auszusagen.
+- **Test 8** sah auf 43 km richtig aus und war auf 156 km das Gegenteil.
+
+Auf kurzen Strecken gibt es keine echten Alternativen: Was der Router wählt,
+ist dort oft alternativlos, und ein Eingriff sieht wirkungslos oder harmlos aus,
+obwohl er es nicht ist. **Jede Aussage über Routenwahl braucht mindestens
+100 km**, besser mit Gelände- und Straßenmischung. Referenzstrecken und ein
+Skript dafür liegen in `messungen/`.
+
+Kurze Strecken bleiben brauchbar für Fragen nach der **Datenlage** („wie viel
+Kopfsteinpflaster liegt in dieser Altstadt") — nicht für Fragen nach dem
+**Verhalten**.
+
+---
 
 ### Test 6 — Ab welcher Länge bricht der Server ab? offen, wichtig
 
@@ -191,6 +302,25 @@ Content-Type: text/plain
 
 → { "profileid": "custom_1787044885678" }
 ```
+
+**Der Upload-Endpunkt meldet Syntaxfehler im Klartext — anders als das Rechnen.**
+Gemessen am 19.08.2026: Ein Profil mit `maxspeed=|5|10|…` kam mit **HTTP 200**
+zurück, aber mit einem Fehlerfeld daneben:
+
+```json
+{ "profileid": "custom_1787086779452",
+  "error": "Profile error: ParseException 1787086779452.brf at line 238: unknown lookup value: 5" }
+```
+
+Zwei Dinge folgen daraus:
+
+1. **Wer nur den Status prüft, hält ein kaputtes Profil für gelungen** — und
+   bekommt den Fehler erst später beim Rechnen als nichtssagenden `500` zurück.
+   Das Feld `error` muss ausgewertet werden.
+2. **BRouter prüft Tag-Werte gegen seine Nachschlagetabelle.** `maxspeed=5` ist
+   dort unbekannt und lässt das ganze Profil scheitern. Beim Schreiben von
+   Regeln also nur Werte aufzählen, die es in den Daten gibt — alles Übrige
+   gehört in den `else`-Zweig.
 
 Danach `profile=custom_1787044885678` wie ein normaler Profilname. Antwort trägt
 `Access-Control-Allow-Origin: *`. Weil `text/plain` ein einfacher

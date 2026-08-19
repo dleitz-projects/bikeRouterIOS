@@ -1,0 +1,7 @@
+# Test 2 auf langer Strecke: maxspeed-Baustein
+# Profil: custom_1787086801219 | Strecke: harz-lang (Hannover – Goslar – Braunlage – Nordhausen, 165 km) | 2026-08-19
+# feste Parameter: consider_traffic=1.0
+wert	km	hm	min	kosten	tempo70	haupt	rau	befestigt	ohne_smoothness
+0	156.28	1235	538	233240	7.27	24.98	0.08	93.63	64.8
+1	156.3	1235	538	249488	6.99	23.48	0.08	93.62	65.7
+2.5	156.3	1235	538	273279	6.99	23.48	0.08	93.62	65.7

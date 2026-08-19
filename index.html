@@ -51,6 +51,15 @@
     <button class="iconbtn" id="mLoc" type="button" aria-label="Auf meinen Standort zentrieren">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.4"/><circle cx="12" cy="12" r="7.6"/><path d="M12 1.6v2.8M12 19.6v2.8M1.6 12h2.8M19.6 12h2.8"/></svg>
     </button>
+    <button class="iconbtn" id="mLayer" type="button" aria-label="Kartenbild wählen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 7.6l9 4.6 9-4.6z"/><path d="M3 12.4 12 17l9-4.6"/><path d="M3 16.9 12 21.5l9-4.6"/></svg>
+    </button>
+  </div>
+
+  <!-- Linke Kante: Zoom, darunter die Nennung der Datenquellen -->
+  <div class="zoom" id="zoom">
+    <button id="zIn" type="button" aria-label="Hineinzoomen">+</button>
+    <button id="zOut" type="button" aria-label="Herauszoomen">−</button>
   </div>
 
   <!-- Nennung der Datenquellen. OSM verlangt sie sichtbar, erlaubt auf kleinen
@@ -72,6 +81,8 @@
     <div class="grab" id="grab" role="button" tabindex="0" aria-label="Blatt öffnen"><span></span></div>
     <div class="sheetscroll">
 
+      <div class="rchips" id="rchips" hidden></div>
+
       <div>
         <div class="eyebrow" id="sheetProfile">Wenig Verkehr</div>
         <div class="readout" id="readout" hidden>
@@ -81,6 +92,7 @@
           <div class="sep"></div>
           <div class="big num" id="rTime">–</div>
         </div>
+        <div class="rdelta" id="rdelta" hidden></div>
         <p class="status" id="status" role="status" aria-live="polite">Tippe auf die Karte, um den Start zu setzen.</p>
       </div>
 
@@ -92,12 +104,19 @@
         <button class="btn sq" id="saveBtn" type="button" disabled aria-label="Tour speichern">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.8A1.8 1.8 0 0 1 6.8 4h8.4L19 7.8v10.4A1.8 1.8 0 0 1 17.2 20H6.8A1.8 1.8 0 0 1 5 18.2z"/><path d="M8.4 4v5h6V4M8.4 20v-5.4h7.2V20"/></svg>
         </button>
+        <button class="btn sq" id="clearBtn" type="button" hidden aria-label="Andere Routen entfernen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14"/><path d="M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="M6.6 7l.8 12.1A1.6 1.6 0 0 0 9 20.6h6a1.6 1.6 0 0 0 1.6-1.5L17.4 7"/></svg>
+        </button>
       </div>
 
       <div id="analysis" hidden>
         <div class="card">
           <div class="cardhead"><h3>Höhenprofil</h3><span class="v" id="eleRange"></span></div>
-          <svg class="chart" id="elev" viewBox="0 0 340 104" preserveAspectRatio="none" role="img"></svg>
+          <div class="chartwrap">
+            <svg class="chart" id="elev" viewBox="0 0 340 104" preserveAspectRatio="none" role="img"
+                 aria-label="Höhenprofil der ausgewählten Route"></svg>
+            <div class="scrubline" id="scrubLine" hidden></div>
+          </div>
           <div class="axisrow eyebrow"><span>0 km</span><span id="eleMid"></span><span id="eleEnd"></span></div>
         </div>
 
@@ -172,7 +191,7 @@
     <div class="nav">
       <button class="txtbtn" data-close="allprofiles" type="button">Fertig</button>
       <h2>Profile</h2>
-      <button class="txtbtn" id="newProfile" type="button">Neu</button>
+      <span class="navpad"></span>
     </div>
     <div class="screenscroll" id="allBody"></div>
   </section>
@@ -187,6 +206,14 @@
     <button class="pmore" id="pMore" type="button">Mehr Profile <span id="pRest"></span></button>
     <p class="note" id="pTip"></p>
     <button class="btn wide" id="pDone" type="button">Fertig</button>
+  </div>
+
+  <div class="menu" id="layers" aria-label="Kartenbild">
+    <div class="grab"><span></span></div>
+    <div class="menuhead"><h3>Kartenbild</h3><span class="cnt" id="layerCount"></span></div>
+    <div id="layerList"></div>
+    <p class="note" id="layerNote"></p>
+    <button class="btn wide" id="lDone" type="button">Fertig</button>
   </div>
 
   <div class="menu" id="menu" aria-label="Menü">
@@ -209,16 +236,16 @@
     </p>
   </div>
 
-  <div class="menu" id="savedlg" aria-label="Profil sichern">
+  <div class="menu" id="savedlg" aria-label="Geänderte Werte">
     <div class="grab"><span></span></div>
-    <div class="menuhead"><h3>Profil sichern</h3></div>
+    <div class="menuhead"><h3>Geänderte Werte</h3></div>
     <p class="note" id="saveHint"></p>
+    <button class="btn primary wide" id="saveUse" type="button">Übernehmen</button>
+    <p class="note" id="saveUseNote"></p>
     <input type="text" id="saveName" maxlength="40" autocomplete="off" aria-label="Name des Profils">
-    <div class="actions two">
-      <button class="btn" id="saveCancel" type="button">Änderungen verwerfen</button>
-      <button class="btn primary" id="saveNew" type="button">Als neues sichern</button>
-    </div>
-    <button class="btn wide" id="saveOver" type="button">Bestehendes überschreiben</button>
+    <button class="btn wide" id="saveNew" type="button">Als neues Profil sichern</button>
+    <button class="btn wide" id="saveOver" type="button">Profil aktualisieren</button>
+    <button class="btn wide danger" id="saveCancel" type="button">Änderungen verwerfen</button>
   </div>
 
   <div class="menu" id="namedlg" aria-label="Name">

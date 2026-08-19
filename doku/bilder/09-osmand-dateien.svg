@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" role="img" aria-label="Platzhalter: In Dateien sichern">
+<style>
+  .r { fill: #E9EBE3; }
+  .b { fill: none; stroke: #98A08C; stroke-width: 2; stroke-dasharray: 9 7; }
+  text { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; text-anchor: middle; }
+  .k { fill: #DC4514; font-size: 15px; font-weight: 600; letter-spacing: 2px; }
+  .t { fill: #171A13; font-size: 25px; font-weight: 600; }
+  .z { fill: #98A08C; font-size: 15px; }
+  .f { fill: #98A08C; font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+</style>
+<rect class="r" width="390" height="844" rx="30"/>
+<rect class="b" x="14" y="14" width="362" height="816" rx="22"/>
+<text class="k" x="195.0" y="300">ÜBERGABE</text>
+<text class="t" x="195.0" y="344">In Dateien sichern</text>
+<text class="z" x="195.0" y="392">— Platzhalter —</text>
+<text x="195" y="428" class="z">Das Teilen-Menü der App mit</text><text x="195" y="454" class="z">„In Dateien sichern“ —</text><text x="195" y="480" class="z">OsmAnd fehlt hier absichtlich.</text>
+<text class="f" x="195.0" y="798">09-osmand-dateien.png · 390 × 844 pt</text>
+</svg>

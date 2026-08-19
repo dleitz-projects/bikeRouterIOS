@@ -17,7 +17,7 @@ Hier steht nur, was eine Idee daraus macht.
 
 ## Idee 1 — Tempolimit als eigene Kostendimension
 
-**Status:** offen, aber messtechnisch belegt · **Aufwand:** mittel
+**Status:** umgesetzt am 19.08.2026 als Baustein · Kontrolle bestanden, siehe `UMSETZUNG.md` U7
 
 Ausgelöst durch die Beobachtung, dass Beschaffenheits- und Verkehrsdaten auf
 weiten Teilen der Strecke keinen Einfluss zu haben scheinen.
@@ -152,7 +152,7 @@ Implementierungsaufwand — sie existieren bereits, man muss sie nur anbieten.
 
 ## Idee 7 — Kartenwahl als eigenes Werkzeug
 
-**Status:** offen, für den nächsten Entwurf vorgemerkt · **Aufwand:** klein
+**Status:** umgesetzt am 19.08.2026 · siehe `UMSETZUNG.md`, U5
 
 Die App zeigt heute nur die Standard-Kacheln von OpenStreetMap. Andere Planer
 bieten an derselben Stelle ein Schnellmenü mit Kartenbildern an — Standard,
@@ -174,7 +174,7 @@ zumutbar ist, nicht die Architektur.
 
 ## Idee 8 — Zoomknöpfe
 
-**Status:** offen, für den nächsten Entwurf vorgemerkt · **Aufwand:** klein
+**Status:** umgesetzt am 19.08.2026 · links unten, Leaflets zoomControl bleibt aus
 
 Zwei Finger zum Zoomen sind auf dem Rad mit Handschuh unbequem; Plus und Minus
 wären der schnellere Weg. Vorschlag: klein und auf der **linken** Seite — rechts
@@ -190,7 +190,7 @@ wiedereinzuschalten wäre der falsche Weg.
 
 ## Idee 9 — Berechnete Routen bleiben liegen, Vergleich durch Auswählen
 
-**Status:** offen, inhaltlich der stärkste Punkt · **Aufwand:** groß
+**Status:** umgesetzt am 19.08.2026 · Regeln in `CLAUDE.md`, Offenes in `UMSETZUNG.md`
 
 Heute ersetzt jede Berechnung die vorige. Wer das Profil wechselt und neu
 rechnet, sieht das Ergebnis — aber nie den **Unterschied**. Genau der ist der

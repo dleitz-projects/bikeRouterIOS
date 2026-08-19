@@ -1,0 +1,33 @@
+{
+  "_": "Referenzstrecken für alle Messungen. Wer eine Messung wiederholt, nimmt dieselben — sonst sind zwei Ergebnisse nicht vergleichbar. Format: lon,lat je Wegpunkt.",
+  "strecken": [
+    {
+      "id": "harz-runde",
+      "name": "Goslar – Torfhaus – Bad Harzburg",
+      "km": 43,
+      "lonlats": "10.3,51.85|10.4746,51.8887|10.5984,51.7801",
+      "warum": "Mittelgebirge, viele Alternativen, hoher Anteil schneller Straßen. Die Standardstrecke seit dem 18.08.2026."
+    },
+    {
+      "id": "hannover-hildesheim",
+      "name": "Hannover – Hildesheim",
+      "km": 74,
+      "lonlats": "9.7320,52.3705|10.5267,52.1561",
+      "warum": "Flachland, gut ausgebaut, wenig smoothness in den Daten. Gegenprobe zum Harz."
+    },
+    {
+      "id": "harz-lang",
+      "name": "Hannover – Goslar – Braunlage – Nordhausen",
+      "km": 165,
+      "lonlats": "9.7320,52.3705|10.4287,51.9057|10.6100,51.7270|10.7900,51.5030",
+      "warum": "Lang genug, dass sich Umwegkosten summieren. Kurze Strecken zeigen einen Effekt oft nur zufällig — hier ist Platz für echte Alternativen."
+    },
+    {
+      "id": "stadt-goslar",
+      "name": "Goslar Altstadt quer",
+      "km": 2,
+      "lonlats": "10.4185,51.9105|10.4330,51.8995",
+      "warum": "Kopfsteinpflaster-Dichte. NUR für Belagsfragen brauchbar — für Routenwahl viel zu kurz."
+    }
+  ]
+}

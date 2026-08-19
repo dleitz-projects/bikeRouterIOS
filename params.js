@@ -55,7 +55,12 @@ const PARAM_DEFS = {
     scale: ['aus', 'sehr stark', 'kompromisslos'],
     desc: 'Meidet Straßen mit viel Verkehr, auch wenn der Weg dadurch länger wird. ' +
           'Grundlage ist die Verkehrsschätzung von BRouter — sie liegt auf allen ' +
-          'Straßen vor, auf denen überhaupt Autos fahren.'
+          'Straßen vor, auf denen überhaupt Autos fahren.',
+    /* Gemessen am 18.08.2026 im Harz. Die Zahlen stehen dran, weil „1,0" allein
+       nichts sagt — und weil der Regler ueber den dokumentierten Bereich hinaus
+       sauber weiterskaliert, was man ihm nicht ansieht. */
+    messung: 'Gemessen: Hauptstraßenanteil 42,5 % bei 1,0 · 36,8 % bei 4,0 · 27,6 % ' +
+             'bei 8,0. Der Regler wirkt also auch oberhalb von 1,0 weiter.'
   },
   consider_traffic_bool: {
     key: 'consider_traffic',
@@ -181,12 +186,29 @@ const PARAM_DEFS = {
   },
 
   /* --- GPX-Export --- */
+  /* Am 19.08.2026 alle sieben Werte an derselben Strecke ausgegeben und die
+     GPX-Dateien verglichen. Zwei Befunde, die man der Liste nicht ansieht:
+
+     1. „automatisch wählen" (1) liefert eine Datei, die BYTE-IDENTISCH mit
+        „keine" (0) ist. Der Standard erzeugt also gar keine Hinweise — wer
+        welche will, muss den Stil ausdrücklich wählen.
+     2. Die Stile unterscheiden sich nicht in der Qualität, sondern in der
+        Stelle, an der die Hinweise stehen. Deshalb steht das jetzt dran. */
   turnInstructionMode: {
     name: 'Abbiegehinweise in der Datei', type: 'choice', def: '1',
-    opts: [['0', 'keine'], ['1', 'automatisch wählen'], ['2', 'Locus'],
-           ['3', 'OsmAnd'], ['4', 'als Kommentar'], ['5', 'GPSies'], ['6', 'OruxMaps']],
-    desc: 'Diese App navigiert nicht. Die Hinweise landen aber in der GPX-Datei und ' +
-          'werden von der Ziel-App gelesen — bei OsmAnd lohnt der passende Stil.'
+    opts: [['0', 'keine'],
+           ['1', 'automatisch (= keine, gemessen)'],
+           ['2', 'Locus · sym am Streckenpunkt'],
+           ['3', 'OsmAnd · eigene Route mit rtept'],
+           ['4', 'als Kommentar im Dateikopf'],
+           ['5', 'GPSies · Wegpunkte mit Namen'],
+           ['6', 'OruxMaps · Wegpunkte mit extensions']],
+    desc: 'Diese App navigiert nicht. Die Hinweise landen in der GPX-Datei und werden ' +
+          'von der Ziel-App gelesen.',
+    messung: 'Alle sieben Werte am 19.08.2026 verglichen: „automatisch" liefert eine ' +
+             'byte-identische Datei wie „keine" — der Standard erzeugt also GAR KEINE ' +
+             'Hinweise. Für OsmAnd ist „OsmAnd" richtig: nur dieser Stil legt eine ' +
+             'eigene Route mit Abbiegepunkten an.'
   },
   turnInstructionCatchingRange: {
     name: 'Hinweise zusammenfassen bis', type: 'range',
@@ -194,11 +216,13 @@ const PARAM_DEFS = {
     fmt: function (v) { return v + ' m'; },
     scale: ['0 m', '60 m', '120 m'],
     desc: 'Mehrere Abbiegungen innerhalb dieser Strecke werden zu einem Hinweis ' +
-          'verschmolzen.'
+          'verschmolzen. Wirkt nur, wenn oben ein Stil gewählt ist — ohne Hinweise ' +
+          'gibt es nichts zusammenzufassen.'
   },
   turnInstructionRoundabouts: {
     name: 'Kreisverkehre eigens ansagen', type: 'switch', def: true,
-    desc: 'Erzeugt für Kreisverkehre eigene Hinweise statt gewöhnlicher Abbiegungen.'
+    desc: 'Erzeugt für Kreisverkehre eigene Hinweise („dritte Ausfahrt") statt ' +
+          'gewöhnlicher Abbiegungen. Wirkt nur mit gewähltem Stil.'
   },
 
   /* processUnusedTags steht bewusst NICHT mehr hier. Die App setzt ihn bei
@@ -334,6 +358,81 @@ const BASES = {
   }
 };
 
+/* ------------------------------------------------- Weitere Serverprofile
+
+   Alles, was brouter.de sonst noch beantwortet — am 19.08.2026 einzeln
+   nachgemessen (siehe PROFILE.md). Sie sind waehlbar, aber NICHT einstellbar:
+   Welche Parameter sie kennen, weiss die App nicht, und Regler anzubieten, die
+   der Server still ignoriert, waere eine Luege an der Oberflaeche. Genau
+   deshalb steht `frei: true` daran und `groups` bleibt leer.
+
+   `gruppe` ordnet die Profilliste. `was` sagt, was das Profil tut — nicht, wie
+   es heisst: Mehrere Originalnamen fuehren in die Irre, Belege in PROFILE.md. */
+
+const WEITERE = [
+  ['fastbike-asia-pacific', 'Zügig (Asien/Pazifik)', 'Rennrad',
+   'Wie „Zügig", erlaubt aber Autobahnen — in Europa unbrauchbar.'],
+
+  ['safety', 'Trekking, Hauptstraßen meiden', 'Tourenrad',
+   'Trekking mit einem einzigen Schalter (avoid_unsafe). Der Originalname „safety" verspricht mehr, als der hält.'],
+  ['trekking-steep', 'Trekking, Steigungen egal', 'Tourenrad',
+   'Ignoriert die Höhe (consider_elevation aus) — kürzer und steiler. „steep" meint erlauben, nicht suchen.'],
+  ['trekking-ignore-cr', 'Trekking ohne Radrouten-Bonus', 'Tourenrad',
+   '„cr" heißt cycleroutes: ausgeschilderte Radrouten bekommen keinen Vorzug mehr.'],
+  ['trekking-noferries', 'Trekking ohne Fähren', 'Tourenrad',
+   'Trekking mit allow_ferries = false.'],
+  ['trekking-nosteps', 'Trekking ohne Treppen', 'Tourenrad',
+   'Trekking mit allow_steps = false.'],
+
+  ['quaelnix-gravel', 'Gravel', 'Gelände',
+   'Fassung vom 21.06.2025 — die neuere der beiden von quaelnix.'],
+  ['gravel', 'Gravel (ältere Fassung)', 'Gelände',
+   'Fassung vom 28.04.2024, gleicher Autor. Zwei Stände desselben Profils, nicht zwei Profile.'],
+  ['mtb', 'Mountainbike', 'Gelände',
+   'Nimmt Pfade und groben Untergrund bewusst mit. Achtung: nur klein geschrieben vorhanden.'],
+
+  ['vm-forum-liegerad-schnell', 'Liegerad schnell', 'Liegerad und Velomobil',
+   'Aus dem Velomobilforum — flacher Sitz, andere Steigungsbewertung.'],
+  ['vm-forum-velomobil-schnell', 'Velomobil schnell', 'Liegerad und Velomobil',
+   'Dreirädrig und breit, meidet enge und schlechte Wege.'],
+
+  ['hiking-beta', 'Wandern', 'Andere Fortbewegung', 'Zu Fuß, Wege statt Straßen.'],
+  ['hiking-mountain', 'Bergwandern', 'Andere Fortbewegung', 'Zu Fuß im Gebirge, nimmt Steigungen in Kauf.'],
+  ['skating', 'Inline-Skating', 'Andere Fortbewegung', 'Nur glatter Asphalt.'],
+  ['moped', 'Moped', 'Andere Fortbewegung', 'Kleinkraftrad, meidet Autobahnen.'],
+  ['car-eco', 'Auto sparsam', 'Andere Fortbewegung', 'Zielgeschwindigkeit 90 km/h.'],
+  ['car-fast', 'Auto schnell', 'Andere Fortbewegung',
+   'Identisch mit „Auto sparsam" bis auf vmax 160 statt 90.'],
+  ['car-vario', 'Auto einstellbar', 'Andere Fortbewegung', 'Auto mit Reglern für Maut, Fähren, Tempo.'],
+  ['car-vario-nocost', 'Auto ohne Zeitmodell', 'Andere Fortbewegung', 'Wie einstellbar, aber ohne Fahrzeitberechnung.'],
+
+  ['shortest', 'Kürzeste Strecke', 'Sonderzwecke',
+   'Ignoriert Höhenmeter und Wegart — misst nur Länge.'],
+  ['all', 'Alles gleich teuer', 'Sonderzwecke',
+   'Testprofil: jeder Weg zählt gleich. Zeigt, was überhaupt verbunden ist.'],
+  ['softaccess', 'Zugangsprüfung', 'Sonderzwecke', 'Hilfsprofil der Engine, kein Fahrprofil.'],
+  ['dummy', 'Platzhalter', 'Sonderzwecke', 'Leeres Profil, nur zum Prüfen der Datenlage.'],
+  ['rail', 'Schiene', 'Sonderzwecke', 'Folgt Bahnstrecken statt Straßen.'],
+  ['river', 'Fluss', 'Sonderzwecke', 'Folgt Wasserläufen — für Karten, nicht fürs Fahren.']
+];
+
+WEITERE.forEach(function (w) {
+  BASES[w[0]] = {
+    label: w[1], hint: w[3], gruppe: w[2],
+    frei: true,          /* waehlbar, aber ohne Parameterkatalog */
+    groups: {}, defs: {}
+  };
+});
+
+/* Die vier eingerichteten Profile bekommen ihre Gruppe nachgereicht. */
+BASES['fastbike'].gruppe = 'Rennrad';
+BASES['fastbike-lowtraffic'].gruppe = 'Rennrad';
+BASES['fastbike-verylowtraffic'].gruppe = 'Rennrad';
+BASES['trekking'].gruppe = 'Tourenrad';
+
+const GRUPPEN = ['Rennrad', 'Tourenrad', 'Gelände',
+                 'Liegerad und Velomobil', 'Andere Fortbewegung', 'Sonderzwecke'];
+
 /* Erbende Basisprofile auflösen, damit der Rest der App keine Sonderfälle kennt. */
 Object.keys(BASES).forEach(function (id) {
   const b = BASES[id];
@@ -404,6 +503,7 @@ function baseParamIds(baseId) {
 }
 
 window.BR = {
+  GRUPPEN: GRUPPEN,
   PARAM_DEFS: PARAM_DEFS,
   USER_DEFS: USER_DEFS,
   SECTIONS: SECTIONS,

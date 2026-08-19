@@ -10,6 +10,9 @@ Abgrenzung zu den Nachbardateien:
 | `BROUTER.md` | Was gemessen ist, plus offene **Tests** an der Engine |
 | `IDEEN.md` | Was man **zusätzlich** bauen könnte |
 | `OFFENE-PUNKTE.md` | Wie etwas heißen oder sich verhalten soll, das es schon gibt |
+| `UMSETZUNG.md` | Was beim Bauen entschieden wurde und noch zu bestätigen ist |
+| `PROFILE.md` | Welche Profile es gibt und welche wir übernehmen |
+| `SERVER.md` | Wer die Server betreibt und was sie aushalten |
 
 Ein Punkt verschwindet hier nicht, wenn er entschieden ist — er bekommt das
 Ergebnis angehängt und wandert bei Bedarf als Regel in die `CLAUDE.md`.
@@ -210,7 +213,19 @@ oder ist es ein Tap zu viel auf dem Weg zurück zur Karte?
 
 ---
 
-## P8 — Woher kommt der Profiltext für den Baukasten? · offen, blockiert
+## P8 — Woher kommt der Profiltext für den Baukasten? · entschieden 19.08.2026
+
+**Ergebnis: mitliefern.** `basis/fastbike.brf` und `basis/trekking.brf` liegen
+im Repo, zusammen 34 KB. Eine zweite fremde Abhängigkeit im Betrieb wäre
+schlechter. Der Baukasten ist damit scharf; die Kontrolle (`consider_speed = 0`
+liefert exakt die Referenzwerte) ist am 19.08.2026 bestanden. Begründung,
+Alterungsproblem und Abgleich-Weg: `basis/README.md` und `UMSETZUNG.md` U7.
+
+Die ursprüngliche Abwägung bleibt darunter stehen.
+
+---
+
+## P8-alt — die Abwägung dazu
 
 Beim Umsetzen aufgefallen und vorher übersehen: **Neue Regeln brauchen den
 vollständigen Profiltext.** Der Upload-Weg (`POST /brouter/profile`) erwartet
@@ -467,3 +482,60 @@ schmal.
 Zusammen mit P11: Das Blatt wächst mit dem, was es zu zeigen hat — vom Knopf
 über die Kennzahlen bis zur vollen Analyse. Diese Frage entscheidet nur, wo das
 Wachstum anfängt.
+
+---
+
+## P14 — Die Prozentzahlen stammen aus zu wenigen Strecken · offen
+
+In der App stehen an mehreren Stellen Zahlen aus Messungen: „Hauptstraßenanteil
+42,5 % bei 1,0", „`smoothness` fehlt auf rund 70 % der Strecke", „Tempo ≥ 70 von
+23,7 % auf 8,7 %".
+
+**Das ist gut so und soll bleiben** — eine Zahl mit Datum ist besser als ein
+Gefühl, und der Nutzer kann einschätzen, ob eine Einstellung ihm etwas bringt.
+
+**Aber:** Diese Werte stammen jeweils aus einer Handvoll Strecken in
+Niedersachsen und im Harz, teilweise aus einer einzigen. Sie sind eine
+Größenordnung, keine Zusage. Wie sehr das trügen kann, hat Test 8 gezeigt: Auf
+43 km sah der Befund genau umgekehrt aus wie auf 156 km.
+
+**Was zu tun wäre:** Dieselben Fragen auf fünf bis zehn Strecken in
+verschiedenen Gegenden messen — Flachland, Mittelgebirge, Stadtnähe, Grenzlagen
+— und aus den Einzelwerten Spannen machen („zwischen 20 und 40 %"). Das Werkzeug
+dafür liegt in `messungen/`; es fehlt nur die Zeit an der Leitung.
+
+**Was das nicht werden soll:** Wissenschaft. Es geht um eine ehrliche
+Einschätzung für einen einzelnen Nutzer, nicht um Veröffentlichungsreife. Eine
+Spanne aus acht Strecken reicht völlig.
+
+**Bis dahin:** Die Zahlen bleiben stehen, tragen aber ihr Datum. In
+`messungen/ERKENNTNISSE.md` steht ausdrücklich dabei, worauf sie beruhen.
+
+---
+
+## P15 — Routen bearbeiten: was passiert mit dem Stapel? · teilweise gelöst
+
+**Gelöst am 19.08.2026:** Wer eine Route auswählt, bekommt jetzt auch ihr Profil
+in die Pille oben links. Vorher zeigte die Pille etwas anderes an als die
+ausgewählte Route unten — und die nächste Berechnung lief mit einem Profil, das
+man gar nicht gewählt hatte. Existiert das Profil nicht mehr, entstehen aus den
+in der Route gespeicherten Werten wieder übernommene Werte.
+
+**Offen bleibt der Fall, den du beschrieben hast:** Ich habe die Routen A bis D
+und möchte *eine davon* bearbeiten — also ihre Wegpunkte verschieben, ohne die
+anderen zu verlieren. Heute wirft jede Änderung an den Wegpunkten den **ganzen**
+Stapel weg, weil keine der Routen mehr zur Frage passt.
+
+Drei denkbare Wege:
+
+| Weg | Was er bedeutet |
+|---|---|
+| **So lassen** | Der Stapel beantwortet die Frage „welches Profil für diese Punkte". Ändern sich die Punkte, ist es eine neue Frage |
+| **Wegpunkte je Route** | Jede Route bekommt ihre eigenen Punkte. Mächtig, aber die Karte zeigt dann Punkte, die zu einer nicht ausgewählten Route gehören |
+| **Nachrechnen statt verwerfen** | Beim Ändern eines Punktes alle Routen neu rechnen. Ehrlich, aber bei vier Routen sind das vier Anfragen auf einen Schlag — an gespendete Infrastruktur |
+
+**Meine Neigung: so lassen, aber die Quittung ernst nehmen.** Sie sagt jetzt,
+wie viele Routen verworfen werden. Wer viel verglichen hat, sieht also, was ihn
+eine Punktverschiebung kostet, bevor er sie bereut — und kann vorher speichern.
+
+Zu entscheiden, sobald sich im Gebrauch zeigt, ob der Fall überhaupt vorkommt.

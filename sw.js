@@ -4,7 +4,7 @@
 
    Beim Ausliefern einer geaenderten Version CACHE hochzaehlen. */
 
-const CACHE = 'bikerouterios-v7';
+const CACHE = 'bikerouterios-v10';
 
 const SHELL = [
   './',
@@ -14,7 +14,12 @@ const SHELL = [
   'style.css',
   'manifest.json',
   'icon-192.png',
-  'icon-512.png'
+  'icon-512.png',
+  /* Die Basisprofile fuer den Baukasten. Ohne sie liesse sich ein Profil mit
+     Bausteinen offline nicht einmal zusammensetzen — und beim ersten Rechnen
+     nach der Installation waere ein zweiter Ladevorgang noetig. */
+  'basis/fastbike.brf',
+  'basis/trekking.brf'
 ];
 
 const CDN = [

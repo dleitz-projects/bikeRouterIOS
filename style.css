@@ -62,7 +62,7 @@ a{color:var(--signal);}
   background:var(--raised);border-radius:22px;box-shadow:var(--shadow-sm);
   border:1px solid var(--line-soft);max-width:72%;}
 .pill .dot{width:9px;height:9px;border-radius:50%;background:var(--signal);flex:0 0 auto;}
-.pill b{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;
+.pill b{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;}
 .pill .chev{color:var(--faint);font-size:11px;}
 
@@ -93,9 +93,20 @@ a{color:var(--signal);}
   background:var(--sheet);border-top:1px solid var(--line);
   border-radius:20px 20px 0 0;box-shadow:0 -2px 26px rgba(0,0,0,.16);
   display:flex;flex-direction:column;
-  height:186px;transition:height .34s cubic-bezier(.32,.72,0,1);}
-.sheet[data-detent="half"]{height:58%;}
-.sheet[data-detent="full"]{height:calc(100% - 92px);}
+  height:112px;transition:height .34s cubic-bezier(.32,.72,0,1);
+  -webkit-user-select:none;user-select:none;}
+/* Die Hoehen setzt das Skript, weil sie vom Inhalt abhaengen: Die kleine Raste
+   ist mit einer Route niedriger als mit dreien, die halbe endet unter der
+   Hoehenprofil-Karte. Feste Prozentwerte traefen beides nie. */
+
+/* Ohne Route: nur Hinweis und Knopf. Alles Uebrige waere leer. */
+.sheet[data-detent="empty"] .rchips,
+.sheet[data-detent="empty"] .readout,
+.sheet[data-detent="empty"] .rdelta,
+.sheet[data-detent="empty"] #sheetProfile,
+.sheet[data-detent="empty"] .grab span{display:none;}
+.sheet[data-detent="empty"] .sheetscroll{overflow:hidden;}
+.sheet[data-detent="empty"] #analysis{display:none;}
 .grab{flex:0 0 auto;padding:9px 0 3px;display:grid;place-items:center;cursor:grab;}
 
 /* Der Griff war 16,5 px hoch — auf dem Telefon nicht sicher zu treffen, und
@@ -104,7 +115,10 @@ a{color:var(--signal);}
    Zeile darunter ist Text, kein Bedienelement). touch-action:none, weil sonst
    Safari die Ziehgeste als Seitenscrollen abfaengt. */
 #grab{position:relative;touch-action:none;}
-#grab::before{content:"";position:absolute;left:0;right:0;top:0;height:44px;}
+/* Nach OBEN ueber den Blattrand hinaus, nicht nach unten ins Blatt hinein:
+   Sonst liegt die Flaeche ueber der Reiterzeile, und ein Tap auf „A" traefe
+   den Griff. Unsichtbare Trefferflaechen duerfen nur ueber toten Raum wachsen. */
+#grab::before{content:"";position:absolute;left:0;right:0;top:-14px;height:40px;}
 .dragging #grab{cursor:grabbing;}
 .dragging .rail,.dragging .attribwrap{transition:none;}
 .grab span{width:38px;height:4.5px;border-radius:3px;background:var(--line);display:block;}
@@ -124,24 +138,61 @@ a{color:var(--signal);}
    die Ausnahme fuer .dragging. */
 .sheet[data-detent="peek"]:not(.dragging) #analysis{display:none;}
 
+/* ------------------------------------------------------- Routenstapel */
+.rchips{flex:0 0 auto;display:flex;gap:7px;overflow-x:auto;margin:0 -17px;
+  padding:1px 17px 2px;scrollbar-width:none;
+  /* Positioniert, damit die Reiter ueber der Trefferflaeche des Griffs liegen. */
+  position:relative;z-index:3;}
+.rchips::-webkit-scrollbar{display:none;}
+.rchip{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:32px;
+  padding:0 13px;border-radius:18px;border:1px solid var(--line);
+  background:var(--raised);font-size:12.5px;font-weight:600;color:var(--muted);
+  white-space:nowrap;}
+.rchip .sw{width:14px;height:3.5px;border-radius:2px;flex:0 0 auto;background:var(--faint);}
+.rchip.on{border-color:var(--signal);color:var(--ink);}
+/* Kreuz am ausgewaehlten Reiter: sichtbar klein, anfassbar 44 px. */
+.rkill{position:relative;flex:0 0 auto;width:28px;min-height:32px;margin-left:-4px;
+  color:var(--muted);font-size:17px;line-height:1;display:grid;place-items:center;}
+.rkill::before{content:"";position:absolute;left:-8px;top:-6px;width:44px;height:44px;}
+.rkill:active{color:var(--sienna);}
+.rchip.on .sw{background:var(--signal);}
+.rdelta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
+  display:flex;gap:11px;flex-wrap:wrap;margin-top:7px;}
+.rdelta .more{color:var(--sienna);} .rdelta .less{color:var(--good);}
+
+/* Im Vollbild bleiben die Reiter stehen: Dort vergleicht man Hoehenprofil und
+   Anteile — genau da muss der Wechsel moeglich sein. */
+.sheet[data-detent="full"] .rchips{position:sticky;top:-4px;background:var(--sheet);
+  padding-top:5px;}
+
 .readout{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:5px;}
-.readout .big{font-size:30px;font-weight:600;letter-spacing:-.024em;line-height:1;}
-.readout .big small{font-size:15px;font-weight:500;color:var(--muted);margin-left:3px;}
+.readout .big{font-size:26px;font-weight:600;letter-spacing:-.024em;line-height:1;}
+.readout .big small{font-size:13px;font-weight:500;color:var(--muted);margin-left:3px;}
 .readout .sep{width:1px;height:23px;background:var(--line);}
 
 .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
   text-transform:uppercase;color:var(--faint);font-weight:500;}
 .axisrow{display:flex;justify-content:space-between;}
-.status{margin:6px 0 0;font-size:13px;color:var(--muted);}
+.status{margin:6px 0 0;font-size:12.5px;color:var(--muted);}
 .status.error{color:var(--sienna);}
 .status.busy{color:var(--signal);}
-.note{margin:0;font-size:12px;line-height:1.55;color:var(--muted);}
+.note{margin:0;font-size:11.5px;line-height:1.55;color:var(--muted);}
 .note b{color:var(--ink);font-weight:600;}
 .note code{font-family:"IBM Plex Mono",monospace;font-size:11.5px;
   background:var(--line-soft);padding:1.5px 5px;border-radius:4px;}
 .menuattrib{padding:2px 2px 4px;}
 
 /* Sitzt wie die Leiste ueber dem Blatt und wandert mit ihm. */
+.zoom{position:absolute;left:13px;z-index:20;display:flex;flex-direction:column;
+  border-radius:12px;overflow:hidden;background:var(--raised);
+  border:1px solid var(--line-soft);box-shadow:var(--shadow-sm);
+  transition:bottom .34s cubic-bezier(.32,.72,0,1),opacity .2s;}
+.zoom.hidden{opacity:0;pointer-events:none;}
+.zoom button{position:relative;width:36px;height:36px;display:grid;place-items:center;
+  font-size:16px;font-weight:500;color:var(--ink);}
+.zoom button::before{content:"";position:absolute;left:-4px;top:-4px;width:44px;height:44px;}
+.zoom button+button{border-top:1px solid var(--line-soft);}
+
 .attribwrap{position:absolute;left:13px;z-index:20;display:flex;align-items:center;gap:8px;
   transition:bottom .34s cubic-bezier(.32,.72,0,1),opacity .2s;}
 .attribwrap.hidden{opacity:0;pointer-events:none;}
@@ -154,14 +205,14 @@ a{color:var(--signal);}
   box-shadow:var(--shadow-sm);padding:8px 11px;font-size:11.5px;line-height:1.5;
   color:var(--muted);max-width:min(74vw,320px);}
 
-.actions{display:grid;grid-template-columns:1fr auto auto;gap:9px;}
+.actions{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;}
 .actions.two{grid-template-columns:1fr 1fr;}
-.btn{min-height:47px;border-radius:13px;font-weight:600;font-size:15.5px;
+.btn{min-height:44px;border-radius:12px;font-weight:600;font-size:13.5px;
   display:grid;place-items:center;border:1px solid var(--line);
   background:var(--raised);padding:0 16px;}
 .btn.primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal);}
 .btn.danger{color:var(--sienna);border-color:color-mix(in srgb,var(--sienna) 45%,transparent);}
-.btn.sq{width:47px;padding:0;}
+.btn.sq{width:44px;padding:0;}
 .btn.wide{width:100%;}
 .btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;
   stroke-linecap:round;stroke-linejoin:round;}
@@ -171,20 +222,44 @@ a{color:var(--signal);}
 /* ------------------------------------------------------------ Analyse */
 
 #analysis{display:flex;flex-direction:column;gap:16px;}
+
+/* -------------------------------------------------------- Kartenwahl */
+.layerrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:9px 4px;border-bottom:1px solid var(--line-soft);}
+.layerrow:last-of-type{border-bottom:0;}
+.lprev{width:42px;height:42px;border-radius:10px;flex:0 0 auto;border:1px solid var(--line);}
+.layerrow .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.layerrow .mt b{font-size:13.5px;font-weight:600;}
+.layerrow .mt span{font-size:11.5px;color:var(--muted);}
+.layerrow .pdot{width:18px;height:18px;flex:0 0 auto;}
+.layerrow[disabled]{opacity:.45;}
+
+/* Punkt auf der Karte, der dem Finger im Hoehenprofil folgt */
+.scrub{display:grid;place-items:center;}
+.scrub i{display:block;width:13px;height:13px;border-radius:50%;
+  background:var(--signal);border:2.5px solid var(--sheet);box-shadow:var(--shadow-sm);}
+.scrub b{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:var(--ground);font-family:"IBM Plex Mono",monospace;
+  font-size:11px;font-weight:500;padding:5px 9px;border-radius:14px;white-space:nowrap;
+  box-shadow:var(--shadow-sm);}
 .card{background:var(--raised);border:1px solid var(--line-soft);border-radius:15px;
   padding:14px;display:flex;flex-direction:column;gap:11px;}
-.card h3{margin:0;font-size:13.5px;font-weight:600;}
+.card h3{margin:0;font-size:12.5px;font-weight:600;}
 .cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
-.cardhead .v{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);
+.cardhead .v{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
   font-variant-numeric:tabular-nums;white-space:nowrap;}
-.chart{width:100%;height:104px;display:block;overflow:visible;}
+.chart{width:100%;height:104px;display:block;overflow:visible;touch-action:none;
+  -webkit-user-select:none;user-select:none;}
+.chartwrap{position:relative;}
+.scrubline{position:absolute;top:0;bottom:0;width:1.5px;background:var(--signal);
+  opacity:.75;pointer-events:none;transform:translateX(-50%);}
 .axis{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:var(--faint);}
 
 .bar{display:flex;height:11px;border-radius:6px;overflow:hidden;gap:1.5px;
   background:var(--line-soft);}
 .bar i{display:block;height:100%;}
 .legend{display:flex;flex-direction:column;gap:7px;}
-.legend div{display:flex;align-items:center;gap:9px;font-size:12.5px;}
+.legend div{display:flex;align-items:center;gap:9px;font-size:11.5px;}
 .legend .swatch{width:9px;height:9px;border-radius:2.5px;flex:0 0 auto;}
 .legend .lbl{flex:1 1 auto;color:var(--muted);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
@@ -194,9 +269,9 @@ a{color:var(--signal);}
 .flag{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:12px;
   background:color-mix(in srgb,var(--signal) 11%,transparent);
   border:1px solid color-mix(in srgb,var(--signal) 26%,transparent);}
-.flag .k{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;
+.flag .k{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;
   color:var(--signal);line-height:1.15;font-variant-numeric:tabular-nums;}
-.flag p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45;}
+.flag p{margin:0;font-size:11.5px;color:var(--muted);line-height:1.45;}
 .flag p b{color:var(--ink);font-weight:600;}
 
 /* --------------------------------------------------------- Vollbilder */
@@ -208,9 +283,9 @@ a{color:var(--signal);}
 .nav{flex:0 0 auto;display:flex;align-items:center;gap:10px;
   padding:calc(env(safe-area-inset-top) + 11px) 13px 11px;
   border-bottom:1px solid var(--line);background:var(--sheet);}
-.nav h2{margin:0;font-size:16.5px;font-weight:600;flex:1 1 auto;text-align:center;
+.nav h2{margin:0;font-size:15.5px;font-weight:600;flex:1 1 auto;text-align:center;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.txtbtn{font-size:15px;font-weight:600;color:var(--signal);padding:6px 4px;
+.txtbtn{font-size:14px;font-weight:600;color:var(--signal);padding:6px 4px;
   flex:0 0 auto;min-width:56px;}
 .nav .txtbtn:last-child{text-align:right;}
 .navpad{flex:0 0 auto;min-width:56px;}
@@ -219,7 +294,7 @@ a{color:var(--signal);}
   display:flex;flex-direction:column;gap:13px;}
 .screenscroll.flush{padding-top:0;}
 
-.editnote{margin:0;padding:10px 17px;font-size:12.5px;line-height:1.45;
+.editnote{margin:0;padding:10px 17px;font-size:11.5px;line-height:1.45;
   color:var(--muted);background:color-mix(in srgb,var(--signal) 9%,transparent);
   border-bottom:1px solid color-mix(in srgb,var(--signal) 24%,transparent);}
 .editnote b{color:var(--ink);font-weight:600;}
@@ -251,10 +326,15 @@ a{color:var(--signal);}
 .param + .param{border-top:0;}
 .ptop{display:flex;align-items:flex-start;gap:12px;}
 .pname{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;min-width:0;}
-.pname b{font-size:14.5px;font-weight:600;}
+.pname b{font-size:13.5px;font-weight:600;}
 .pname .key{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);}
-.pdesc{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted);}
-.pval{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600;
+.pdesc{margin:0;font-size:11.5px;line-height:1.5;color:var(--muted);}
+/* Gemessenes steht anders da als Erklaerendes: eingerueckt, mit Linie,
+   in der Schrift der Zahlen. */
+.pmess{margin:0;font-size:11px;line-height:1.55;color:var(--faint);
+  font-family:"IBM Plex Mono",monospace;
+  border-left:2px solid var(--line);padding-left:9px;}
+.pval{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;
   color:var(--signal);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .pchanged{color:var(--signal);font-size:10.5px;font-family:"IBM Plex Mono",monospace;}
 
@@ -317,8 +397,8 @@ select{padding-right:34px;
 .menuitem svg{width:21px;height:21px;stroke:var(--muted);fill:none;stroke-width:1.6;
   stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
 .menuitem .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;}
-.menuitem b{font-size:15px;font-weight:600;}
-.menuitem .mt span{font-size:12.5px;color:var(--muted);overflow:hidden;
+.menuitem b{font-size:14px;font-weight:600;}
+.menuitem .mt span{font-size:11.5px;color:var(--muted);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
 
 /* -------------------------------------------------------- Profilzeilen */
@@ -333,25 +413,30 @@ select{padding-right:34px;
 .pdot.on::after{content:"";position:absolute;inset:3px;border-radius:50%;
   background:var(--signal);}
 .psel .mt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;}
-.psel b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;
+.psel b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
-.psel .sub{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+.psel .sub{font-size:11px;color:var(--faint);font-family:"IBM Plex Mono",monospace;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Die Beschreibung darf umbrechen — in der Kurzauswahl bleibt sie einzeilig,
+   in der Vollliste (.prow--lang) steht sie vollstaendig da. */
+.psel .was{font-size:12px;line-height:1.4;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prow--lang .psel .was{white-space:normal;}
 .pwhen{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
   flex:0 0 auto;white-space:nowrap;}
 .pedit{padding:9px 13px;border-radius:10px;border:1px solid var(--signal);
-  color:var(--signal);font-size:13px;font-weight:600;flex:0 0 auto;}
+  color:var(--signal);font-size:12px;font-weight:600;flex:0 0 auto;}
 .pmore{display:flex;align-items:center;justify-content:space-between;width:100%;
   padding:13px 5px 4px;border-top:1px solid var(--line);
-  font-size:14.5px;font-weight:600;}
-.pmore span{color:var(--faint);font-size:13px;font-weight:400;}
+  font-size:13.5px;font-weight:600;}
+.pmore span{color:var(--faint);font-size:12px;font-weight:400;}
 
 /* -------------------------------------------------------------- Touren */
 
 .tour{background:var(--raised);border:1px solid var(--line-soft);border-radius:14px;
   padding:14px;display:flex;flex-direction:column;gap:9px;}
 .tour .t1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
-.tour b{font-size:14.5px;font-weight:600;min-width:0;overflow-wrap:anywhere;}
+.tour b{font-size:13.5px;font-weight:600;min-width:0;overflow-wrap:anywhere;}
 .tour .meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
   font-variant-numeric:tabular-nums;}
 .tour .t1 .meta{flex:0 0 auto;}
@@ -359,7 +444,7 @@ select{padding-right:34px;
    Karteikarte nicht in die Höhe treiben. */
 .tour .tprof{font-size:11px;color:var(--faint);white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;min-width:0;}
-.tour .warn{margin:0;font-size:12px;line-height:1.45;color:var(--ochre);}
+.tour .warn{margin:0;font-size:11.5px;line-height:1.45;color:var(--ochre);}
 /* Drei gleich breite Textknöpfe. Bewusst Text statt Symbolen: Bei einer
    löschenden Aktion ist Eindeutigkeit mehr wert als Zeitgeist. */
 .tour .row{display:flex;gap:7px;}
