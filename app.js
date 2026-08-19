@@ -325,20 +325,29 @@ function renumber() {
    kann, ist die schlechteste Sorte. */
 /* ---------------------------------------------------- Startausschnitt
 
-   Wo die Karte beim ersten Start steht, sollte nicht davon abhaengen, wo der
+   Wo die Karte beim ersten Start steht, soll nicht davon abhaengen, wo der
    Entwickler wohnt. Drei Stufen, von genau nach grob:
 
      1. Der zuletzt betrachtete Ausschnitt. Deckt jeden Start ausser dem ersten.
-     2. Die Zeitzone des Geraets. `Intl` kennt sie ohne Netzwerkzugriff, ohne
-        Dienst und ohne dass irgendetwas das Geraet verlaesst — grob genug fuer
-        ein Land, genau genug, um nicht auf einem anderen Kontinent zu landen.
-     3. Mitteleuropa.
+     2. Einmalig die Region aus der IP-Adresse (ipwho.is). Trifft die Stadt und
+        ist damit brauchbar, um sofort Punkte zu setzen — die Zeitzone allein
+        lieferte ganz Deutschland, was niemandem hilft.
+     3. Die Zeitzone des Geraets als Rueckfall, falls der Dienst nicht
+        antwortet. `Intl` kennt sie ohne jeden Netzwerkzugriff.
+     4. Mitteleuropa.
 
-   Bewusst KEINE IP-Geolokalisierung: Die braucht immer einen fremden Dienst,
-   dem bei jedem Start die eigene Adresse mitgeteilt wird — fuer eine App ohne
-   Konto und ohne Server waere das die einzige Stelle, an der Daten abfliessen.
-   Und genauer als die Zeitzone ist sie auch nicht: Beide treffen die Region,
-   nicht den Ort. Wer den Ort will, hat den Standort-Knopf. */
+   ZUR IP-ABFRAGE, weil sie die einzige Stelle ist, an der ueberhaupt etwas
+   ueber den Nutzer nach draussen geht:
+
+   - Sie laeuft **genau einmal** je Installation. Danach steht ein Ausschnitt
+     im Speicher, und Stufe 1 greift fuer immer.
+   - Sie blockiert nichts: Die Karte startet sofort mit der Zeitzonen-
+     Schaetzung und springt nach, wenn die Antwort da ist.
+   - Faellt der Dienst aus oder verweigert er, passiert nichts weiter.
+   - `ipwho.is` braucht keinen Schluessel und kein Konto. Was uebertragen wird,
+     ist die IP-Adresse — also das, was jeder Kachelserver ohnehin sieht.
+
+   Wer das nicht will, drueckt den Standort-Knopf und hat es genauer. */
 
 const ZEITZONEN = {
   'Europe/Berlin': [51.2, 10.4, 6], 'Europe/Vienna': [47.6, 14.1, 7],
@@ -361,6 +370,34 @@ function startView() {
   const z = ZEITZONEN[tz];
   if (z) return [[z[0], z[1]], z[2]];
   return [[50.5, 9.5], 5];
+}
+
+/* Einmalig die Region holen. Nur, wenn noch kein Ausschnitt gemerkt ist —
+   danach nie wieder. Zoom 11 zeigt eine Stadt mit Umland: genug, um sofort
+   den ersten Punkt zu setzen, ohne dass man erst suchen muss. */
+async function regionHolen() {
+  if (!store || store.view) return;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, 6000);
+    const res = await fetch('https://ipwho.is/?fields=latitude,longitude,city,success',
+      { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return;
+    const d = await res.json();
+    if (!d || d.success === false) return;
+    const lat = Number(d.latitude), lng = Number(d.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    /* Nur springen, wenn der Nutzer die Karte noch nicht selbst bewegt hat —
+       sonst reisst ihm die Antwort den Ausschnitt unter dem Finger weg. */
+    if (store.view) return;
+    map.setView([lat, lng], 11);
+    store.view = { lat: +lat.toFixed(5), lng: +lng.toFixed(5), z: 11 };
+    persist();
+    if (d.city) toast('Karte auf ' + d.city + ' gesetzt — verschieben oder Standort antippen.');
+  } catch (err) {
+    /* Kein Netz, geblockt, Zeitüberschreitung: dann bleibt die Zeitzone. */
+  }
 }
 
 const map = L.map('map', { zoomControl: false }).setView([51.85, 10.30], 10);
@@ -3177,6 +3214,7 @@ step('Kartenbild', function () { setLayer(store.layer, false); });
 step('Kartenausschnitt', function () {
   const v = startView();
   map.setView(v[0], v[1], { animate: false });
+  regionHolen();
 });
 step('Profilliste', function () { freezeOrder(); renderProfiles(); renderAllProfiles(); });
 step('Fahrer & Rad', buildUser);

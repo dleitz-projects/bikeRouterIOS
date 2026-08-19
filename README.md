@@ -1,6 +1,8 @@
-# bikeRouteriOS
+<p align="center"><img src="icon-192.png" alt="" width="88"></p>
 
-Ein Radrouten-Planer fürs iPhone, der zeigt, **wie** er rechnet.
+<h1 align="center">bikeRouteriOS</h1>
+
+<p align="center">Ein Radrouten-Planer fürs iPhone, der zeigt, <b>wie</b> er rechnet.</p>
 
 Komoot, Strava und cycle.travel verstecken ihre Routing-Logik hinter Profilen,
 die niemand einsehen kann. [BRouter](https://brouter.de) macht die Regeln
@@ -10,13 +12,14 @@ schließt die Lücke.
 **→ [App öffnen](https://dleitz-projects.github.io/bikeRouterIOS/)**
 
 <p align="center">
-  <img src="doku/bilder/06-erste-route.svg" alt="Eine berechnete Route" width="240">
-  <img src="doku/bilder/07-vergleich.svg" alt="Zwei Routen im Vergleich" width="240">
-  <img src="doku/bilder/08-analyse.svg" alt="Analyse mit Höhenprofil" width="240">
+  <img src="doku/bilder/06-erste-route.png" alt="Eine berechnete Route" width="245">
+  <img src="doku/bilder/07-vergleich.png" alt="Zwei Routen im Vergleich" width="245">
+  <img src="doku/bilder/08-analyse.png" alt="Analyse mit Höhenprofil" width="245">
 </p>
 
-> **Hinweis:** Die Bilder sind noch Platzhalter. Was an ihre Stelle gehört und
-> wie man sie ersetzt, steht in [`doku/bilder/`](doku/bilder/).
+<p align="center"><i>Dieselbe Strecke, zwei Profile: „Wenig Verkehr" fährt 43,4 km
+mit 25,5 % schnellen Straßen, „Trekking" 59,2 km mit 1,8 %.<br>
+Genau dieser Unterschied ist der Grund für die App.</i></p>
 
 ---
 

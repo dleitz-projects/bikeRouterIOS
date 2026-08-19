@@ -1,8 +1,16 @@
 # Bilder für die Startseite
 
-Hier liegen die Bilder, die `README.md` einbindet. Aktuell sind es
-**Platzhalter** (`.svg`) — sie zeigen im richtigen Seitenverhältnis, was an
-dieser Stelle zu sehen sein soll.
+Hier liegen die Bilder, die `README.md` einbindet.
+
+**Die drei App-Bilder (06 bis 08) sind echte Aufnahmen** aus der laufenden App,
+aufgenommen im Browser bei 390 px Breite über die Referenzstrecke
+Goslar–Torfhaus–Bad Harzburg. Sie zeigen dieselben Zahlen, die auch in
+`BROUTER.md` stehen — 43,4 km mit 965 Höhenmetern, im Vergleich gegen Trekking
+mit 59,2 km.
+
+**Die übrigen sind Platzhalter (`.svg`)**, weil sie iOS-Systemdialoge zeigen:
+das Teilen-Menü von Safari, „Zum Home-Bildschirm", den Home-Bildschirm selbst.
+Die kann nur ein echtes iPhone liefern.
 
 ## Ersetzen
 

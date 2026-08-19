@@ -539,3 +539,41 @@ wie viele Routen verworfen werden. Wer viel verglichen hat, sieht also, was ihn
 eine Punktverschiebung kostet, bevor er sie bereut — und kann vorher speichern.
 
 Zu entscheiden, sobald sich im Gebrauch zeigt, ob der Fall überhaupt vorkommt.
+
+---
+
+## P16 — Farbschema: reicht die Systemeinstellung? · vermutlich ja
+
+**Zur Klarstellung, weil es leicht zu verwechseln ist:** Die App richtet sich
+**nicht** nach der Tageszeit. Sie folgt `prefers-color-scheme` — also genau der
+Einstellung, die im Gerät steht. Wer sein iPhone dauerhaft auf Dunkel gestellt
+hat, bekommt die App dauerhaft dunkel; wer den automatischen Wechsel nach
+Sonnenuntergang eingestellt hat, bekommt ihn auch hier.
+
+Damit tut die App bereits das, was man von ihr erwarten würde, und braucht dafür
+keine eigene Logik.
+
+**Offen bleibt nur:** Ob es zusätzlich eine **manuelle** Umschaltung im Menü
+geben soll — für den Fall, dass man am hellen Tag im Wald doch lieber dunkel
+liest oder umgekehrt. Dagegen spricht, dass jede Einstellung, die es im System
+schon gibt, in der App eine zweite Wahrheit schafft. Dafür spricht, dass die
+Karte selbst hell bleibt und der Kontrast zum dunklen Blatt Geschmackssache ist.
+
+---
+
+## P17 — Das App-Icon · neu gezeichnet am 19.08.2026
+
+Das erste Icon (petrolblauer Grund, hellblaue Zickzacklinie, Pastellpunkte)
+stammte aus der ersten Runde und teilte mit der App **keine einzige Farbe**.
+
+Das neue folgt der Palette aus `style.css`: dunkler Grund `#181C15`, Route in
+`--signal`, Startpunkt in `--good` und Zielpunkt in `--signal`, beide mit hellem
+Ring — dieselbe Formsprache wie die Marker auf der Karte. Der Linienzug hat den
+Schwung einer echten Route statt eines Zickzacks.
+
+Erzeugt wird es von `werkzeuge/icon.py`, ohne Bildbibliothek. Wer die Palette
+ändert, ändert die Konstanten dort und lässt das Skript neu laufen.
+
+**Offen:** Ob GitHub das Icon als Social-Preview bekommen soll. Das lässt sich
+nur über die Weboberfläche einstellen (Settings → Social preview), nicht über
+die API.
