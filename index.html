@@ -17,23 +17,19 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<!-- black-translucent zieht die Seite ueber die volle Bildschirmhoehe: Die
-     Karte reicht dann bis zur obersten Bildpunktzeile, hinter Uhrzeit und
-     Dynamic Island. iOS rechnet das Layout dabei um den oberen Systemstreifen
-     kuerzer (Bildschirm 956, Fenster 894) — eine Altlast aus der Zeit vor der
-     Notch. Der sichtbare Bereich ist aber nachweislich 956: Am 19.08.2026 trug
-     der Streifen unten die Farbe der SEITE (--sheet) und nicht die des Systems,
-     die Seite malt dort also hinein.
+<!-- VARIANTE B (19.08.2026). Die Zeile
+     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+     ist bewusst NICHT gesetzt. Damit beginnt die Seite unter der Statusleiste:
+     Die Karte reicht nicht mehr bis zur obersten Bildpunktzeile, dafuer sitzt
+     der Inhalt bis zur untersten, und env(safe-area-inset-top) meldet null —
+     womit alle Abzuege im Stylesheet von selbst zu Nullen werden.
 
-     Deshalb ist das Dokument selbst so hoch wie der Bildschirm und der Rahmen
-     darin absolut positioniert — siehe style.css und fensterKorrigieren() in
-     app.js. Der frueher gescheiterte Versuch dehnte einen position:fixed-Rahmen,
-     und der wird am Rechenbereich abgeschnitten.
+     Variante A liegt als Tag `variante-a` im Repo. Der Weg zurueck ist genau
+     diese eine Zeile. Vergleich und Begruendung: DARSTELLUNG.md.
 
-     ACHTUNG: iOS liest diese Zeile beim ANLEGEN des Home-Bildschirm-Symbols,
-     nicht bei jedem Start. Wer sie aendert, muss das Symbol loeschen und neu
-     hinzufuegen — sonst aendert sich gar nichts. -->
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+     ACHTUNG: iOS liest die apple-mobile-web-app-*-Zeilen beim ANLEGEN des
+     Home-Bildschirm-Symbols, nicht bei jedem Start. Nach jeder Aenderung
+     hier muss das Symbol geloescht und neu hinzugefuegt werden. -->
 <meta name="apple-mobile-web-app-title" content="bikeRouter">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
