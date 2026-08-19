@@ -497,6 +497,32 @@ beim Laden, keine Fläche neben der Karte.
 
 ---
 
+## U28 — Der Kartenstreifen wird gegen die Kopfzeile gemessen
+
+**Vorher:** Der Streifen über dem Blatt war 44 px hoch, gerechnet ab dem
+Systemstreifen. Die Kopfzeile braucht aber 56 px (12 Innenabstand + 44 Knopf) —
+die Profilpille ragte also 12 px ins Blatt und wurde unten angeschnitten.
+
+Der Fehler steckte schon vorher drin; er fiel erst auf, als der Streifen von
+106 auf 44 px schrumpfte (U25). Vorher hatte die Pille genug Karte um sich
+herum, um nicht wie ein Fehler auszusehen.
+
+**Jetzt:** gemessen ab `.chrome`-Unterkante. Die enthält den Systemstreifen
+schon, weil ihr Innenabstand `calc(env(safe-area-inset-top) + 12px)` ist. Ein
+gemessener Wert statt zweier gerechneter — und dieselbe Zahl gilt für den
+Streifen wie für alles, was über dem Blatt schwebt.
+
+**Mitgenommen: der Prozentwert der halben Raste.** Er stand auf 62 % der
+Fensterhöhe. Jetzt endet die halbe Raste dort, wo die Werkzeugleiste gerade
+noch Platz hat — in dieser Raste wird auf der Karte gearbeitet, dafür braucht
+es die Leiste. Auf dem gemessenen iPhone kommt fast derselbe Wert heraus, aber
+jetzt steht da, **warum** er so hoch ist. Für vier durchgerechnete Fenster
+(dieses hier, iPhone mit und ohne `black-translucent`, ein kleines Gerät) gilt
+in allen: Leiste in der halben Raste sichtbar, im Vollbild alles weg, Kopfzeile
+nie überlappt.
+
+---
+
 ## U17 — Was noch nicht umgesetzt ist
 
 - **Route auf der Karte antippen** funktioniert, ist aber mit einer dünnen

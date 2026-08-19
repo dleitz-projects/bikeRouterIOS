@@ -211,8 +211,31 @@ der Grund einer Fläche, die das System für uns malt. Sie muss deshalb eine
 Flächenfarbe der App sein — und mit dem Farbschema wechseln, sonst leuchtet
 nachts ein heller Balken über der dunklen Karte.)*
 
-**Was die zehn gemeinsam haben:** Keine war ein Schönheitsfehler. Neun von
-zehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+**11. Die Profilpille ragte im Vollbild 12 px ins Blatt** (19.08.). Der
+Kartenstreifen über dem Blatt war 44 px hoch und lag korrekt unter dem
+Systemstreifen — nur braucht die Kopfzeile 56 px (12 Innenabstand + 44 Knopf).
+Die Pille wurde also unten angeschnitten, und der Menüknopf gleich mit.
+
+Der Fehler steckte schon vorher drin, mit `black-translucent` genauso: Beide
+Werte verschieben sich gemeinsam um den Systemstreifen, die Differenz von 12 px
+bleibt. Aufgefallen ist er erst, als der Streifen nicht mehr 106 px hoch war,
+sondern 44 — vorher hatte die Pille genug Karte um sich herum, um nicht wie ein
+Fehler auszusehen.
+
+**Gemessen statt geschätzt** (IMG_4709, volle Raste):
+
+```
+Pille oben       75,0 css      Kopfzeile: 12 + 44 = 56 px ab Seitenanfang
+Blatt oben      107,0 css      Streifen:  44 px ab Seitenanfang
+                               → 12 px Überlappung
+```
+
+*(Die Regel: Was am oberen Rand Platz braucht, wird gegen das gemessen, was
+dort tatsächlich im Weg ist — die Kopfzeile, nicht der Systemstreifen. Sie
+enthält ihn ohnehin. Ein gemessener Wert statt zweier gerechneter.)*
+
+**Was die elf gemeinsam haben:** Keine war ein Schönheitsfehler. Zehn von
+elf machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle
@@ -264,9 +287,19 @@ Streifen, unterer Rand, Analyse und Farbschema in einem Bild.
   richtige Tausch bleibt, ist eine Gestaltungsfrage und keine technische. Der
   Rückweg ist eine Zeile (`black-translucent` zurück) plus einmal Symbol neu
   anlegen; er kostet dann wieder den unerreichbaren Rand unten.
-- **Die Farbe der Statusleiste** ist jetzt `--sheet`. Ob sie über der Karte
-  besser als heller Streifen oder als etwas Dunkleres wirkt, ist nach dem
-  ersten Blick zu entscheiden, nicht vorher.
+- **Die Farbe der Statusleiste kommt womöglich ebenfalls aus dem Symbol.**
+  Am 19.08.2026, 19:35 stand sie weiter auf `--ground`, obwohl die Seite seit
+  18:20 `--sheet` ausliefert. Zwei Erklärungen, beide nicht ausgeschlossen: Die
+  App hatte die neue Fassung noch nicht (der Service Worker braucht zwei
+  Aufrufe), oder iOS nimmt die Farbe aus den Angaben, die beim **Anlegen** des
+  Symbols gespeichert wurden — dann wäre `theme_color` aus dem Manifest die
+  Quelle und nicht die Zeile im HTML. Deshalb steht jetzt auch
+  `background_color` auf demselben Wert: Welche der beiden Angaben iOS auch
+  nimmt, sie stimmen überein. Bleibt die Leiste nach zwei Aufrufen `--ground`,
+  hilft nur das Neuanlegen des Symbols.
+- **Ob die Statusleiste hell richtig ist**, entscheidet sich am Bild. Ein
+  Streifen ist sie in jedem Fall — verschwinden kann er nur wieder unter der
+  Karte, und das kostet den unteren Rand.
 
 **Beantwortet am 19.08.2026:**
 

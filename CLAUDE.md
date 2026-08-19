@@ -335,25 +335,32 @@ zieht das Blatt eine Stufe zu, ohne etwas zu setzen. In der halben Raste gilt
 das ausdrücklich nicht: Sie ist dafür da, auf der Karte zu arbeiten und
 gleichzeitig das Profil zu sehen.
 
-**Der Streifen liegt außerhalb des Systembereichs, nicht darin.** 44 px Karte
-plus `env(safe-area-inset-top)`. Der Zuschlag ist keine Kosmetik: Die Seite
-läuft mit `viewport-fit=cover`, der Ursprung liegt also am obersten
-Bildschirmpunkt. Ohne ihn beginnt der Streifen dort — und der Griff sitzt unter
-der **Dynamic Island**, die den Tap für sich nimmt. Am 19.08.2026 am Gerät
-aufgelaufen: Aus der vollen Raste kam man weder durch Ziehen noch durch Tippen
-heraus. Auf Geräten ohne Insel ist der Zuschlag null.
+**Der Streifen liegt unter allem, was oben schon belegt ist.** 44 px **freie**
+Karte, gemessen ab der **Unterkante der Kopfzeile** — nicht ab dem oberen
+Bildschirmrand und auch nicht ab dem Systemstreifen. Zwei Fassungen desselben
+Fehlers sind am 19.08.2026 am Gerät aufgelaufen:
 
-Seit `black-translucent` gestrichen ist (siehe unten), meldet
-`safe-area-inset-top` auf dem geprüften iPhone ebenfalls null — die Seite
-beginnt ja unter der Statusleiste. **Der Zuschlag bleibt trotzdem stehen.** Er
-kostet dort nichts und ist der einzige Schutz, falls ein Gerät oder ein Modus
-die Seite doch wieder bis an den obersten Bildschirmpunkt zeichnet. Eine Regel,
-die heute null ergibt, ist nicht überflüssig, sondern erfüllt.
+- Gegen den Bildschirmrand gerechnet saß der Griff unter der **Dynamic
+  Island**, die den Tap für sich nimmt. Aus der vollen Raste kam man weder
+  durch Ziehen noch durch Tippen heraus — eine Sackgasse.
+- Gegen den Systemstreifen gerechnet lag der Streifen zwar frei, aber die
+  **Profilpille ragte 12 px ins Blatt**: Der Streifen war 44 px hoch, die
+  Kopfzeile braucht 56.
 
-Daraus die allgemeine Regel: **Was am oberen Rand angefasst werden muss, wird
-gegen `safe-area-inset-top` gerechnet, nicht gegen die Fensterhöhe.** Der Wert
-ist in JavaScript nicht direkt lesbar — die App misst ihn über einen
-unsichtbaren Klotz mit genau dieser Höhe.
+Daraus die allgemeine Regel: **Was am oberen Rand Platz braucht, wird gegen
+das gemessen, was dort tatsächlich im Weg ist — die Kopfzeile.** Sie enthält
+den Systemstreifen bereits, weil ihr Innenabstand
+`calc(env(safe-area-inset-top) + 12px)` ist. Ein gemessener Wert statt zweier
+gerechneter; dieselbe Zahl gilt für den Streifen und für alles, was über dem
+Blatt schwebt.
+
+**Alle Zahlen für Abstände kommen aus einer Quelle.** 14 px Luft über dem
+Blatt, 14 px unter der Kopfzeile — ein Wert, an einer Stelle. Die Rasten und
+die Sichtbarkeit der Werkzeugleiste müssen mit derselben Zahl rechnen, sonst
+widersprechen sie sich: Die halbe Raste endet genau dort, wo die Leiste gerade
+noch Platz hat, denn in dieser Raste wird auf der Karte gearbeitet. Vorher
+stand dort „62 % der Fensterhöhe" — auf dem gemessenen iPhone zufällig richtig,
+auf dem nächsten Gerät nicht.
 
 **Was das Fenster nicht hergibt, ist im Fenster nicht zu holen.** Am
 19.08.2026 am Gerät nachgemessen: Die installierte App wurde über die volle

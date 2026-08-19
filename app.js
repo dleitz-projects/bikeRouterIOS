@@ -403,21 +403,28 @@ async function regionHolen() {
 
 /* ------------------------------------------------------- Fenstermass
 
-   Wie viel nimmt sich das System oben — Statusleiste, Notch, Dynamic Island?
-   Die Seite laeuft mit `viewport-fit=cover`, der Ursprung liegt also am oberen
-   Bildschirmrand und nicht unterhalb davon. In JS ist `env(safe-area-inset-top)`
-   nicht auszulesen; ein Messklotz mit genau dieser Hoehe schon. `visibility`
-   statt `display`, sonst gaebe es nichts zu messen. */
-let safeProbe = null;
-function safeTop() {
-  if (!safeProbe) {
-    safeProbe = document.createElement('div');
-    safeProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;' +
-      'height:env(safe-area-inset-top);pointer-events:none;visibility:hidden;';
-    document.body.appendChild(safeProbe);
-  }
-  return safeProbe.offsetHeight;
+   Wo endet oben das, was schon belegt ist? Nicht beim Systemstreifen — der ist
+   nur die eine Haelfte. Darunter sitzt die Kopfzeile mit Profilpille und Menue,
+   und die ist genauso im Weg. Gemessen wird deshalb ihre Unterkante: Sie
+   enthaelt den Systemstreifen bereits, weil `.chrome` mit
+   `calc(env(safe-area-inset-top) + 12px)` gepolstert ist.
+
+   Am 19.08.2026 am Geraet aufgelaufen: Der Kartenstreifen im Vollbild wurde
+   gegen den Systemstreifen allein gerechnet, war 44 px hoch — und die Pille
+   ragte 12 px darunter ins Blatt. Sichtbar als angeschnittene Pille, auf jedem
+   Geraet gleich falsch, weil beide Werte sich gemeinsam verschieben.
+
+   Ein gemessener Wert statt zweier gerechneter: Was oben im Weg ist, sagt die
+   Kopfzeile selbst. */
+function chromeUnten() {
+  return $('.chrome').getBoundingClientRect().bottom;
 }
+
+/* Derselbe Abstand über wie unter: Was über dem Blatt schwebt, sitzt 14 px
+   darüber und braucht nach oben dieselben 14 px, sonst klebt es an der
+   Kopfzeile. Ein Wert, keine zwei — die Rasten und die Sichtbarkeit der Leiste
+   müssen mit derselben Zahl rechnen, sonst widersprechen sie sich. */
+const LUFT = 14;
 
 /* Der Rahmen reicht bis zum Fensterrand — weiter nicht. Der Versuch, ihn ueber
    das Fenster hinaus auf die Bildschirmhoehe zu ziehen, ist am 19.08.2026 am
@@ -1946,17 +1953,27 @@ function detentPx() {
     sheet.setAttribute('data-detent', vorher);
   }
   /* Vollbild heisst voll: Ein Streifen Karte bleibt nur als Griff zum
-     Zurueckziehen — 44 px reichen dafuer. Sie liegen aber AUSSERHALB dessen,
-     was das System fuer sich nimmt.
+     Zurueckziehen — 44 px reichen dafuer. Sie liegen aber AUSSERHALB von allem,
+     was oben schon belegt ist: Systemstreifen UND Kopfzeile. Beides steckt in
+     der Unterkante der Kopfzeile, siehe chromeUnten().
 
-     Am 19.08.2026 am Geraet aufgelaufen: Ohne den Zuschlag beginnt der Streifen
-     am obersten Bildschirmpunkt, und der Griff sitzt damit unter der Dynamic
-     Island. Die schluckt den Tap — aus der vollen Raste kam man weder durch
-     Ziehen noch durch Tippen heraus. Es war eine Sackgasse, kein Schoenheits-
-     fehler. Auf Geraeten ohne Insel ist der Zuschlag null, dort aendert sich
-     nichts. */
-  const voll = H - 44 - safeTop();
-  detentCache = [leer, klein, Math.min(klein + zu, H * 0.62, voll), voll];
+     Zwei Fassungen dieses Fehlers sind am 19.08.2026 am Geraet aufgelaufen.
+     Erst begann der Streifen am obersten Bildschirmpunkt, und der Griff sass
+     unter der Dynamic Island, die den Tap schluckt — eine Sackgasse. Dann lag
+     er zwar unter dem Systemstreifen, aber die Profilpille ragte 12 px ins
+     Blatt: Der Streifen war 44 px hoch, die Kopfzeile braucht 56. Beide Male
+     dieselbe Ursache — gegen zu wenig gerechnet. */
+  const voll = H - chromeUnten() - 44;
+  /* Nach oben begrenzt wird die halbe Raste dort, wo die Werkzeugleiste gerade
+     noch Platz hat: In dieser Raste wird auf der Karte gearbeitet, und dafür
+     braucht es die Leiste. Vorher stand hier „62 % der Fensterhöhe" — auf dem
+     gemessenen iPhone ergibt die Rechnung denselben Wert, aber jetzt steht da,
+     WARUM er so hoch ist. Ein Prozentwert hätte auf dem nächsten Gerät
+     danebengelegen, und die Leiste wäre genau in der Raste verschwunden, für
+     die es sie gibt. Ein Pixel Abzug, damit eine Rundung sie nicht doch kippt. */
+  const rail = $('#rail').getBoundingClientRect().height || 256;
+  const halbMax = H - chromeUnten() - rail - 2 * LUFT - 1;
+  detentCache = [leer, klein, Math.min(klein + zu, halbMax, voll), voll];
   return detentCache;
 }
 
@@ -2014,25 +2031,20 @@ function positionRail(target) {
   const sheet = $('#sheet');
   const sh = (target !== undefined && target !== null)
     ? target : sheet.getBoundingClientRect().height;
-  /* Derselbe Abstand über wie unter: Was über dem Blatt schwebt, braucht nach
-     oben so viel Luft, wie es nach unten hat. Daraus fällt der Vollbild-Fall
-     von selbst richtig heraus — der Streifen ist 44 px, das kleinste Element
-     ist 30 px hoch und bräuchte mit beidseitiger Luft 44 px plus die eigene
-     Höhe. Im Vollbild ist die Karte damit auf jedem Gerät frei, und ein Tap
-     darauf kann nur heißen „gib mir die Karte zurück". */
-  const luft = 14;
-  const bottom = sh + luft;
+  /* Daraus fällt der Vollbild-Fall von selbst richtig heraus: Der freie
+     Streifen ist 44 px, das kleinste Element 30 px hoch und bräuchte mit
+     beidseitiger Luft 58. Im Vollbild ist die Karte damit auf jedem Gerät
+     frei, und ein Tap darauf kann nur heißen „gib mir die Karte zurück". */
+  const bottom = sh + LUFT;
 
-  /* Der Platz über dem Blatt ist NICHT der ganze Streifen Karte. Oben nimmt
-     sich das System seinen Teil, und was dort hineinragt, verschwindet unter
-     der Dynamic Island. Gerechnet wird deshalb gegen den nutzbaren Streifen.
-
-     Am 19.08.2026 am Gerät aufgelaufen: In der vollen Raste blieb das „©"
-     stehen und schob sich halb hinter die Profilpille. Die alte Schwelle zählte
-     den Systemstreifen mit und kam damit auf genau 92 — abgeschnitten wurde
-     aber erst unter 92. Ein Gleichstand, der auf einem Gerät mit anderem
+  /* Der Platz über dem Blatt ist NICHT der ganze Streifen Karte: Oben liegen
+     Systemstreifen und Kopfzeile, beides zusammen in chromeUnten(). Wer dagegen
+     nicht rechnet, schiebt das „©" unter die Dynamic Island oder auf die
+     Profilpille — am 19.08.2026 genau so passiert. Die alte Schwelle zählte den
+     Systemstreifen mit und kam damit auf genau 92, abgeschnitten wurde aber
+     erst unter 92. Ein Gleichstand, der auf einem Gerät mit anderem
      Systemstreifen nie aufgefallen wäre. */
-  const frei = appH() - bottom - safeTop();
+  const frei = appH() - bottom - chromeUnten();
 
   /* Jedes Element an seiner eigenen Höhe messen statt an einer Konstanten:
      Eine feste Schwelle trägt den Systemstreifen des Geräts in sich, an dem
@@ -2043,7 +2055,7 @@ function positionRail(target) {
   const rail = $('#rail'), at = $('#attribWrap'), zo = $('#zoom');
 
   rail.style.bottom = bottom + 'px';
-  rail.classList.toggle('hidden', frei < hoch(rail, 256) + luft);
+  rail.classList.toggle('hidden', frei < hoch(rail, 256) + LUFT);
 
   /* Linke Kante: erst der Zoom, darunter die Nennung der Datenquellen. Beide
      verschwinden, sobald der Streifen Karte zu schmal wird — sie mit nach oben
@@ -2053,9 +2065,9 @@ function positionRail(target) {
   zo.style.bottom = (bottom + 42) + 'px';
   /* Nicht der ganze Kasten, sondern nur das „©": Aufgeklappt ist der Kasten
      breiter und höher, und dann verschwände die Nennung, sobald man sie liest. */
-  const engZu = frei < hoch($('#attribBtn'), 30) + luft;
+  const engZu = frei < hoch($('#attribBtn'), 30) + LUFT;
   at.classList.toggle('hidden', engZu);
-  zo.classList.toggle('hidden', frei < 42 + hoch(zo, 75) + luft);
+  zo.classList.toggle('hidden', frei < 42 + hoch(zo, 75) + LUFT);
   if (engZu) $('#attribBox').hidden = true;
 }
 
