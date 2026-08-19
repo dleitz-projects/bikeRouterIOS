@@ -124,7 +124,12 @@ a{color:var(--signal);}
 .grab span{width:38px;height:4.5px;border-radius:3px;background:var(--line);display:block;}
 .sheetscroll{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
-  padding:4px 17px calc(env(safe-area-inset-bottom) + 17px);
+  /* max() statt Addition: Auf einem iPhone mit Home-Indikator meldet
+     env(safe-area-inset-bottom) bereits 34 px. Zusaetzlich 17 px addiert ergab
+     einen 51 px hohen leeren Streifen unter dem Rechnen-Knopf — sichtbar als
+     Balken, der wie ein Fehler aussieht. Jetzt gilt der groessere der beiden
+     Werte: 34 px auf dem Geraet, 17 px im Browser und auf aelteren Modellen. */
+  padding:4px 17px max(env(safe-area-inset-bottom), 17px);
   display:flex;flex-direction:column;gap:16px;}
 
 /* In der kleinen Raste bleibt das Blatt starr. Sonst laesst sich die ganze
@@ -290,7 +295,7 @@ a{color:var(--signal);}
 .nav .txtbtn:last-child{text-align:right;}
 .navpad{flex:0 0 auto;min-width:56px;}
 .screenscroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:16px 17px calc(env(safe-area-inset-bottom) + 24px);
+  padding:16px 17px max(env(safe-area-inset-bottom), 24px);
   display:flex;flex-direction:column;gap:13px;}
 .screenscroll.flush{padding-top:0;}
 
@@ -374,7 +379,7 @@ select{padding-right:34px;
 .menu{position:absolute;left:0;right:0;bottom:0;z-index:60;background:var(--sheet);
   border-radius:20px 20px 0 0;border-top:1px solid var(--line);
   box-shadow:0 -2px 30px rgba(0,0,0,.3);
-  padding:9px 13px calc(env(safe-area-inset-bottom) + 13px);
+  padding:9px 13px max(env(safe-area-inset-bottom), 13px);
   max-height:82%;overflow-y:auto;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:9px;
   visibility:hidden;transform:translateY(101%);

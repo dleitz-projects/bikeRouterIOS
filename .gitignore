@@ -3,3 +3,8 @@
 
 # Arbeitsmaterial, nicht Teil der App
 PROMPT-Runde-*.md
+
+# Rohe Screenshots vom Geraet. Die bearbeiteten liegen in doku/bilder/;
+# die Originale sind gross und koennen persoenliche Daten enthalten.
+Screenshot/
+Screenshots/

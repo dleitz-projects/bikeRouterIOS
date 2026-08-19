@@ -328,6 +328,48 @@ Zusammenfassung in `messungen/ERKENNTNISSE.md`, Aufbauten in `BROUTER.md`.
 
 ---
 
+## U22 — Der leere Balken unter dem Rechnen-Knopf
+
+Auf dem iPhone stand unter dem Knopf ein rund 50 px hoher leerer Streifen — am
+Rechner nicht zu sehen, weil es dort keine Safe Area gibt.
+
+**Ursache:** `padding-bottom: calc(env(safe-area-inset-bottom) + 17px)`. Auf
+einem Gerät mit Home-Indikator meldet `env()` bereits 34 px — das ist der
+Abstand, den iOS für den Wischbalken vorsieht. Die zusätzlichen 17 px kamen
+obendrauf, also 51 px.
+
+**Behoben mit `max()` statt Addition:** `max(env(safe-area-inset-bottom), 17px)`.
+Auf dem Gerät gelten 34 px, im Browser und auf Modellen ohne Indikator 17 px.
+Es gibt keinen Fall, in dem beide Abstände zusammen nötig wären — der eine
+ersetzt den anderen.
+
+Dieselbe Korrektur an drei Stellen: Routenblatt, Vollbild-Ebenen und Menüs.
+
+---
+
+## U23 — Echte Screenshots auf der Startseite
+
+Die Platzhalter sind ersetzt. Alle neun Bilder sind iPhone-Aufnahmen vom
+19.08.2026.
+
+**Zwei Bilder mussten bearbeitet werden:** Das Teilen-Menü zeigte die
+AirDrop-Kontaktzeile mit vier Namen und Profilfotos erkennbarer Personen.
+Verpixelt mit `werkzeuge/unkenntlich.py`.
+
+**Verpixelt, nicht geschwärzt** — der Screenshot soll weiter zeigen, *dass* dort
+eine Kontaktzeile steht, nur nicht mehr *wer*. Ein schwarzer Balken sähe aus wie
+ein Fehler im Bild.
+
+**Nebenbei gelernt:** iPhone-Screenshots kommen mit **16 Bit pro Kanal**. Ein
+selbstgeschriebener PNG-Dekoder muss das können, sonst kommt Rauschen heraus —
+mein erster Versuch hat genau das produziert. Das Werkzeug geht deshalb über
+BMP als Zwischenformat, das `sips` auf jedem Mac erzeugt.
+
+Die Rohbilder liegen nicht im Repo (`.gitignore`): Sie sind groß und können
+persönliche Daten enthalten.
+
+---
+
 ## U17 — Was noch nicht umgesetzt ist
 
 - **Route auf der Karte antippen** funktioniert, ist aber mit einer dünnen

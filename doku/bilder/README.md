@@ -1,57 +1,46 @@
 # Bilder für die Startseite
 
-Hier liegen die Bilder, die `README.md` einbindet.
+Alle Bilder in `README.md` sind **echte iPhone-Screenshots**, aufgenommen am
+19.08.2026. Die Platzhalter aus der ersten Runde sind ersetzt und gelöscht.
 
-**Die drei App-Bilder (06 bis 08) sind echte Aufnahmen** aus der laufenden App,
-aufgenommen im Browser bei 390 px Breite über die Referenzstrecke
-Goslar–Torfhaus–Bad Harzburg. Sie zeigen dieselben Zahlen, die auch in
-`BROUTER.md` stehen — 43,4 km mit 965 Höhenmetern, im Vergleich gegen Trekking
-mit 59,2 km.
-
-**Die übrigen sind Platzhalter (`.svg`)**, weil sie iOS-Systemdialoge zeigen:
-das Teilen-Menü von Safari, „Zum Home-Bildschirm", den Home-Bildschirm selbst.
-Die kann nur ein echtes iPhone liefern.
-
-## Ersetzen
-
-Jeden Platzhalter durch einen echten iPhone-Screenshot ersetzen:
-
-1. Screenshot am iPhone machen (Seitentaste + Lauter).
-2. Als PNG unter demselben Namen hier ablegen, aber mit `.png` statt `.svg`.
-3. In `README.md` die Endung ändern: `01-safari-oeffnen.svg` → `.png`.
-4. Den Platzhalter löschen.
-
-Die Namen sind durchnummeriert, damit die Reihenfolge der Anleitung erhalten
-bleibt.
-
-`icon-rund.png` ist kein Screenshot, sondern das App-Icon mit runden Ecken und
-Transparenz — nur für die Startseite. Die ausgelieferten `icon-192.png` und
-`icon-512.png` im Wurzelverzeichnis sind bewusst vollflächig quadratisch: iOS
-legt seine eigene Maske darüber, und ein Icon mit eigenen runden Ecken bekäme
-dort einen doppelten Rand. Erzeugt werden alle drei von `werkzeuge/icon.py`.
-
-| Datei | Was drauf sein soll |
+| Datei | Zeigt |
 |---|---|
-| `01-safari-oeffnen` | Die App in Safari, Adressleiste sichtbar — erkennbar **Safari**, nicht Chrome |
-| `02-teilen-symbol` | Untere Safari-Leiste, das Teilen-Symbol markiert |
-| `03-zum-homebildschirm` | Teilen-Menü, nach unten gescrollt bis „Zum Home-Bildschirm" |
-| `04-hinzufuegen` | Der Dialog mit Icon und Namen, oben rechts „Hinzufügen" |
+| `01-safari-oeffnen` | Die App in Safari, Adressleiste sichtbar |
+| `02-teilen-symbol` | Safari-Menü mit dem Eintrag *Teilen* |
+| `03-zum-homebildschirm` | Das Teilen-Menü, gescrollt bis *Zum Home-Bildschirm* |
+| `04-hinzufuegen` | Der Dialog mit Name und URL, oben rechts *Hinzufügen* |
 | `05-homebildschirm` | Der Home-Bildschirm mit dem neuen Icon |
-| `06-erste-route` | Die App im Vollbild mit einer berechneten Route |
-| `07-vergleich` | Zwei Routen: Reiter A/B, abgelegte gestrichelt, Differenzzeile |
-| `08-analyse` | Blatt im Vollbild mit Höhenprofil und Anteilen |
-| `09-osmand-dateien` | Das Teilen-Menü der App mit „In Dateien sichern" |
+| `06-erste-route` | Eine berechnete Route, Blatt in der kleinen Raste |
+| `07-hoehenprofil` | Dieselbe Route mit aufgezogenem Höhenprofil |
+| `08-analyse` | Bodenbeschaffenheit und Straßenarten |
+| `09-teilen` | Das Teilen-Menü der App |
+| `icon-rund` | Das App-Icon mit runden Ecken — kein Screenshot |
 
-## Worauf beim Fotografieren achten
+## Was unkenntlich gemacht wurde
 
-- **Immer dasselbe Farbschema.** Hell oder dunkel, aber nicht gemischt — sonst
-  wirkt die Anleitung zusammengestückelt.
-- **Dieselbe Route** in allen App-Bildern. Ein Wechsel der Strecke zwischen zwei
-  Bildern lässt den Leser suchen, was sich geändert hat.
-- **Keine persönlichen Daten** im Bild: Uhrzeit und Akku sind unkritisch,
-  aber gespeicherte Touren mit Namen wie „Zur Arbeit" besser vorher umbenennen.
-- **Der markierte Punkt** (Teilen-Symbol, Menüeintrag) darf nachträglich
-  hervorgehoben werden — ein Kreis oder Pfeil hilft mehr als eine Bildunterschrift.
+In `03-zum-homebildschirm` und `09-teilen` stand die **Kontaktzeile von
+AirDrop** — vier Namen samt Profilfotos erkennbarer Personen. Sie ist verpixelt.
 
-Die Platzhalter selbst sind mit einem Skript erzeugt; sie brauchen nicht
-aufgehoben zu werden, sobald echte Bilder da sind.
+**Verpixelt statt geschwärzt**, weil der Screenshot weiter zeigen soll, *dass*
+dort eine Kontaktzeile steht — nur nicht mehr *wer*. Ein schwarzer Balken sähe
+aus wie ein Fehler im Bild.
+
+Gemacht mit `werkzeuge/unkenntlich.py`; die Bereiche stehen dort als Anteile der
+Bildkante, sind also unabhängig von der Auflösung des Geräts.
+
+**Vor jedem neuen Screenshot prüfen:** AirDrop-Kontakte, Namen in gespeicherten
+Touren, WLAN-Namen, und ob die gezeigte Route Rückschlüsse auf die eigene
+Adresse zulässt. Die hier gezeigten Strecken beginnen bewusst nicht an einer
+Haustür.
+
+## Wenn Bilder ersetzt werden
+
+Screenshot am iPhone machen, unter demselben Namen als `.png` ablegen, bei
+Bedarf durch `unkenntlich.py` schicken, dann verkleinern:
+
+```sh
+sips -Z 1000 doku/bilder/06-erste-route.png
+```
+
+1000 px Höhe reichen für die Startseite und halten die Datei bei einigen hundert
+Kilobyte. Die Originale mit 2868 px brauchen das Repo nicht.

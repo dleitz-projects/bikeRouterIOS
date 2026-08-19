@@ -12,14 +12,14 @@ schließt die Lücke.
 **→ [App öffnen](https://dleitz-projects.github.io/bikeRouterIOS/)**
 
 <p align="center">
-  <img src="doku/bilder/06-erste-route.png" alt="Eine berechnete Route" width="245">
-  <img src="doku/bilder/07-vergleich.png" alt="Zwei Routen im Vergleich" width="245">
-  <img src="doku/bilder/08-analyse.png" alt="Analyse mit Höhenprofil" width="245">
+  <img src="doku/bilder/06-erste-route.png" alt="Eine berechnete Route auf der Karte" width="245">
+  <img src="doku/bilder/07-hoehenprofil.png" alt="Route mit Höhenprofil" width="245">
+  <img src="doku/bilder/08-analyse.png" alt="Analyse: Belag und Straßenarten" width="245">
 </p>
 
-<p align="center"><i>Dieselbe Strecke, zwei Profile: „Wenig Verkehr" fährt 43,4 km
-mit 25,5 % schnellen Straßen, „Trekking" 59,2 km mit 1,8 %.<br>
-Genau dieser Unterschied ist der Grund für die App.</i></p>
+<p align="center"><i>Hildesheim–Clausthal, 77,4 km: die Route, das Höhenprofil,
+und woraus die Strecke besteht.<br>
+93,9 % Asphalt, 30,3 % Hauptstraße — Zahlen, die kein anderer Planer herausrückt.</i></p>
 
 ---
 
@@ -30,7 +30,7 @@ Home-Bildschirm gelegt und verhält sich danach wie eine normale App.
 
 <table>
 <tr>
-<td width="160"><img src="doku/bilder/01-safari-oeffnen.svg" alt="Schritt 1" width="150"></td>
+<td width="160"><img src="doku/bilder/01-safari-oeffnen.png" alt="Schritt 1" width="150"></td>
 <td>
 
 **1. [Den Link in Safari öffnen](https://dleitz-projects.github.io/bikeRouterIOS/)**
@@ -41,17 +41,18 @@ den Home-Bildschirm legen.
 </td>
 </tr>
 <tr>
-<td><img src="doku/bilder/02-teilen-symbol.svg" alt="Schritt 2" width="150"></td>
+<td><img src="doku/bilder/02-teilen-symbol.png" alt="Schritt 2" width="150"></td>
 <td>
 
 **2. Teilen-Symbol antippen**
 
-Das Quadrat mit dem Pfeil nach oben, unten in der Mitte der Safari-Leiste.
+Das Quadrat mit dem Pfeil nach oben — je nach iOS-Fassung unten in der Leiste
+oder im Menü hinter den drei Punkten.
 
 </td>
 </tr>
 <tr>
-<td><img src="doku/bilder/03-zum-homebildschirm.svg" alt="Schritt 3" width="150"></td>
+<td><img src="doku/bilder/03-zum-homebildschirm.png" alt="Schritt 3" width="150"></td>
 <td>
 
 **3. „Zum Home-Bildschirm" wählen**
@@ -61,7 +62,7 @@ Im Menü nach unten wischen — der Eintrag steht weit unten in der Liste.
 </td>
 </tr>
 <tr>
-<td><img src="doku/bilder/04-hinzufuegen.svg" alt="Schritt 4" width="150"></td>
+<td><img src="doku/bilder/04-hinzufuegen.png" alt="Schritt 4" width="150"></td>
 <td>
 
 **4. Oben rechts auf „Hinzufügen"**
@@ -72,7 +73,7 @@ nicht abschneidet.
 </td>
 </tr>
 <tr>
-<td><img src="doku/bilder/05-homebildschirm.svg" alt="Schritt 5" width="150"></td>
+<td><img src="doku/bilder/05-homebildschirm.png" alt="Schritt 5" width="150"></td>
 <td>
 
 **5. Safari schließen, App vom Home-Bildschirm starten**
@@ -118,7 +119,7 @@ dann nur die Linie.
 
 <table>
 <tr>
-<td width="160"><img src="doku/bilder/09-osmand-dateien.svg" alt="Teilen-Menü" width="150"></td>
+<td width="160"><img src="doku/bilder/09-teilen.png" alt="Teilen-Menü" width="150"></td>
 <td>
 
 1. In der App auf **Teilen** (Pfeil nach oben) tippen.
