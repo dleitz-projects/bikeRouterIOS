@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entwurf: Vergleichszeile — bikeRouteriOS, 20.08.2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Farben und Masse aus style.css uebernommen, damit der Entwurf nicht
+   schoener aussieht als die App. */
+:root{
+  --ground:#E9EBE3; --sheet:#F7F8F3; --raised:#FFFFFF;
+  --ink:#171A13; --muted:#6B7362; --faint:#98A08C;
+  --line:#D5D9CB; --line-soft:#E3E6DA;
+  --signal:#DC4514; --slate:#4B6E88; --ochre:#B0812B;
+  --sienna:#96502E; --good:#3F7F58;
+  --shadow-sm:0 1px 2px rgba(20,26,16,.10), 0 2px 8px rgba(20,26,16,.08);
+}
+body.dunkel{
+  --ground:#0D100B; --sheet:#181C15; --raised:#1F2419;
+  --ink:#E9EDE1; --muted:#8B937F; --faint:#69715E;
+  --line:#2B3125; --line-soft:#232819;
+  --signal:#FF6B33; --slate:#7FA6C2; --ochre:#DBA748;
+  --sienna:#C8744C; --good:#5FB07E;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 3px 10px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.45 "IBM Plex Sans",-apple-system,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+header{padding:28px 20px 8px;max-width:1180px;margin:0 auto;}
+h1{margin:0 0 6px;font-size:22px;font-weight:600;letter-spacing:-.02em;}
+.lead{margin:0;color:var(--muted);font-size:14px;max-width:62ch;line-height:1.6;}
+.werkzeug{max-width:1180px;margin:14px auto 0;padding:0 20px;}
+.schalter{font:inherit;font-size:13px;font-weight:600;color:var(--ink);
+  background:var(--raised);border:1px solid var(--line);border-radius:20px;
+  padding:9px 16px;cursor:pointer;}
+main{max-width:1180px;margin:0 auto;padding:20px;
+  display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));}
+.spalte{display:flex;flex-direction:column;gap:12px;}
+.kopf{display:flex;align-items:baseline;gap:9px;}
+.nr{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  color:var(--signal);letter-spacing:.08em;}
+h2{margin:0;font-size:15.5px;font-weight:600;}
+.warum{margin:0;font-size:12.5px;line-height:1.6;color:var(--muted);}
+.warum b{color:var(--ink);font-weight:600;}
+
+/* ---- das Blatt, wie in der App ---- */
+.blatt{background:var(--sheet);border:1px solid var(--line);
+  border-radius:20px 20px 0 0;padding:0 17px 18px;box-shadow:var(--shadow-sm);}
+.griff{display:grid;place-items:center;padding:9px 0 3px;}
+.griff span{width:38px;height:4.5px;border-radius:3px;background:var(--line);}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+  letter-spacing:.10em;text-transform:uppercase;color:var(--faint);
+  margin:6px 0 7px;}
+.gross{font-size:26px;font-weight:600;letter-spacing:-.024em;line-height:1;}
+.gross small{font-size:13px;font-weight:500;color:var(--muted);margin-left:3px;}
+.trenner{width:1px;align-self:stretch;background:var(--line);}
+.knopfzeile{display:flex;gap:9px;margin-top:15px;}
+.knopf{flex:1 1 auto;height:44px;border-radius:12px;background:var(--signal);
+  color:#fff;font-size:14.5px;font-weight:600;display:grid;place-items:center;}
+body.dunkel .knopf{color:#1A0C05;}
+.quadrat{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+  background:var(--raised);display:grid;place-items:center;color:var(--muted);
+  font-size:15px;}
+
+/* ---- heute ---- */
+.heute{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+.altdelta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  color:var(--muted);display:flex;gap:11px;flex-wrap:wrap;margin-top:7px;}
+.mehr{color:var(--sienna);} .weniger{color:var(--good);}
+
+/* ---- Vorschlag: Spalten ---- */
+.raster{display:grid;align-items:baseline;column-gap:0;}
+.drei{grid-template-columns:1fr 1px 1fr 1px 1fr;}
+.vier{grid-template-columns:1fr 1px 1fr 1px 1fr 1px .85fr;}
+.zelle{padding-right:12px;}
+.zelle + .zelle{padding-left:12px;}
+.dz{font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.1;
+  padding-top:7px;letter-spacing:-.01em;}
+.bezug{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
+  letter-spacing:.06em;text-transform:uppercase;margin-top:9px;}
+.kopfzeile-sp{font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+  margin-bottom:6px;white-space:nowrap;}
+.tempo{font-size:26px;font-weight:600;letter-spacing:-.024em;line-height:1;}
+
+/* ---- Notizen unter jedem Entwurf ---- */
+.pro{margin:0;font-size:12px;line-height:1.6;color:var(--muted);}
+.pro b{color:var(--ink);}
+.faelle{border-top:1px solid var(--line-soft);margin-top:6px;padding-top:10px;}
+.faelle .titel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--faint);font-family:"IBM Plex Mono",monospace;margin-bottom:8px;}
+footer{max-width:1180px;margin:0 auto;padding:8px 20px 60px;color:var(--muted);
+  font-size:12.5px;line-height:1.7;}
+footer b{color:var(--ink);}
+code{font-family:"IBM Plex Mono",monospace;font-size:.92em;
+  background:var(--line-soft);padding:1.5px 5px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Vergleichszeile — drei Entwürfe</h1>
+  <p class="lead">
+    Heute steht der Vergleich zweier Routen in zwei Zeilen und bricht bei
+    größeren Zahlen in drei um. Gesucht ist eine Form, die einzeilig bleibt,
+    <b>ohne Information zu kürzen</b> — und die Frage, ob der Verkehrsanteil
+    (Tempo&nbsp;70+) mit hineinpasst. Zahlen und Farben sind aus der App
+    übernommen; die Blätter unten zeigen nur den Ausschnitt zwischen Griff und
+    Knopfzeile. Offener Punkt <code>P21</code>.
+  </p>
+</header>
+
+<div class="werkzeug">
+  <button class="schalter" id="modus" type="button">Dunkel ansehen</button>
+</div>
+
+<main>
+
+  <!-- ---------------------------------------------------------- heute -->
+  <section class="spalte">
+    <div class="kopf"><span class="nr">0</span><h2>So ist es heute</h2></div>
+    <p class="warum">
+      Zwei Zeilen unter den Kennzahlen. Beide wiederholen die Einheiten, die
+      drei Zeilen darüber schon stehen — und genau diese Wörter machen die
+      Zeile breit, nicht die Zahlen.
+    </p>
+    <div class="blatt">
+      <div class="griff"><span></span></div>
+      <div class="eyebrow">Route B · Sehr wenig Verkehr</div>
+      <div class="heute">
+        <div class="gross">60,1<small>km</small></div>
+        <div class="trenner" style="height:22px"></div>
+        <div class="gross">125<small>hm</small></div>
+        <div class="trenner" style="height:22px"></div>
+        <div class="gross">2:46<small>h</small></div>
+      </div>
+      <div class="altdelta">
+        <span>gegenüber A</span><span class="mehr">+1,7 km</span>
+        <span class="mehr">+39 hm</span><span class="mehr">+6 min</span>
+      </div>
+      <div class="altdelta"><span>Tempo 70+: 0,3 % statt 2,2 %</span></div>
+      <div class="knopfzeile">
+        <div class="knopf">Route berechnen</div>
+        <div class="quadrat">↑</div><div class="quadrat">▤</div><div class="quadrat">🗑</div>
+      </div>
+    </div>
+    <div class="faelle">
+      <div class="titel">mit größeren Zahlen</div>
+      <div class="altdelta">
+        <span>gegenüber A</span><span class="mehr">+128,4 km</span>
+        <span class="mehr">+1.240 hm</span><span class="mehr">+5:12 h</span>
+      </div>
+      <p class="pro" style="margin-top:8px">→ bricht in drei Zeilen um.</p>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ Vorschlag 1 -->
+  <section class="spalte">
+    <div class="kopf"><span class="nr">1</span><h2>Differenz in Spalten</h2></div>
+    <p class="warum">
+      Jede Differenz steht <b>unter ihrer eigenen Kennzahl</b>. Die Einheiten
+      stehen schon oben, also fallen sie unten weg — bis auf die Zeit, wo
+      <code>min</code> und <code>h</code> sich unterscheiden. Die Zeile wächst
+      damit nur noch mit den Ziffern.
+    </p>
+    <div class="blatt">
+      <div class="griff"><span></span></div>
+      <div class="eyebrow">Route B · Sehr wenig Verkehr</div>
+      <div class="raster drei">
+        <div class="zelle">
+          <div class="gross">60,1<small>km</small></div>
+          <div class="dz mehr">+1,7</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="gross">125<small>hm</small></div>
+          <div class="dz mehr">+39</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="gross">2:46<small>h</small></div>
+          <div class="dz mehr">+6 min</div>
+        </div>
+      </div>
+      <div class="bezug">gegenüber A · Tempo 70+ 0,3 % statt 2,2 %</div>
+      <div class="knopfzeile">
+        <div class="knopf">Route berechnen</div>
+        <div class="quadrat">↑</div><div class="quadrat">▤</div><div class="quadrat">🗑</div>
+      </div>
+    </div>
+    <div class="faelle">
+      <div class="titel">mit größeren Zahlen · kürzere Route</div>
+      <div class="raster drei">
+        <div class="zelle"><div class="gross">188,5<small>km</small></div>
+          <div class="dz mehr">+128,4</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="gross">1.365<small>hm</small></div>
+          <div class="dz mehr">+1.240</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="gross">7:58<small>h</small></div>
+          <div class="dz mehr">+5:12 h</div></div>
+      </div>
+      <div class="raster drei" style="margin-top:14px">
+        <div class="zelle"><div class="gross">41,2<small>km</small></div>
+          <div class="dz weniger">−18,9</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="gross">86<small>hm</small></div>
+          <div class="dz weniger">−39</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="gross">1:52<small>h</small></div>
+          <div class="dz weniger">−54 min</div></div>
+      </div>
+      <p class="pro" style="margin-top:10px">
+        → kann nicht umbrechen. Die Spalte ist so breit wie die Kennzahl
+        darüber, und die passte schon vorher.
+      </p>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ Vorschlag 2 -->
+  <section class="spalte">
+    <div class="kopf"><span class="nr">2</span><h2>Verkehr als vierte Kennzahl</h2></div>
+    <p class="warum">
+      Tempo&nbsp;70+ rückt nach oben zu den anderen und bekommt dieselbe Form:
+      großer Wert, Einheit klein, Differenz darunter. Damit ist der Verkehr
+      keine Fußnote mehr, sondern <b>gleichrangig mit Länge, Höhe und Zeit</b> —
+      und die zweite Zeile entfällt ganz.
+    </p>
+    <div class="blatt">
+      <div class="griff"><span></span></div>
+      <div class="eyebrow">Route B · Sehr wenig Verkehr</div>
+      <div class="raster vier">
+        <div class="zelle">
+          <div class="gross">60,1<small>km</small></div>
+          <div class="dz mehr">+1,7</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="gross">125<small>hm</small></div>
+          <div class="dz mehr">+39</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="gross">2:46<small>h</small></div>
+          <div class="dz mehr">+6 min</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="tempo" style="color:var(--good)">0,3<small style="color:var(--muted)">%</small></div>
+          <div class="dz weniger">−1,9</div>
+        </div>
+      </div>
+      <div class="bezug">gegenüber A · vierte Spalte: Anteil Tempo 70+</div>
+      <div class="knopfzeile">
+        <div class="knopf">Route berechnen</div>
+        <div class="quadrat">↑</div><div class="quadrat">▤</div><div class="quadrat">🗑</div>
+      </div>
+    </div>
+    <div class="faelle">
+      <div class="titel">wenn es viel Verkehr ist</div>
+      <div class="raster vier">
+        <div class="zelle"><div class="gross">58,4<small>km</small></div>
+          <div class="dz weniger">−1,7</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="gross">86<small>hm</small></div>
+          <div class="dz weniger">−39</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="gross">2:40<small>h</small></div>
+          <div class="dz weniger">−6 min</div></div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="tempo" style="color:var(--sienna)">22,4<small style="color:var(--muted)">%</small></div>
+          <div class="dz mehr">+20,2</div></div>
+      </div>
+      <p class="pro" style="margin-top:10px">
+        → Der erste Versuch trug das Etikett <code>T70+</code> direkt am Wert
+        und lief damit über den Blattrand. Jetzt steht nur <code>%</code> dort
+        und der Name in der Bezugszeile — die passt, kostet aber eine
+        Erklärung: Ohne sie ist die vierte Spalte nicht zu deuten. Genau daran
+        setzt Entwurf 3 an.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ------------------------------------------------------ Vorschlag 3 -->
+  <section class="spalte">
+    <div class="kopf"><span class="nr">3</span><h2>Mit Spaltenköpfen</h2></div>
+    <p class="warum">
+      Vier Spalten, jede mit einem kleinen Kopf. Damit erklärt sich die vierte
+      selbst, und die Einheiten dürfen aus den großen Zahlen verschwinden —
+      sie stehen ja im Kopf. <b>Drei Zeilen statt zwei</b>, dafür keine
+      einzige, die etwas voraussetzt.
+    </p>
+    <div class="blatt">
+      <div class="griff"><span></span></div>
+      <div class="eyebrow">Route B · Sehr wenig Verkehr</div>
+      <div class="raster vier">
+        <div class="zelle">
+          <div class="kopfzeile-sp">Länge km</div>
+          <div class="gross">60,1</div>
+          <div class="dz mehr">+1,7</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="kopfzeile-sp">Höhe hm</div>
+          <div class="gross">125</div>
+          <div class="dz mehr">+39</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="kopfzeile-sp">Zeit h</div>
+          <div class="gross">2:46</div>
+          <div class="dz mehr">+6 min</div>
+        </div>
+        <div class="trenner"></div>
+        <div class="zelle">
+          <div class="kopfzeile-sp">Tempo 70+</div>
+          <div class="gross" style="color:var(--good)">0,3<small style="color:var(--muted)">%</small></div>
+          <div class="dz weniger">−1,9</div>
+        </div>
+      </div>
+      <div class="bezug">gegenüber A</div>
+      <div class="knopfzeile">
+        <div class="knopf">Route berechnen</div>
+        <div class="quadrat">↑</div><div class="quadrat">▤</div><div class="quadrat">🗑</div>
+      </div>
+    </div>
+    <div class="faelle">
+      <div class="titel">ohne Vergleich — die erste Route</div>
+      <div class="raster vier">
+        <div class="zelle"><div class="kopfzeile-sp">Länge km</div><div class="gross">60,1</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="kopfzeile-sp">Höhe hm</div><div class="gross">125</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="kopfzeile-sp">Zeit h</div><div class="gross">2:46</div></div>
+        <div class="trenner"></div>
+        <div class="zelle"><div class="kopfzeile-sp">Tempo 70+</div>
+          <div class="gross" style="color:var(--good)">0,3<small style="color:var(--muted)">%</small></div></div>
+      </div>
+      <p class="pro" style="margin-top:10px">
+        → Die Differenzzeile fehlt ersatzlos, der Rest steht unverändert. In
+        Entwurf 1 und 2 gilt dasselbe.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    <b>Was in allen Entwürfen gleich bleibt:</b> Die erste Route hat keinen
+    Vergleich — dann fehlt die Differenzzeile ersatzlos, und die Kennzahlen
+    stehen wie heute. Farbe folgt der Bedeutung, nicht dem Vorzeichen: mehr
+    Weg, mehr Höhe, mehr Zeit und mehr Verkehr sind
+    <span class="mehr">sienna</span>, weniger davon ist
+    <span class="weniger">grün</span>.
+  </p>
+  <p>
+    <b>Was offen bleibt (P21):</b> Tempo&nbsp;70+ ist die einzige Zahl in der
+    App, die etwas über Verkehr sagt — und zugleich unvollständig, weil
+    Tempolimit nicht Verkehrsdichte ist. Entwurf 2 macht sie gleichrangig; ob
+    das gerechtfertigt ist, hängt an einer Messung, die noch aussteht.
+  </p>
+</footer>
+
+<script>
+const knopf = document.getElementById('modus');
+knopf.addEventListener('click', function () {
+  const dunkel = document.body.classList.toggle('dunkel');
+  knopf.textContent = dunkel ? 'Hell ansehen' : 'Dunkel ansehen';
+});
+</script>
+</body>
+</html>

@@ -168,7 +168,17 @@ Beide Varianten unterscheiden sich in genau einer Zeile in `index.html`:
 `env(safe-area-inset-top)`; in Variante B meldet der null, und damit werden
 alle Abzüge von selbst zu Nullen. Deshalb gibt es auch keinen zweiten Zweig im
 Repo — eine Kopie, die gepflegt werden müsste, wäre teurer als der Wechsel.
-Variante A ist als Tag `variante-a` gesichert (Stand v24, am Gerät geprüft).
+Beide Stände sind als Tags gesichert: `variante-a` und `variante-b`.
+
+**Entschieden am 20.08.2026 nach dem Vergleich am Gerät: Variante A.** Beide
+waren installiert und in allen vier Rasten angesehen. Die randlose Karte wiegt
+schwerer als die 62 px Inhalt — auch weil der Streifen unten in Blattfarbe
+nicht als Fehler gelesen wird, der Streifen oben über der Karte aber schon.
+
+**Ebenfalls am 20.08.2026 geprüft und verworfen:** `"display_override":
+["fullscreen", "standalone"]` im Manifest. **Keine Wirkung** — iOS behandelt
+`fullscreen` wie `standalone`. Die Zeile ist wieder raus; sie hätte nur
+suggeriert, dass dort noch etwas zu holen wäre.
 
 **Nach jedem Wechsel muss das Home-Bildschirm-Symbol gelöscht und neu angelegt
 werden.** iOS liest diese Zeile beim Anlegen des Symbols, nicht bei jedem
@@ -389,8 +399,18 @@ Gemessen wird jetzt bei Scrollstand null, danach wird er zurückgesetzt.
 `scrollTop` auf null. Die Korrektur ist dort folgenlos und hier belegt durch
 die Situation, in der sie auftrat.)*
 
-**Was die vierzehn gemeinsam haben:** Keine war ein Schönheitsfehler. Dreizehn von
-vierzehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
+**15. Vollbild-Ebenen begannen 11 px zu tief** (20.08.). Dieselbe Ursache wie
+Falle 12, nur an einer Stelle, die vorher niemand angesehen hatte: Die
+Kopfzeile einer Vollbild-Ebene (Routen-Auswahl, Baukasten, Touren) hatte
+`padding-top: calc(env(safe-area-inset-top) + 11px)` — Systemstreifen **plus**
+Innenabstand. Auf dem Gerät sah es aus, als sei die Ebene nicht ganz
+hochgezogen. Jetzt `max()`, wie überall sonst.
+
+*(Zum dritten Mal dieselbe Regel, zum dritten Mal an einer neuen Stelle. Wer
+`env(...)` in einer Addition sieht, sollte hellhörig werden.)*
+
+**Was die fünfzehn gemeinsam haben:** Keine war ein Schönheitsfehler. Vierzehn von
+fünfzehn machten etwas unbedienbar oder ließen die App kaputt aussehen, und keine
 einzige zeigte sich im Browser am Schreibtisch.
 
 ## Prüfliste für die Sichtkontrolle

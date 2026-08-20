@@ -377,7 +377,11 @@ positioniertem Inhalt. Safari schneidet beide Male am Fensterrand ab. Dass das
 System darunter noch die Hintergrundfarbe malt, heißt nur, dass es die Leinwand
 weiterführt — es heißt nicht, dass die Seite dort zeichnen darf.
 
-Damit bleibt hochkant eine Wahl, und sie ist getroffen:
+Damit bleibt hochkant eine Wahl. Beide Varianten waren am 20.08.2026 auf dem
+Gerät installiert und in allen vier Rasten angesehen; **entschieden wurde für
+die randlose Karte.** Beide Stände liegen als Tags `variante-a` und
+`variante-b` im Repo, der Wechsel ist eine Zeile plus einmal Symbol neu
+anlegen.
 **`apple-mobile-web-app-status-bar-style: black-translucent` bleibt.** Die Karte
 reicht bis zur obersten Bildpunktzeile, die 62 px liegen unten unter dem Blatt —
 in Blattfarbe, wo sie als Rand gelesen werden statt als Fehler. Der Preis sind

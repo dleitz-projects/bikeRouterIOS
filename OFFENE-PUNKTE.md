@@ -838,3 +838,18 @@ die Straßenart.
 **Nicht gebaut**, weil es die Reihenfolge aus dem Entwurf umstellt
 (`CLAUDE.md`: „Der Vergleich steht als Differenz unter den Kennzahlen") und an
 Frage 1 hängt.
+
+**Zum Ansehen: `doku/entwurf-vergleich-2026-08-20.html`.** Drei Formen
+nebeneinander, mit den Farben und Maßen der App, hell und dunkel umschaltbar:
+
+| Entwurf | Idee | was er kostet |
+|---|---|---|
+| 1 · Differenz in Spalten | jede Differenz unter ihrer Kennzahl, Einheiten entfallen | Tempo 70+ bleibt eine eigene Zeile |
+| 2 · Verkehr als vierte Kennzahl | Tempo 70+ rückt nach oben, gleiche Form wie die anderen | die vierte Spalte ist ohne Erklärung nicht zu deuten |
+| 3 · Mit Spaltenköpfen | kleine Köpfe über den Werten, Einheiten wandern dorthin | eine Zeile mehr Höhe |
+
+Jeder Entwurf zeigt zusätzlich die Grenzfälle: dreistellige Differenzen, eine
+kürzere Route (negative Werte), viel Verkehr, und die erste Route ganz ohne
+Vergleich. Am ersten Versuch von Entwurf 2 ist gleich sichtbar geworden, woran
+diese Form hängt: Mit dem Etikett `T70+` direkt am Wert lief die Zeile über den
+Blattrand.

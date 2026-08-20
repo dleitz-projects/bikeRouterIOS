@@ -17,19 +17,20 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<!-- VARIANTE B (19.08.2026). Die Zeile
-     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-     ist bewusst NICHT gesetzt. Damit beginnt die Seite unter der Statusleiste:
-     Die Karte reicht nicht mehr bis zur obersten Bildpunktzeile, dafuer sitzt
-     der Inhalt bis zur untersten, und env(safe-area-inset-top) meldet null —
-     womit alle Abzuege im Stylesheet von selbst zu Nullen werden.
+<!-- VARIANTE A, entschieden am 20.08.2026 nach dem Vergleich beider am Geraet.
+     Mit dieser Zeile zieht iOS die Seite ueber die volle Bildschirmhoehe: Die
+     Karte reicht bis zur obersten Bildpunktzeile, hinter Uhrzeit und Dynamic
+     Island. Der Preis ist der Rechenbereich — er bleibt 62 px kuerzer als der
+     Bildschirm, und diese 62 px liegen unten unter dem Blatt, in Blattfarbe.
 
-     Variante A liegt als Tag `variante-a` im Repo. Der Weg zurueck ist genau
-     diese eine Zeile. Vergleich und Begruendung: DARSTELLUNG.md.
+     Variante B (Zeile weglassen) liegt als Tag `variante-b` im Repo, die
+     Gegenueberstellung in DARSTELLUNG.md. Mehr als diese Zeile unterscheidet
+     die beiden nicht: Alle Abstaende rechnen gegen env(safe-area-inset-top).
 
      ACHTUNG: iOS liest die apple-mobile-web-app-*-Zeilen beim ANLEGEN des
      Home-Bildschirm-Symbols, nicht bei jedem Start. Nach jeder Aenderung
      hier muss das Symbol geloescht und neu hinzugefuegt werden. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="bikeRouter">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -203,6 +204,11 @@
       <span class="navpad"></span>
     </div>
     <div class="screenscroll" id="backupBody"></div>
+    <!-- Das Geraet sagt seine Masse selbst. Steht hier und nicht im Menue:
+         Dort gehoert die Nennung der Datenquellen hin, und daneben sah eine
+         Fensterbeschreibung aus wie ein vergessener Debug-Ausdruck. Hier, in
+         der technischen Ebene, ist sie am Platz. Siehe DARSTELLUNG.md. -->
+    <p class="note diag" id="diag"></p>
   </section>
 
   <section class="screen" id="allprofiles" aria-label="Alle Profile">
@@ -252,10 +258,6 @@
       Kartendaten © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende ·
       Routing über <a href="https://brouter.de">BRouter</a>
     </p>
-    <!-- Das Geraet sagt seine Masse selbst. Jede Zahl der Oberfläche musste
-         bisher aus Screenshots zurueckgerechnet werden; auf einem fremden
-         Geraet geht das gar nicht. Siehe DARSTELLUNG.md. -->
-    <p class="note diag" id="diag"></p>
   </div>
 
   <div class="menu" id="savedlg" aria-label="Geänderte Werte">
